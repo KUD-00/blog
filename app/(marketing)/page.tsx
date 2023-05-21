@@ -26,9 +26,9 @@ export default async function IndexPage() {
   return (
     <>
       <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10">
-        <div className="container md:flex max-w-[64rem] flex-row gap-4 text-center">
-          <div className="md:w-2/3 flex-initial flex-col">
-            <h2 className="inline-block font-heading text-3xl leading-tight lg:text-4xl mb-10">
+        <div className="container max-w-[64rem] flex-row gap-4 text-center md:flex">
+          <div className="flex-initial flex-col md:w-2/3">
+            <h2 className="mb-10 inline-block font-heading text-3xl leading-tight lg:text-4xl">
               New Posts
             </h2>
             {posts?.length ? (
@@ -67,8 +67,8 @@ export default async function IndexPage() {
               <p>No posts published.</p>
             )}
           </div>
-          <div className="mt-16 md:mt-0 md:w-1/3 flex-initial flex-col items-center">
-            <h2 className="inline-block font-heading text-3xl leading-tight lg:text-4xl mb-10">
+          <div className="ml-16 mt-16 flex-initial flex-col items-center md:mt-0 md:w-1/3">
+            <h2 className="mb-10 inline-block font-heading text-3xl leading-tight lg:text-4xl">
               New Hints
             </h2>
             {hints?.length ? (
