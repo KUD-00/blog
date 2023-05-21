@@ -67,7 +67,7 @@ export default async function IndexPage() {
               <p>No posts published.</p>
             )}
           </div>
-          <div className="ml-16 mt-16 flex-initial flex-col items-center md:mt-0 md:w-1/3">
+          <div className="mt-16 flex-initial flex-col items-center md:ml-16 md:mt-0 md:w-1/3">
             <h2 className="mb-10 inline-block font-heading text-3xl leading-tight lg:text-4xl">
               New Hints
             </h2>

@@ -7,7 +7,7 @@ export const siteConfig: SiteConfig = {
   url: "",
   ogImage: "",
   links: {
-    twitter: "https://twitter.com/shadcn",
-    github: "https://github.com/KUD-00/collab-homepage",
+    twitter: "https://twitter.com/KUD_LAIN",
+    github: "https://github.com/KUD-00/blog",
   },
 }
