@@ -1,0 +1,57 @@
+---
+title: linux(高级？)命令学习
+description: 已经变成chatgpt的形状了
+image: /images/blog/miku-sky.jpg
+date: "2023-05-25"
+authors:
+  - Kud
+---
+
+# patch
+patch用于将补丁文件应用于源代码文件，以更新、修补或修改源代码
+
+有一个名为file.c的源代码文件：
+
+```c
+#include <stdio.h>
+
+int main() {
+    printf("Hello, world!");
+    return 0;
+}
+```
+
+现在，要在源代码文件中添加一些代码，使其输出“Goodbye, world！”而不是“Hello,world！”。可以创建一个名为patch.diff的补丁文件：
+
+```makefile
+--- file.c.orig    2021-05-25 14:00:00.000000000 -0400
++++ file.c    2021-05-25 14:01:00.000000000 -0400
+@@ -2,6 +2,6 @@
+
+ int main() {
+-    printf("Hello, world!");
++    printf("Goodbye, world!");
+     return 0;
+ }
+```
+
+在这个补丁文件中，第一行指定了源代码文件的原始版本的文件名和时间戳。第二行指定了源代码文件的新版本的文件名和时间戳。接下来的几行表示要更改部分
+
+可以使用patch命令将补丁文件应用于源代码文件
+
+```shell
+patch file.c patch.diff
+```
+
+这将应用patch.diff中指定的更改，并将其保存到file.c中。现在，如果您查看file.c的内容，它将包含以下内容：
+
+```c
+#include <stdio.h>
+
+int main() {
+    printf("Goodbye, world!");
+    return 0;
+}
+```
+
+---

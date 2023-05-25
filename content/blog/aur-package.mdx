@@ -1,0 +1,56 @@
+---
+title: 给aur打个包
+description: 可能会有人用得上
+image: /images/blog/arknights-amiya.jpg
+date: "2023-05-25"
+authors:
+  - Kud
+---
+
+打包，就是写一个PKGBUILD文件，模板在`/usr/share/pacman/PKGBUILD.proto`
+
+值得参考的网站：
+- [Arch Package Guidelines](https://wiki.archlinux.org/title/Arch_package_guidelines)
+
+- [AUR Submission Guidelines](https://wiki.archlinux.org/title/AUR_submission_guidelines)
+
+---
+# 流程
+- 获取源代码，通常由指定source之后自动完成
+
+- prepare()：build之前的一切准备，
+
+- build()：构建软件包
+
+编译源代码、安装依赖项
+
+- package()：定义软件包的安装、打包和清理过程。
+
+可以定义软件包的安装路径、文件权限、元数据以及其他与软件包相关的信息
+
+---
+# 一些小技巧？
+
+```makefile
+source=("git+${url}")
+md5sums=('SKIP')
+```
+如果源来自git repo,那么不需要进行md5检查。
+
+---
+
+```makefile
+pkgver() {
+    cd $srcdir/$pkgname-$pkgver
+    echo $(grep 'Version =' setup.py | cut -d '"' -f2)
+}
+package() {
+    cd $srcdir/$pkgname-$pkgver
+    python setup.py install --root="$pkgdir/" --optimize=1
+}
+```
+`pkgver()`确定的版本号，可以通过`$pkgver`来获取（暂时没试过）
+
+---
+
+如果在PKGBUILD文件中定义了多个以“package_”前缀开头的函数，则makepkg将根据软件包的目标平台和其他标志来决定要执行哪个函数。例如，如果使用makepkg -s选项构建软件包，它将构建所有平台的软件包，因此将依次执行所有的package_函数。
