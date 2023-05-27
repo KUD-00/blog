@@ -40,7 +40,11 @@ export function MainNav({ items, children }: MainNavProps) {
               </Link>
               <>
                 {index == 1 &&
-                 <Link href="/" className="hidden items-center space-x-2 md:flex">
+                 <Link
+                   key={"logo"}
+                   href="/"
+                   className="hidden items-center space-x-2 md:flex"
+                 >
                    <Icons.logo />
                    <span className="hidden font-bold sm:inline-block">
                      {siteConfig.name}

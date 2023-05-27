@@ -7,16 +7,17 @@ import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { allPosts } from "contentlayer/generated"
+import { Icons } from "@/components/icons"
 import { allHints } from "contentlayer/generated"
 import { compareDesc } from "date-fns"
 import { formatDate } from "@/lib/utils"
 
 export default async function IndexPage() {
   const posts = allPosts
-        .filter((post) => post.published)
         .sort((a, b) => {
           return compareDesc(new Date(a.date), new Date(b.date))
         })
+        .slice(0, 10)
 
   const hints = allHints
         .sort((a, b) => {
@@ -66,6 +67,16 @@ export default async function IndexPage() {
             ) : (
               <p>No posts published.</p>
             )}
+            <Link
+              href="/blog"
+              className={cn(
+                buttonVariants({ variant: "ghost" }),
+                "top-14 mt-10 inline-flex"
+              )}
+            >
+              <Icons.chevronLeft className="mr-2 h-4 w-4" />
+              See all posts
+            </Link>
           </div>
           <div className="mt-16 flex-initial flex-col items-center md:ml-16 md:mt-0 md:w-1/3">
             <h2 className="mb-10 inline-block font-heading text-3xl leading-tight lg:text-4xl">
@@ -76,7 +87,7 @@ export default async function IndexPage() {
                 {hints.map((hint, index) => (
                   <article
                     key={hint._id}
-                    className="group relative flex flex-col space-y-2"
+                    className="group relative flex flex-col space-y-2 rounded-md outline outline-offset-8 outline-blue-500/20"
                   >
                     <h2 className="text-2xl font-extrabold">{hint.title}</h2>
                     {hint.date && (
