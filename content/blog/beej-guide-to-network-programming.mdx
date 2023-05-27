@@ -1,0 +1,82 @@
+---
+title: beej guide to network programming 笔记
+description: 愿我能多理解一点关于网络的事情
+date: "2023-05-26"
+authors:
+  - Kud
+---
+
+网络是非常复杂的，我真的佩服前人的智慧们
+
+这篇pdf有126页，希望我看完之后能多了解一点网络的工作方式吧，感觉教科书式的背书对理解没什么帮助，实际上还是很难想象整个网络的全貌以及具体的实现
+
+---
+
+## chapter II: What is a socket?
+
+socket is a way to speak to other programs using standard Unix file descriptors.
+
+Unix programs do any sort of I/O, they do it by reading or writing to a file descriptor. A file descriptor is simply an integer associated with an open file. But (and here’s the catch), that file can be a network connection, a FIFO, a pipe, a terminal, a real on-the-disk file, or just about anything else
+
+> 一切皆文件，是一种用户层面的抽象，实际上在底层实现里面还是要分file/device，block device or other things
+
+One is “Stream Sockets”; the other is “Datagram Sockets”, which may hereafter be referred to as “SOCK_STREAM” and “SOCK_DGRAM”, respectively. Datagram sockets are sometimes called “connectionless sockets”. (Though they can be connect()’d if you really want
+
+telnet or ssh applications, yes? They use stream sockets. web browsers use the Hypertext Transfer Protocol (HTTP) which uses stream sockets to get pages. Indeed, if you telnet to a web site on port 80, and type “GET / HTTP/1.0” and hit RETURN twice, it’ll dump the HTML back at you!
+
+> Telnet协议在传输过程中使用的是明文，没有加密机制，安全性方面存在风险。现代网络中通常使用更安全的协议，如SSH（Secure Shell）来代替Telnet
+
+if you send a datagram, it may arrive. It may arrive out of order. If it arrives, the data within the packet will be error-free
+
+Sample applications: tftp (trivial file transfer protocol, a little brother to FTP), dhcpcd (a DHCP client), multiplayer games, streaming audio, video conferencing
+
+> TFTP基于UDP（User Datagram Protocol）进行通信，并被设计为简化的、轻量级的文件传输协议。使用固定的端口号69。没有加密和身份验证机制。因此，在需要安全传输文件的情况下，应该使用更安全的协议，如SCP（Secure Copy Protocol）或SFTP（SSH File Transfer Protocol）等。
+
+> Dhcpcd（Dynamic Host Configuration Protocol Client Daemon）是一种用于管理网络接口和自动获取IP地址的守护进程（daemon）。它是一个开源的、跨平台的DHCP客户端，主要用于Linux和Unix-like操作系统。
+> DHCP是一种网络协议，用于动态分配IP地址、子网掩码、默认网关和其他网络配置信息给主机。Dhcpcd作为DHCP客户端，可以与DHCP服务器进行通信，自动获取和更新网络配置
+> 常见的家用和商用路由器通常内置了DHCP服务器功能。DHCP服务器负责在局域网中为连接到路由器的设备动态分配IP地址和其他网络配置信息，以便设备能够正常连接到网络并进行通信
+
+tftp and similar programs have their own protocol on top of UDP. For example, the tftp protocol says that for each packet that gets sent, the recipient has to send back a packet that says, “I got it!” (an “ACK” packet). If the sender of the original packet gets no reply in, say, five seconds, he’ll re-transmit the packet until he finally gets an ACK. This acknowledgment procedure is very important when implementing reliable SOCK_DGRAM applications
+
+---
+
+infamous Layered Network Model (aka “ISO/OSI”)
+
+> 我也觉得是挺臭名昭著的，教科书一定要写这个东西（有些写的还很晦涩
+
+---
+
+## chapter III: IP Addresses, structs, and Data Munging
+
+we were running out of Class C networks quite quickly, and we were most definitely out of Class As, so don’t even bother to ask. To remedy this, The Powers That Be allowed for the netmask to be an arbitrary number of bits, not just 8, 16, or 24. So you might have a netmask of, say 255.255.255.252, which is 30 bits of network, and 2 bits of host allowing for four hosts on the network
+
+> IP地址由网络位（Network ID）和主机位（Host ID）组成，它们用于标识网络和主机的部分。
+
+> 网络位指示IP地址中用于标识网络的部分。它决定了一个IP地址属于哪个网络。网络位的长度可以根据IP地址类别或子网掩码的设置而变化。在传统的IP地址分类中，IP地址的第一个字节用于表示网络位。根据第一个字节的范围，将IP地址分为A类、B类、C类等。例如，在A类地址中，第一个字节用于表示网络位，剩余的三个字节用于表示主机位。但是，现代网络中更普遍使用子网掩码来划分网络位和主机位。
+
+> 传统的A、B、C类IP地址划分已逐渐被CIDR（无类别域间路由）取代。CIDR采用可变长度子网掩码（VLSM）的方式，更灵活地划分IP地址空间，提供更有效的地址分配和路由规划
+
+> 通过使用VLSM，网络管理员可以根据每个子网的需求来动态划分IP地址，并确保资源的最佳利用。这对于大型网络、企业网络或互联网服务提供商（ISP）特别有用，因为它们经常需要分配不同大小的子网来满足不同区域、部门或客户的需求。VLSM的使用需要支持可变长度子网掩码的路由协议，如RIPv2、OSPF、EIGRP等。这些协议能够传递有关子网掩码长度的信息，使得网络设备能够正确地路由数据包到相应的子网。
+
+Or, for IPv6, something like this: 2001:db8::/32 or 2001:db8:5413:4028::9db9/64.
+
+You can see them all in the [Big IANA Port List](https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml?&page=1) or, if you’re on a Unix box, in your /etc/services file. HTTP (the web) is port 80, telnet is port 23, SMTP is port 25, the game DOOM4 used port 666, etc. and so on. Ports under 1024 are often considered special, and usually require special OS privileges to use.
+
+---
+
+The more-sane Big-Endian is also called Network Byte Order because that’s the order us network types like.
+
+Your computer stores numbers in Host Byte Order. If it’s an Intel 80x86, Host Byte Order is Little-Endian. If it’s a Motorola 68k, Host Byte Order is Big-Endian.
+
+A lot of times when you’re building packets or filling out data structures you’ll need to make sure your two- and four-byte numbers are in Network Byte Order
+
+- htons() host to network short
+- htonl() host to network long
+- ntohs() network to host short
+- ntohl() network to host long
+
+Basically, you’ll want to convert the numbers to Network Byte Order before they go out on the wire, and convert them to Host Byte Order as they come in off the wire.
+
+---
+
+`struct addrinfo`. This structure is a more recent invention, and is used to prep the socket address structures for subsequent use. It’s also used in host name lookups, and service name lookups
