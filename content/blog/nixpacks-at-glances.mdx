@@ -1,0 +1,51 @@
+---
+title: "尝试nixpacks"
+date: "2023-05-27"
+description: "docker and nix save the world?"
+image: /images/blog/blue-archive-3.jpg
+authors:
+  - KUD
+---
+
+```shell
+λ sudo nixpacks build ../blog/ --name blog
+
+╔══════════════ Nixpacks v1.9.0 ══════════════╗
+║ setup      │ nodejs-16_x, pnpm-7_x, openssl ║
+║─────────────────────────────────────────────║
+║ install    │ pnpm i --frozen-lockfile       ║
+║─────────────────────────────────────────────║
+║ build      │ pnpm run build                 ║
+║─────────────────────────────────────────────║
+║ start      │ pnpm run start                 ║
+╚═════════════════════════════════════════════╝
+
+[+] Building 122.9s (15/15) FINISHED
+ => [internal] load build definition from Dockerfile                                                                                                                                                       0.0s
+ => => transferring dockerfile: 1.11kB                                                                                                                                                                     0.0s
+ => [internal] load .dockerignore                                                                                                                                                                          0.0s
+ => => transferring context: 2B                                                                                                                                                                            0.0s
+ => [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1684957838                                                                                                                             0.7s
+ => [internal] load build context                                                                                                                                                                          3.4s
+ => => transferring context: 829.46MB                                                                                                                                                                      3.3s
+ => [stage-0  1/10] FROM ghcr.io/railwayapp/nixpacks:ubuntu-1684957838@sha256:eb26a5ad60faad269d01ac896a4eefb5e7987040d39549dbe5d8cdfd1a830b75                                                             0.0s
+ => CACHED [stage-0  2/10] WORKDIR /app/                                                                                                                                                                   0.0s
+ => CACHED [stage-0  3/10] COPY .nixpacks/nixpkgs-293a28df6d7ff3dec1e61e37cc4ee6e6c0fb0847.nix .nixpacks/nixpkgs-293a28df6d7ff3dec1e61e37cc4ee6e6c0fb0847.nix                                              0.0s
+ => [stage-0  4/10] RUN nix-env -if .nixpacks/nixpkgs-293a28df6d7ff3dec1e61e37cc4ee6e6c0fb0847.nix && nix-collect-garbage -d                                                                              54.2s
+ => [stage-0  5/10] COPY . /app/.                                                                                                                                                                          1.9s
+ => [stage-0  6/10] RUN --mount=type=cache,id=qaIR9Sb5rs-/root/local/share/pnpm/store/v3,target=/root/.local/share/pnpm/store/v3 pnpm i --frozen-lockfile                                                 28.5s
+ => [stage-0  7/10] COPY . /app/.                                                                                                                                                                          2.4s
+ => [stage-0  8/10] RUN --mount=type=cache,id=qaIR9Sb5rs-next/cache,target=/app/.next/cache --mount=type=cache,id=qaIR9Sb5rs-node_modules/cache,target=/app/node_modules/.cache pnpm run build            24.6s
+ => [stage-0  9/10] RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile                                                                                                                     0.4s
+ => [stage-0 10/10] COPY . /app                                                                                                                                                                            2.5s
+ => exporting to image                                                                                                                                                                                     4.3s
+ => => exporting layers                                                                                                                                                                                    4.3s
+ => => writing image sha256:0ed1df0145858514dcad2d070f6c3a7d316d937a6bcf6d83b1778a5691d8b1fb                                                                                                               0.0s
+ => => naming to docker.io/library/blog                                                                                                                                                                    0.0s
+=== Successfully Built! ===
+
+Run:
+  docker run -it blog
+```
+
+build成功了，但是run的时候卡住了，以后再试试吧，这还是挺好的一工具

@@ -13,3 +13,17 @@ authors:
 
 - `$ sudo reflector --country 'Japan' --age 24 --protocol https --sort rate --save /etc/pacman.d/mirrorlist`
   - 通过把更快的源放在前面加速pacman
+
+- 要关注optdependency（可选依赖），有些包不装它们甚至会影响基础功能
+
+---
+
+# 内核相关
+
+- 更新内核后需立即重启，因为有很多东西都变化了
+  - 比如/usr/lib/modules下面是：
+  ```shell
+  λ ls /usr/lib/modules
+  drwxr-xr-x - root 27 May 18:15  6.3.4-arch1-1
+  ```
+  可以看到是和版本相关的，之前没重启然后用docker出现了[这个](https://qiita.com/blue_key/items/82facd82e9383c711534)问题，docker找不到modules了

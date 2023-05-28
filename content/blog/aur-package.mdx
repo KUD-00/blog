@@ -9,6 +9,8 @@ authors:
 
 打包，就是写一个PKGBUILD文件，模板在`/usr/share/pacman/PKGBUILD.proto`
 
+(我用一个新包，就看看它的PKGBUILD,然后在这里写点)
+
 值得参考的网站：
 - [Arch Package Guidelines](https://wiki.archlinux.org/title/Arch_package_guidelines)
 
@@ -54,3 +56,43 @@ package() {
 ---
 
 如果在PKGBUILD文件中定义了多个以“package_”前缀开头的函数，则makepkg将根据软件包的目标平台和其他标志来决定要执行哪个函数。例如，如果使用makepkg -s选项构建软件包，它将构建所有平台的软件包，因此将依次执行所有的package_函数。
+
+---
+
+`BUILDENV+=(!check)` 的意思是将 `check`环境变量添加到 `BUILDENV` 数组中，并将其设置为 `!`（即不执行）。
+
+软件包通常会包含一个或多个测试套件。构建软件包时可通过设置 `check` 环境变量来启用测试套件。然而，有时测试套件可能会失败或不可用，这时可通过将 `check` 环境变量添加到 `BUILDENV` 数组中，并将其设置为 `!`，来禁用测试套件的执行
+
+---
+
+`options=(!lto)`指定了在构建软件包时不使用 LTO（Link Time Optimization）优化。LTO 是一种编译器优化技术，它可以在链接阶段对代码进行优化，以提高程序的性能。但是，LTO 也可能会导致编译时间变长，因此在某些情况下禁用 LTO 可以加快软件包的构建速度。
+
+---
+
+## Rust 相关
+
+```rust
+cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+```
+
+用于从远程仓库下载依赖项并将其缓存到本地
+
+- fetch：表示执行下载操作。
+- --locked：表示锁定依赖项的版本，即使用 Cargo.lock 文件中指定的版本。
+- --target "$CARCH-unknown-linux-gnu"：表示下载适用于 $CARCH-unknown-linux-gnu 目标架构的依赖项。其中，$CARCH 是一个环境变量，表示当前系统的 CPU 架构，例如 x86_64、armv7l等。unknown-linux-gnu 则表示目标操作系统为 Linux。
+
+---
+
+```rust
+local RUSTUP_TOOLCHAIN=stable
+local CARGO_TARGET_DIR=target
+cargo build --frozen --release --all-features
+```
+
+local 表示这个命令将会在当前的shell中运行（并不会影响其他的shell）， RUSTUP_TOOLCHAIN  是一个Rust语言工具链的环境变量（Rustup是一个Rust的版本管理工具，它允许开发者在同一台机器上安装多个不同版本的Rust，每个版本称为一个“工具链”）；而  stable  则是这个环境变量要设置的值，它指定了在本地使用的Rustup工具链的版本为稳定版。
+
+CARGO_TARGET_DIR  是一个Cargo的环境变量，它用于指定编译输出的目录；而  target 则是这个环境变量要设置的值，它指定了编译输出的目录为当前工作目录下的  target  目录
+
+--frozen  表示当构建项目时尝试使用之前锁定的依赖项版本，而不是尝试更新依赖项为最新版本； --release  表示构建出发布版本的二进制文件，该版本将会做优化以提高性能； --all-features  表示启用所有 Cargo 特性（Cargo feature），这将会编译所有被激活的特性
+
+---

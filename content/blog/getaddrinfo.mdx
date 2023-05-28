@@ -1,0 +1,85 @@
+---
+title: 从 getaddrinfo()学一点
+description: net thing 1
+image: /images/blog/gun-girl.jpg
+date: "2023-05-28"
+authors:
+  - Kud
+---
+
+```c
+#include <stdio.h>                                                                     
+#include <netdb.h>                                                                     
+
+int main()                                                                             
+{                                                                                      
+  struct addrinfo hints, *res;                                                       
+  int status;                                                                        
+
+  memset(&hints, 0, sizeof(hints));                                                  
+  hints.ai_family = AF_UNSPEC; // IPv4 or IPv6                                       
+  hints.ai_socktype = SOCK_STREAM; // TCP stream sockets                             
+
+  if ((status = getaddrinfo("www.example.com", "http", &hints, &res)) != 0) {        
+    fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));              
+    return 1;                                                                      
+  }                                                                                  
+
+  struct sockaddr_in *ipv4 = (struct sockaddr_in *)res->ai_addr;                     
+  char ip_addr[INET_ADDRSTRLEN];                                                     
+  inet_ntop(AF_INET, &(ipv4->sin_addr), ip_addr, INET_ADDRSTRLEN);                   
+  printf("IPv4 address: %s\n", ip_addr);                                             
+
+  struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)res->ai_addr;                   
+  char ip6_addr[INET6_ADDRSTRLEN];                                                   
+  inet_ntop(AF_INET6, &(ipv6->sin6_addr), ip6_addr, INET6_ADDRSTRLEN);               
+  printf("IPv6 address: %s\n", ip6_addr);                                            
+
+  freeaddrinfo(res);                                                                 
+
+  return 0;                                                                          
+}
+```
+
+netdb.h 是一个 C 标准库头文件，它提供了一些函数和数据结构，用于在网络上进行主机名和服务名的解析。它包含了一些函数，如 getaddrinfo()和 gethostbyname()，可以根据主机名或服务名获取 IP 地址或主机名等信息。
+                                                                                         
+netdb.h 通常与其他网络相关的头文件，如 sys/socket.h 和 netinet/in.h 一起使用，以便在网络编程中使用这些函数和数据结构。这些头文件通常在 Unix 和 Linux 系统上使用，用于实现网络应用程序。
+
+在网络编程中，通常会使用一个名为 hints 的 addrinfo 结构体来指示 getaddrinfo()函数应该如何工作(啊？)
+
+addrinfo 结构体在网络编程中用于存储地址信息，而 hints 结构体则用于指示 getaddrinfo()函数应该如何工作，例如指定套接字类型、地址族以及其他选项。res 指针将用于存储 getaddrinfo()函数返回的结果，即主机名和服务名相关联的地址信息。由于 getaddrinfo()函数返回的是一个 addrinfo 类型的链表，因此 res 变量实际上是一个指向链表头部的指针。
+
+在这个例子中，&hints 是一个指向 addrinfo 类型的结构体 hints 的指针，sizeof(hints)返回 hints 结构体的大小，即需要设置的字节数。因此，这句话的含义是将 hints 结构体中的所有字节都设置为 0，以确保结构体中所有的成员都被初始化为默认值。这是一种常见的编程技巧，可以避免在使用结构体时出现未定义的行为。
+
+memset()函数是一个 C 标准库函数，用于将一块内存中的每个字节都设置为指定的值。它的原型为    
+```c
+void *memset(void *s, int c, size_t n)                                                   
+```
+其中 s 是指向要设置的内存块的指针，c是要设置的值，n是要设置的字节数。                    
+
+AF\_UNSPEC 是一个常量，它定义在 sys/socket.h 头文件中，表示"未指定地址族"。在网络编程中，地址族用于指定使用的协议族，例如 IPv4 或 IPv6。当指定 AF_UNSPEC 时，系统会自动选择合适的地址族。
+
+fprintf、sprintf 和 printf 的区别在于输出的目标和方式。
+• printf 函数将格式化的字符串输出到标准输出流 stdout 中，即输出到终端屏幕上。               
+• fprintf 函数将格式化的字符串输出到指定的输出流中，例如标准错误流 stderr 或文件流。        
+• sprintf 函数将格式化的字符串输出到一个字符数组中，而不是输出到流中。
+
+gai_strerror()函数用于将 getaddrinfo()函数返回的错误码转换成一个可读的错误消息。
+
+addrinfo 结构体中的 ai\_addr 成员是一个指向通用的 sockaddr 类型结构体的指针，它可以存储 IPv4 或 IPv6 地址信息。 要获取 IPv4 地址信息，因此需要将 ai\_addr 指针强制转换为指向 sockaddr\_in 类型的指针。sockaddr\_in 结构体是一个专门用于存储 IPv4 地址信息的结构体，它包含了 IPv4 地址和端口号等信息。
+                                                                                         
+ip\_addr 的字符数组，用于存储 IPv4 地址的字符串表示形式。              
+                                                                                         
+INET\_ADDRSTRLEN 是一个常量，定义在头文件 netinet/in.h 中，它表示 IPv4 地址的最大长度，通常为 16 个字符。因此，ip\_addr 数组的大小被设置为 INET\_ADDRSTRLEN，可以确保存储 IPv4 地址的字符串表示形式所需的空间。
+
+这句代码使用 inet\_ntop()函数将 IPv4 地址从二进制格式转换为点分十进制格式，并将转换后的字符串存储在名为 ip\_addr 的字符数组中。
+                                                                                         
+具体来说，inet\_ntop()函数是一个标准库函数，它的原型为：                                  
+                                                                                         
+```c
+const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);             
+```
+                                                                                           
+其中，af 表示地址族，src 是一个指向包含二进制格式地址的结构体的指针，dst 是一个指向用于存储转换后地址的字符数组的指针，size 是该字符数组的大小。
+                                                                                         
+在这个例子中，inet_ntop()函数的第一个参数 AF_INET 表示要转换的地址族为 IPv4，第二个参数&(ipv4->sin_addr)表示要转换的二进制格式地址存储在 sockaddr_in 结构体中的 sin_addr 成员中，第三个参数 ip_addr 表示转换后的点分十进制格式地址将存储在该字符数组中，第四个参数 INET_ADDRSTRLEN 表示该字符数组的最大大小为16个字节。
