@@ -8,7 +8,9 @@ forked from taxonomy by shadcn
 不着急，大概也不会做
 
 * [x] 首页只加载 10 个 post
+* [ ] latex support 
 * [ ] blog 界面添加翻页功能
 * [ ] hint 做成和 post 一样的
+* [ ] 添加 update_time 属性
 * [ ] 添加 tag 功能
 * [ ] 添加搜索功能

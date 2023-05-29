@@ -80,6 +80,8 @@
     "react-editor-js": "^2.1.0",
     "react-hook-form": "^7.43.9",
     "react-textarea-autosize": "^8.4.1",
+    "rehype-katex": "^6.0.3",
+    "remark-math": "^5.1.1",
     "sharp": "^0.31.3",
     "shiki": "^0.11.1",
     "stripe": "^11.18.0",

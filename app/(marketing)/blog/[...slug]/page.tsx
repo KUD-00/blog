@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import Script from 'next/script';
 import { allAuthors, allPosts } from "contentlayer/generated"
 
 import { Mdx } from "@/components/mdx-components"
@@ -95,6 +96,7 @@ export default async function PostPage({ params }: PostPageProps) {
   )
 
   return (
+    <>
     <article className="container relative max-w-3xl py-6 lg:py-10">
       <Link
         href="/blog"
@@ -165,5 +167,12 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
       </div>
     </article>
+<Script
+  id="remove-Katex"
+  dangerouslySetInnerHTML={{
+    __html: `var katexSpans = document.getElementsByClassName("katex-html");for (var i = 0; i < katexSpans.length; i++) { katexSpans[i].style.display = "none";}`,
+  }}
+/>
+      </>
   )
 }

@@ -1,0 +1,90 @@
+---
+title: "Applied Informatics期中复习"
+date: "2023-05-29"
+description: "我就这一门有期中考试，但是很烦"
+image: /images/blog/pizza-girl.jpg
+authors:
+  - KUD
+---
+
+Standard NN
+Recurrent NN(RNN)
+Convolutional NN(CNN)
+
+ML and DL difference: Feature extraction in ML is by human
+
+---
+
+# Linear Regression
+
+$y=wx+b$
+- x and y are given, inter(cept) and slope are unknown.
+
+---
+
+Least Squares for Simple Linear Regression
+Loss function:
+$$
+L(w,b) = \frac{1}{m} \int^m_{i=1} (y[i] - (w x[i] + b))^2 \\
+$$
+
+---
+
+$$
+\frac{\partial L(w,b)}{\partial w} = 0 \\
+$$
+
+---
+
+$$
+\frac{\partial L(w,b)}{\partial b} = 0
+$$
+
+<Callout>
+这个w的结果算出来好像xy协方差比x的方差啊……
+</Callout>
+
+> 因为最小二乘法为简单线性回归问题提供了一种求解方法，其中 w 的计算结果可以被解释为 x 和 y 的协方差除以 x 的方差。具体来说，w 表示 x 和 y 之间的线性关系的斜率，而 x 和 y 的协方差则度量它们之间的相关性，除以 x 的方差可以将其标准化，从而得到一个无单位的值。因此，w 的计算结果与 x 和 y 的协方差比上 x 的方差非常相似。
+
+<Callout>
+又忘了最小二乘法是什么了……我是傻逼
+</Callout>
+
+---
+
+Gradient Descent
+
+$$
+w = w - \alpha \frac{\partial L(w, b)}{\partial w}
+$$
+
+---
+
+$$
+b = b - \alpha \frac{\partial L(w, b)}{\partial b} \\
+$$
+
+Can be used for linear model and other model
+
+---
+
+# NN
+## Logistic Regression
+
+Probability: $P (y = 1 | x)$
+
+odds: P/(1-P)
+
+from linear regression to logistic regression
+
+$ln(odds) = wx + b$
+
+$odds = e^{(wx+b)}$
+
+$P = 1/(1+e^{(-(wx-b))})$
+
+在0-1之间
+
+> 数学上来说，逻辑回归可以看作是一种广义线性回归模型（Generalized Linear Model,GLM），它将线性回归模型的结果通过一个非线性函数（如Sigmoid函数）转换成概率值。
+
+奶奶的没有latex support真是不能忍

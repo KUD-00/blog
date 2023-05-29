@@ -1,0 +1,16 @@
+---
+title: python tip 1
+date: "2023-05-29"
+---
+
+```python
+doc_result = list(filter(lambda x: x.get_score() > 0, doc))
+# doc_result = doc.filter(lambda x: x.get_score() > 0)
+
+doc_result.sort(key=lambda s: s.get_score(), reverse=True)
+for document in doc_result:
+```
+
+注释那么写不行，好奇怪啊python,我不太理解，js写多了感觉这好恶心
+
+还有就是不能再for in后面进行sort。，我也不知道为什么，报一个TypeError: 'NoneType' object is not iterable的错误
