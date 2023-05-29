@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { Mdx } from "@/components/mdx-components"
 import Link from "next/link"
 import { allHints } from "contentlayer/generated"
 import { compareDesc } from "date-fns"
@@ -20,10 +21,10 @@ export default async function BlogPage() {
       <div className="flex flex-col items-start gap-4 md:flex-row md:justify-between md:gap-8">
         <div className="flex-1 space-y-4">
           <h1 className="inline-block font-heading text-4xl tracking-tight lg:text-5xl">
-            Blog
+            Hint
           </h1>
           <p className="text-xl text-muted-foreground">
-            A blog built using Contentlayer. Posts are written in MDX.
+              随想，无条理的倾诉
           </p>
         </div>
       </div>
@@ -41,9 +42,7 @@ export default async function BlogPage() {
                   {formatDate(hint.date)}
                 </p>
               )}
-              <Link href={hint.slug} className="absolute inset-0">
-                <span className="sr-only">View Article</span>
-              </Link>
+              <Mdx code={hint.body.code}/>
             </article>
           ))}
         </div>

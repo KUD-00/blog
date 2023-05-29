@@ -95,9 +95,6 @@ export default async function IndexPage() {
                         {formatDate(hint.date)}
                       </p>
                     )}
-                    <Link href={hint.slug} className="absolute inset-0">
-                      <span className="sr-only">View Article</span>
-                    </Link>
                     <Mdx code={hint.body.code}/>
                   </article>
                 ))}
