@@ -167,12 +167,12 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
       </div>
     </article>
-<Script
-  id="remove-Katex"
-  dangerouslySetInnerHTML={{
-    __html: `var katexSpans = document.getElementsByClassName("katex-html");for (var i = 0; i < katexSpans.length; i++) { katexSpans[i].style.display = "none";}`,
-  }}
-/>
-      </>
+      <Script
+        id="remove-Katex"
+        dangerouslySetInnerHTML={{
+          __html: `var katexSpans = document.getElementsByClassName("katex-html");for (var i = 0; i < katexSpans.length; i++) { katexSpans[i].style.display = "none";}`,
+        }}
+      />
+    </>
   )
 }

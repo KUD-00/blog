@@ -7,6 +7,10 @@ authors:
   - KUD
 ---
 
+<Callout>
+本文使用了katex,如遇到数学公式重复渲染等问题，可以刷新解决（刷新会重新加载解决此问题的js）
+</Callout>
+
 Standard NN
 Recurrent NN(RNN)
 Convolutional NN(CNN)
@@ -40,6 +44,14 @@ $$
 \frac{\partial L(w,b)}{\partial b} = 0
 $$
 
+---
+
+$$
+w = \frac{\sum^m_{i=1} (x[i] - \bar{x}) (y[i] - \bar{y})}{\sum^m_{i=1} (x[i] - \bar{x})^2}
+$$
+
+---
+
 <Callout>
 这个w的结果算出来好像xy协方差比x的方差啊……
 </Callout>
@@ -55,6 +67,11 @@ $$
 Gradient Descent
 
 $$
+\frac{\partial L(w,b)}{\partial w} = \frac{\partial \frac{1}{m} \sum^m_{i=1}(y[i] - (wx[i] + b))^2}{\partial w} = \frac{-2}{m} \sum^m_{i=1} x[i](y[i] - \hat{y}) = \frac{-2}{m}\sum^m_{i=1}x[i](y[i] - (wx[i] + b))
+$$
+
+---
+$$
 w = w - \alpha \frac{\partial L(w, b)}{\partial w}
 $$
 
@@ -64,6 +81,12 @@ $$
 b = b - \alpha \frac{\partial L(w, b)}{\partial b} \\
 $$
 
+> 每次迭代中，梯度下降算法计算损失函数关于权重和偏置的偏导数（梯度），并朝着损失函数下降最快的方向更新权重和偏置。这是因为梯度给出了损失函数在当前点的最陡峭方向。因此，通过更新权重和偏置以沿着负梯度方向移动，我们可以最小化损失函数
+
+<Callout>
+道理看起来好像明白了，但是实际上如何，如何直观的理解，还是需要借助数学作图工具以后再看一眼
+</Callout>
+
 Can be used for linear model and other model
 
 ---
@@ -71,20 +94,35 @@ Can be used for linear model and other model
 # NN
 ## Logistic Regression
 
-Probability: $P (y = 1 | x)$
+Probability: $P (y = 1 | x), 0\leqslant P \leqslant 1$
 
-odds: P/(1-P)
+odds: $P/(1-P)$, 0 to infinity
 
-from linear regression to logistic regression
+from linear regression to logistic regression:
+- $ln(\frac{P}{1-P}) = wx + b$
 
-$ln(odds) = wx + b$
+$$
+odds = \frac{P}{1-P} = e^{(wx+b)}
+$$
 
-$odds = e^{(wx+b)}$
+---
 
-$P = 1/(1+e^{(-(wx-b))})$
-
-在0-1之间
+$$
+P = \frac{1}{(1+e^{(-(wx-b))})}
+$$
 
 > 数学上来说，逻辑回归可以看作是一种广义线性回归模型（Generalized Linear Model,GLM），它将线性回归模型的结果通过一个非线性函数（如Sigmoid函数）转换成概率值。
 
-奶奶的没有latex support真是不能忍
+Sigmoid:
+
+$$
+\sigma(z) = \frac{1}{1+e^{-z}}
+$$
+
+> 逻辑回归中，我们将线性组合通过sigmoid函数进行转换，可以得到一个在0到1之间的值，表示输入变量属于正类的概率
+
+未知量仍然是w和b
+
+---
+
+## Logistic Regression Loss Function
