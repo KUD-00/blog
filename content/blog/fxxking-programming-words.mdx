@@ -1,0 +1,112 @@
+---
+title: "fxxking 编程术语"
+date: "2023-06-01"
+description: "程序员可真 tm 会造词"
+image: /images/blog/night-girl.jpg
+authors:
+  - KUD
+---
+<Callout>
+本文正在施工中
+</Callout>
+
+存储一个值
+
+| Name     | Language | tiny difference | reference |
+| -------- | -------- | --------------- | --------- | 
+| variable | most     |                 |           |
+| symbol   | lisp     |                 |           |
+
+---
+
+多种可能类型共存
+
+```typescript
+let uma : string | undefined
+
+let uma = Math.random() > 0.5
+    ? undefined
+    : "good"
+```
+
+| Name  | Language   | tiny difference | reference |
+| ----- | ---------- | --------------- | --------- | 
+| union | Typescript |
+
+---
+
+类型检查可通过各种迹象判断缩窄可能类型范围
+
+```ts
+let uma: string | number
+
+if (uma === "UFO") {
+    uma.toUpperCase() //OK
+}
+
+uma = "UFO"
+
+uma.toFixed()
+// Error: Property 'toFixed' does not exist on type 'string'
+```
+
+| Name      | Language   | tiny difference | reference |
+| -----     | ---------- | --------------- | --------- | 
+| narrowing | Typescript |
+
+---
+
+常量作为自身的类型
+
+```ts
+let uma: "UFO"
+
+uma = "UUU"
+//Error: Type '"Byron"' is not assignable to type '"UFO"'
+```
+
+| Name         | Language   | tiny difference | reference |
+| --------     | ---------- | --------------- | --------- | 
+| literal type | Typescript |
+
+---
+
+对象类型中的可选类型
+
+```ts
+type Book = {
+   author?: string;
+   pages: number;
+};
+```
+
+| Name              | Language   | tiny difference | reference |
+| ----------------- | ---------- | --------------- | --------- |
+| optional property | Typescript |
+
+---
+
+对类型做并集
+
+```ts
+```
+
+| Name               | Language   | tiny difference | reference |
+| ------------------ | ---------- | --------------- | --------- |
+| intersection types | Typescript |
+
+---
+
+不存在的类型
+
+| Name  | Language   | tiny difference | reference |
+| ----- | ---------- | --------------- | --------- |
+| never | Typescript |
+
+---
+
+函数重载
+
+| Name              | Language   | tiny difference | reference |
+| ----------------- | ---------- | --------------- | --------- |
+| overload signature| Typescript |

@@ -23,6 +23,7 @@ export default async function IndexPage() {
         .sort((a, b) => {
           return compareDesc(new Date(a.date), new Date(b.date))
         })
+        .slice(0, 15)
 
   return (
     <>

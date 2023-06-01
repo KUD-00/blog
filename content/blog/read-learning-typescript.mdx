@@ -1,0 +1,298 @@
+---
+title: "读 Learning TypeScript"
+date: "2023-06-01"
+description: "ts 还能流行多久？"
+image: /images/blog/three-girls.jpg
+authors:
+  - KUD
+---
+
+<Callout>
+TypeScript 并不是一个独立的解释器，而是建立在 JavaScript 之上的编程语言。它是 JavaScript 的超集，意味着任何有效的 JavaScript 代码也是有效的 TypeScript 代码。
+
+TypeScript 代码需要经过编译过程，将 TypeScript 代码转换为纯粹的 JavaScript 代码，然后在 JavaScript 解释器或 JavaScript 引擎中执行。这是因为浏览器和 Node.js 等 JavaScript 运行时环境只能直接执行 JavaScript 代码。
+
+编译 TypeScript 代码的过程是使用 TypeScript 编译器（tsc）来进行的。TypeScript 编译器将 TypeScript 代码转换为 JavaScript 代码，以便在 JavaScript 环境中执行。
+</Callout>
+
+很多事情，都得在这个角度下来看，typescript 只是一个壳子
+
+# 第三四章
+
+第三章没必要细看，大都是废话，只要知道 ts 的 type check 很智能，会把可能的错误都找出来就行了。到时候自己写的时候错了就改，没什么好说的。纯粹在这边凑字数。
+
+Type aliases, like type annotations, are not compiled to the output JavaScript. They exist purely in the TypeScript type system. you cannot reference them in runtime code.
+
+```ts
+type WithFirstName = {
+ firstName: string;
+};
+type WithLastName = {
+ lastName: string;
+};
+const hasBoth = {
+ firstName: "Lucille",
+ lastName: "Clifton",
+};
+// Ok: `hasBoth` contains a `firstName` property of type `string`
+let withFirstName: WithFirstName = hasBoth;
+// Ok: `hasBoth` contains a `lastName` property of type `string`
+let withLastName: WithLastName = hasBoth;
+```
+
+Excess Property Checking，这个东西感觉挺傻逼的。
+
+Optional Property
+```ts
+type Book = {
+ author?: string;
+ pages: number;
+};
+```
+
+union of object types
+
+Inferred Object-Type Unions vs. Explicit Object-Type Unions
+
+已经要被搞晕了，真的要理解这么多关于类型的事情吗？先放一边吧，感觉有点离谱
+
+简单来说，如果是 inferred,那就可能会出现 undefined；如果是 explicit,那访问不存在的，或者可能不存在的属性就会报错。
+
+为什么要这么干？既然强类型检查，都报错不就好了……还有 narrow 就是类型检查可以通过各种迹象来判断 union 的类型，将可能性去除
+
+Discriminated Unions
+
+```ts
+type PoemWithPages = {
+ name: string;
+ pages: number;
+ type: 'pages';
+};
+type PoemWithRhymes = {
+ name: string;
+ rhymes: boolean;
+ type: 'rhymes';
+};
+type Poem = PoemWithPages | PoemWithRhymes;
+const poem: Poem = Math.random() > 0.5
+ ? { name: "The Double Image", pages: 7, type: "pages" }
+ : { name: "Her Kind", rhymes: true, type: "rhymes" };
+if (poem.type === "pages") {
+ console.log(`It's got pages: ${poem.pages}`); // Ok
+} else {
+ console.log(`It rhymes: ${poem.rhymes}`);
+}
+poem.type; // Type: 'pages' | 'rhymes'
+```
+
+简直了：
+```ts
+type ShortPoem = { author: string } & (
+   | { kigo: string; type: "haiku"; }
+   | { meter: number; type: "villanelle"; }
+);
+```
+keep code as simple as possible when using intersection types
+
+
+```ts
+type NotPossible = number & string;
+// Type: never
+```
+
+---
+
+# 第五章
+
+没什么新东西
+
+```ts
+function announceSong(song: string, singer?: string) {}
+
+function singAllTheSongs(singer: string, ...songs: string[]) {}
+```
+
+function types:
+```ts
+let inputAndOutput: (songs: string[], count?: number) => number;
+
+let maybeReturnsString: (() => string) | undefined;
+```
+
+简直傻逼，没有返回值指定 void,实际上隐式返回 undefined,那直接在签名里写返回 undefined 不就好了，怎么又多一个 void 字。
+
+The void and never type is not JavaScript. It’s a TypeScript keyword used to declare return types of functions. 
+
+Some functions not only don’t return a value, but aren’t meant to return at all. Never-returning functions are those that always throw an error or run an infinite loop
+
+```ts
+function fail(message: string): never {
+ throw new Error(`Invariant failure: ${message}.`);
+}
+function workWithUnsafeParam(param: unknown) {
+ if (typeof param !== "string") {
+ fail(`param should be a string, not ${typeof param}`);
+ }
+ // Here, param is known to be type string
+ param.toUpperCase(); // Ok
+}
+```
+
+overload signatures: declaring different versions of the function’s name, parameters, and return types multiple times before one final implementation signature and the body of the function
+
+---
+
+# 第六章
+
+Union-Type Array
+```ts
+let arrayOfStringOrNumbers: (string | number)[];
+```
+
+array type 默认是 any[]，但是往里面放东西之后会变得有 type 起来（但是挺奇怪的，这个 type 会越变越多如果放的东西不是一个 type 的）
+
+```ts
+const soldiersOrDates = ["Deborah Sampson", new Date(1782, 6, 3)];
+const soldierOrDate = soldiersOrDates[0];
+// Type: Date | string
+```
+
+The TypeScript type system is known to be technically unsound: it can get types mostly right, but sometimes its understanding about the types of values may be incorrect. Arrays in particular are a source of unsoundness in the type system
+
+```ts
+function withElements(elements: string[]) {
+   console.log(elements[9001].length); // No type error
+}
+withElements(["It's", "over"]);
+```
+
+tuple: fixed size array
+
+```ts
+let yearAndWarrior: [number, string];
+yearAndWarrior = [530, "Tomyris"];
+```
+
+```ts
+// Type: (boolean | number)[]
+const pairLoose = [false, 123];
+const pairTupleLoose: [boolean, number] = pairLoose; //Error
+```
+
+必须显式的指定 tuple 的类型，不然会被认为是 union-type array
+
+tuple 还可以 spread,在调用函数的时候可以用，同上注意
+
+Explicit tuple types
+
+```ts
+// Return type: [string, number]
+function firstCharAndSizeExplicit(input: string): [string, number] {
+   return [input[0], input.length];
+}
+// 不显式指定的话就会返回两个 string | number
+
+// firstChar type: string
+// size type: number
+const [firstChar, size] = firstCharAndSizeExplicit("Cathay Williams");
+```
+
+const asserted tuples
+
+```ts
+// Type: (string | number)[]
+const unionArray = [1157, "Tomoe"];
+
+// Type: readonly [1157, "Tomoe"]
+const readonlyTuple = [1157, "Tomoe"] as const;
+```
+
+In practice, read-only tuples are convenient for function returns. Returned values from functions that return a tuple are often destructured immediately anyway, so the tuple being read-only does not get in the way of using the function
+
+```ts
+// Return type: readonly [string, number]
+function firstCharAndSizeAsConst(input: string) {
+    return [input[0], input.length] as const;
+}
+
+// firstChar type: string (read and write)
+// size type: number (read and write)
+const [firstChar, size] = firstCharAndSizeAsConst("Ching Shih");
+```
+
+---
+
+# 七 Interface
+
+- interfaces can “merge” together to be augmented—a feature particularly useful when working with third-party code such as built-in globals or npm packages
+
+这个特性在处理第三方代码时非常有用。例如，当我们需要使用一些内置的全局对象（如 window、document 等）或引入的 npm 软件包时，我们可以使用接口合并来扩展它们的类型，以添加我们自己的自定义属性或方法。
+
+例如，假设我们想要扩展内置全局对象 window，我们可以定义一个自定义接口，并使用接口合并将其与 Window 接口合并在一起：
+```ts
+interface CustomWindow {
+  customProperty: string;
+}
+
+interface Window extends CustomWindow {}
+
+// 现在，window 对象具有自定义属性 customProperty
+window.customProperty = "Hello, World!";
+```
+
+- interfaces can be used to type check the structure of class declarations while type aliases cannot.
+
+- Interfaces are generally speedier for the TypeScript type checker to work with: they declare a named type that can be cached more easily internally, rather than a dynamic copy-and-paste of a new object literal the way type aliases do
+
+- Because interfaces are considered named objects rather than an alias for an unnamed object literal, their error messages are more likely to be readable in hard edge cases
+
+```ts
+interface Page {
+   readonly text: string;
+}
+```
+
+remember that they’re a type system construct only and don’t exist in the compiled JavaScript output code. They only protect from modification during development with the TypeScript type checker.
+
+two ways of declaring interface members as functions
+- method syntax
+- property syntax
+
+```ts
+interface HasBothFunctionTypes {
+   property: () => string;
+   method(): string;
+}
+```
+
+- Methods cannot be declared as readonly; properties can.
+- Interface merging (covered later in this chapter) treats them differently.
+
+Recommend: 
+- Use a method function if you know the underlying function may refer to this, most commonly for instances of classes
+- Use a property function otherwise.
+
+### Call Signature:
+箭头函数是一种常见的使用 call signature 的写法，但它并不是 call signature 的唯一形式。
+
+```ts
+type FunctionAlias = (input: string) => number;
+
+interface CallSignature {
+   (input: string): number;
+}
+```
+
+### Index Signature
+```ts
+type Person = {
+  [index: string]: string | number;
+};
+
+const person: Person = {
+  name: "Alice",
+  age: 25,
+};
+```
+
+
