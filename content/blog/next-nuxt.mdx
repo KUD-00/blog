@@ -1,0 +1,42 @@
+---
+title: "nuxt.js & daisyUI & DrizzleORM & PlanetScale初探"
+date: "2023-06-05"
+description: "vue!"
+image: /images/blog/girl-in-bookshelf.jpg
+authors:
+  - KUD
+---
+
+next.js
+- react
+- webpack
+
+nuxt.js
+- vue
+- vite
+
+---
+
+一大问题是我不太会sql,得摸着石头过河了，先想想数据结构应该是什么样的
+
+Article Table
+Id
+Link
+Title
+Date
+
+Comment Table
+Id
+Article Id
+Content
+Reply Comment Id
+
+---
+
+索引：在comment表中创建适当的索引，以加快对评论的查询速度。例如，可以在article_id列上创建索引，以便根据文章快速检索相关评论。
+
+数据库分区：根据需要，可以考虑对comment表进行水平分区。这意味着将comment表分成多个独立的分区，每个分区存储特定范围的评论。这样可以将数据分散到不同的物理存储设备上，提高查询性能。
+
+maybe i should use nosql for this app? No, I will practice sql!
+
+---

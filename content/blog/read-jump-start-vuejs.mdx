@@ -1,0 +1,127 @@
+---
+title: "读jump start vue.js"
+date: "2023-06-03"
+description: "听说vue是前端的原神，但我觉得这可能是偏见吧，学学看"
+image: /images/blog/genshin-ganyu.jpg
+authors:
+  - KUD
+---
+
+<Callout>
+感觉不如看官方文档，弃了
+</Callout>
+
+Any properties that are assigned to the returned object (including nested objects and arrays) become reactive, meaning that Vue will observe them and automatically re-render the UI when they change.
+
+It’s good practice to declare initial values for all your data properties, as properties added later won’t be reactive by default.
+
+```html
+<div id="main">
+ <p>The price is: {{ price * 1.20 }} (inc. VAT)</p>
+</div>
+<script>
+ Vue.createApp({
+   data() {
+     return {
+         price: 25
+     }
+   }
+ }).mount('#main');
+</script>
+```
+
+```html
+<tbody>
+ <tr v-for="employee in employees" :key="employee.id">
+ <td>
+   <img src="https://randomuser.me/api/portraits/thumb/women/9.jpg"
+        class="ui mini rounded image" />
+ </td>
+ <td>{{ employee.firstName }}</td>
+ <td>{{ employee.lastName }}</td>
+ </tr>
+</tbody>
+```
+
+Using an Array Index as a Key
+`<tr v-for="(employee, index) in employees" :key="index">..</tr>`
+
+```html
+<tbody>
+ <tr v-else-if="employees.length === 0">
+   <td colspan="6">No employees found</td>
+ </tr>
+</tbody>
+```
+
+```html
+<img :src="employee.photoUrl" class="ui mini rounded image" />
+```
+By doing this, Vue knows to update the attribute any time the bound property changes.
+
+two-way binding for use with form inputs:
+
+```html
+<div id="main">
+ <input v-model="text" placeholder="edit me">
+ <p>Text is: {{ text }}</p>
+</div>
+<script>
+Vue.createApp({
+ data() {
+ return {
+ text: 'Good golly, Miss Molly'
+ }
+ }
+}).mount('#main');
+</script>
+```
+
+v-model directive is being used to bind the text property to the \<input\> element. When Vue initially renders the template, the input will be pre-filled with the content of text. Changing the input field will cause the text property to be updated and the output inside the \<p\>  element to be re-rendered.
+
+```jsx
+<div id="main">
+ <button @mousedown="updateStatus" @contextmenu.prevent="">Toggle Me!</button>
+ <p>{{ status }}</p>
+</div>
+```
+
+.stop: stops propagation of the event (like calling event.stopPropagation())
+.prevent: prevents the default action from being fired (like calling event.preventDefault())
+.capture: use event capturing when listening
+.once: attaches the handler to listen for the first firing of the event only
+
+<Callout>
+event.preventDefault() 用于阻止事件的默认行为。它通常在事件处理程序中使用，例如点击事件的回调函数中。
+
+事件处理程序是指在用户与网页元素交互时执行的函数。例如，当用户单击一个链接时，会触发点击事件，并执行与该链接关联的事件处理程序。
+
+事件的默认行为是指浏览器对特定事件的默认处理方式。例如，当用户单击一个链接时，默认行为是导航到链接的 URL，而在表单中按下回车键时，默认行为是提交表单。
+
+需要注意的是，event.preventDefault() 只能阻止事件的默认行为，而不能阻止事件的传播。如果要同时阻止事件的传播，请使用 event.stopPropagation() 方法。
+</Callout>
+
+```js
+document.getElementById('myLink').addEventListener('click', function(event) {
+  event.preventDefault(); // 阻止默认行为
+  // 执行其他自定义的操作
+});
+```
+
+<Callout>
+event.stopPropagation()用于停止事件的传播。
+
+事件传播是指在 DOM（文档对象模型）结构中，事件从触发的元素经过父元素或子元素依次传递的过程。事件传播分为两个阶段：捕获阶段和冒泡阶段。
+
+在捕获阶段，事件从文档根节点一直向下传递到触发事件的元素。然后，在冒泡阶段，事件从触发事件的元素一直向上冒泡到文档根节点。
+
+event.stopPropagation() 方法用于停止事件在传播过程中的进一步传递。当事件处理程序调用 event.stopPropagation() 方法时，事件将不再传递给其他元素，且不会触发其他元素上的相同类型的事件处理程序。
+</Callout>
+
+```js
+document.getElementById('myDiv').addEventListener('click', function(event) {
+  event.stopPropagation(); // 停止事件传播
+  // 执行其他自定义的操作
+});
+```
+当用户单击 id 为 "myDiv" 的元素时，事件将不会继续传播到该元素的父元素或其他后代元素。这样可以避免触发其他元素上的点击事件处理程序。

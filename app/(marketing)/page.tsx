@@ -66,7 +66,7 @@ export default async function IndexPage() {
                 ))}
               </div>
             ) : (
-              <p>No posts published.</p>
+              <p>No post published.</p>
             )}
             <Link
               href="/blog"
