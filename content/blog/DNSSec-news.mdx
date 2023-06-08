@@ -1,0 +1,87 @@
+---
+title: "DNSSEC KSK rollover breaks DNS resolution for .nz domains"
+date: "2023-05-30"
+description: "挺离谱的"
+image:
+authors:
+  - KUD
+---
+
+[Original](https://status.internetnz.nz/incidents/gq1c6slz3198)
+
+[Hacker News](https://news.ycombinator.com/item?id=36118856)
+
+> It seems like some folks are missing the motivation for DNSSec and suggesting TLS instead. If your threat model includes global adversaries, you have can't rely on TLS because governments can trivially compromise TLS providers and TLS exposes users to the lowest common denominator TLS. The lowest common denominator TLS (ACME DNS-1) and the mitigation to the TLS provider problem (CAA records) are both based on DNS. So you either accept that TLS is the global maxima for security and world governments can basically permanently compromise the internet, or you build private PKI systems, or you want something like DNSSec. And DNSSec is something like DNSSec.
+
+
+DNSSec（Domain Name System Security Extensions）和TLS（Transport Layer Security）是用于不同目的的安全机制。
+
+DNSSec: DNSSec是一种用于增强域名系统（DNS）安全性的扩展机制。它的主要目标是防止DNS缓存污染和欺骗攻击。DNSSec通过在DNS查询和响应中引入数字签名，确保数据的完整性和身份验证。它可以验证域名解析过程中的数据是否被篡改，从而提供更可靠的域名解析服务。DNSSec的实现需要在域名服务器和域名注册中进行相应的配置和支持。
+
+TLS: TLS是一种协议，用于在计算机网络上实现安全通信。它的主要目标是提供数据传输的机密性和完整性。TLS通过加密通信内容和使用数字证书进行身份验证，确保通信双方之间的数据传输是安全的。它经常用于保护网站的HTTPS连接，以及其他应用程序之间的安全通信。
+
+因此，DNSSec和TLS解决了不同层次的安全问题。DNSSec关注于增强DNS的安全性，防止针对域名解析的攻击，而TLS关注于保护数据在网络传输中的安全性。尽管它们都提供了安全保护，但在不同的领域和用途中使用。
+
+---
+
+威胁模型（Threat model）是指对系统或应用程序进行安全分析时所考虑的潜在威胁和攻击者的描述和建模过程。它帮助确定系统可能面临的威胁类型、攻击者的能力和资源，并评估潜在威胁对系统的影响。
+
+在威胁建模中，通常会考虑以下几个方面：
+
+威胁目标：确定系统或应用程序的关键资产、功能或信息，这些可能是攻击者的目标。
+
+攻击者的能力和资源：评估攻击者的技能、知识和资源。这可能包括黑客、恶意软件开发者、内部人员或其他潜在攻击者。
+
+威胁场景和攻击路径：分析攻击者可能采取的威胁场景和攻击路径，包括入侵系统、利用漏洞、社交工程等。
+
+潜在威胁和攻击类型：识别可能对系统造成威胁的各种威胁类型，例如身份盗窃、拒绝服务攻击、数据泄露等。
+
+威胁影响和风险评估：评估潜在威胁对系统的影响程度，并确定相应的风险等级。
+
+通过建立威胁模型，安全团队可以更好地了解系统面临的威胁和风险，以便采取相应的安全措施来保护系统。威胁模型可以帮助指导安全策略、漏洞修复和安全设计决策，并促使系统在设计和实现阶段就考虑安全性。
+
+---
+
+针对域名解析（DNS）的攻击可以包括以下几种：
+
+DNS缓存污染（DNS Cache Poisoning）：攻击者通过向DNS服务器发送伪造的响应，将错误的数据存储在DNS缓存中。当用户进行域名解析请求时，DNS服务器将返回被篡改的错误数据，导致用户被重定向到错误的IP地址或恶意网站。
+
+DNS劫持（DNS Hijacking）：攻击者劫持了合法的DNS解析过程，将用户的DNS查询重定向到攻击者控制的恶意服务器上。这使得攻击者能够截获用户的通信流量、进行钓鱼攻击或注入恶意内容。
+
+DNS重放攻击（DNS Replay Attack）：攻击者截获合法的DNS查询和响应流量，并重新发送先前的响应，使用户的请求指向过期或恶意的IP地址。
+
+DNS拒绝服务攻击（DNS Denial-of-Service Attack）：攻击者通过向DNS服务器发送大量的恶意请求或利用漏洞，导致DNS服务器过载或崩溃，从而使合法用户无法解析域名或访问网络资源。
+
+域名劫持（Domain Hijacking）：攻击者通过获取域名注册账户的访问权限，更改域名的DNS设置，将域名指向攻击者控制的服务器，从而完全控制该域名下的所有网络流量和服务。
+
+域名欺骗（Domain Spoofing）：攻击者伪造合法的域名，以欺骗用户相信他们正在与合法的服务进行通信，从而进行钓鱼攻击或其他欺骗行为。
+
+这些攻击类型旨在破坏或操纵DNS解析过程，以达到攻击者的恶意目的。保护DNS的安全性对于防止这些攻击至关重要，包括使用安全的DNS解析服务、实施DNSSec来验证数据的完整性和身份验证，并采取其他防御措施来减轻潜在攻击的影响。
+
+---
+
+一些理论上可能被用于攻击TLS的方法：
+
+1. 中间人攻击：攻击者可以通过在用户和服务器之间插入一个虚假节点，来截获或篡改TLS通信。为了实现这种攻击，攻击者需要能够获取TLS证书并将其伪装成服务器。
+
+2. TLS证书劫持：攻击者可以尝试获取服务器的私钥或证书，并使用它来伪装成服务器，从而截获或篡改TLS通信。
+
+3. 政府要求TLS提供商提供后门：政府可以通过法律程序要求TLS提供商提供后门，以便政府能够访问TLS通信。这种方法可能会受到监管机构和安全专家的监督，以确保其在法律和伦理方面的合法性。
+
+需要注意的是，TLS协议的设计旨在防止这些攻击。TLS证书不仅包含公钥，还包含数字签名，以确保证书的完整性和真实性。服务器和客户端之间的握手过程也包括身份验证和密钥协商，以确保通信的安全性。但是，如果攻击者能够
+成功地获取证书或私钥，或者TLS提供商被要求提供后门，那么TLS通信可能会受到威胁。
+
+---
+
+最小公共分母TLS（ACME DNS-01）是一种基于DNS验证的证书颁发机构（CA）授权方法，用于验证域名所有权并获取SSL / TLS证书。它要求在域名的DNS记录中添加一个特定的TXT记录，以证明域名所有权。这种方法通常用于自动化证书颁发和更新。
+
+---
+
+InternetNZ是新西兰的一个非营利性组织，负责管理和维护新西兰的互联网基础设施和资源。它的使命是促进和维护新西兰的互联网开放性、可访问性和可信性，以及保护用户权益和隐私。InternetNZ的职责包括管理新西兰的国
+家顶级域名“.nz”、推动互联网政策和法律的制定、支持互联网技术和创新的发展，以及提供互联网相关的研究、培训和教育等服务。它通过一个名为“DNCL（Domain Name Commission
+Limited）”的子公司来管理“.nz”域名，为新西兰的互联网用户提供可靠、安全和高效的DNS服务。
+
+
+<Callout>
+当DNS运营商
+</Callout>

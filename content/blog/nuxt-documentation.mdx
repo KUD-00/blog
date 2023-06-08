@@ -1,0 +1,52 @@
+---
+title: "读nuxt3文档"
+date: "2023-06-07"
+description: "有点难读，英文，我也不怎么懂vue"
+image:
+authors:
+  - KUD
+---
+
+Vue和Nuxt中，组合式（composables）是一种用于组织和共享可复用逻辑的模式。Vue是一种流行的JavaScript框架，而Nuxt是构建基于Vue的服务器端渲染应用程序的框架。
+
+组合式是一种将逻辑抽象为可重用函数的方法，使得开发者可以更好地组织和共享Vue组件之间的逻辑。它提供了一种在不同组件之间共享逻辑的方式，以解决组件之间的复用和代码重复的问题。
+
+在Vue中，组合式是通过Vue 3中引入的Composition API实现的。Composition API允许开发者将逻辑关注点组织为函数，而不是依赖于传统的选项对象。通过使用组合式，开发者可以将相关的逻辑组合在一起，使得代码更加清晰、可维护和可测试。
+
+Nuxt是一个构建在Vue之上的框架，专注于创建服务器端渲染的应用程序。Nuxt提供了一组内置的组合式，称为Nuxt composables，用于处理与服务器端渲染相关的逻辑。这些组合式包括与数据获取、路由、状态管理等相关的逻辑，使得在Nuxt应用程序中处理这些常见任务变得更加简单和一致。
+
+考虑使用runtimeConfig代替.env
+
+The app.config.ts file, located in the source directory (by default the root of the project), is used to expose public variables that can be determined at build time. Contrary to the runtimeConfig option, these can not be overridden using environment variables.
+
+在Nuxt.js的语境下，"hydrated"和"bundled"是两个与应用程序的渲染和打包相关的术语。
+
+Hydrated（水合渲染）：在服务器端渲染（SSR）应用程序中，"hydrated"是指在客户端接管服务器端生成的HTML内容后，将其转换为可交互的Vue应用程序的过程。在这个过程中，Vue会重新激活并绑定到已生成的静态HTML上，使得应用程序能够响应用户的交互操作。通过水合渲染，Nuxt应用程序能够在服务器端提供首屏的静态HTML，并在客户端接管后转换为可交互的Vue应用程序。
+
+Bundled（打包）：在Nuxt.js中，"bundled"是指将应用程序的代码和依赖项打包成可供浏览器加载和执行的文件的过程。Nuxt使用Webpack作为默认的打包工具，通过构建过程将Vue组件、样式、JavaScript文件等打包成较小的静态资源文件。这些打包后的文件可以通过HTTP请求加载到浏览器中，并在客户端执行Nuxt应用程序。
+
+根据view章节改一下目录结构
+
+Example of an auth middleware protecting the /dashboard page:
+```ts
+// pages/dashboard.vue
+export default defineNuxtRouteMiddleware((to, from) => {
+  // isAuthenticated() is an example method verifying if a user is authenticated
+  if (isAuthenticated() === false) {
+    return navigateTo('/login')
+  }
+})
+
+// pages/dashboard.vue
+<script setup>
+definePageMeta({
+  middleware: 'auth'
+})
+</script>
+
+<template>
+  <h1>Welcome to your dashboard</h1>
+</template>
+````
+
+看了nuxt2 to nuxt3 的迁移文档，豁然开朗
