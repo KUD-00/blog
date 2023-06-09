@@ -7,6 +7,12 @@ authors:
   - KUD
 ---
 
+<Callout>
+太困难了，nuxt3好奇怪，数据库也连不上，暂时放弃了
+
+过段时间换一个数据库用用，比如说vercel的postgres
+</Callout>
+
 next.js
 - react
 - webpack
@@ -38,5 +44,47 @@ Reply Comment Id
 数据库分区：根据需要，可以考虑对comment表进行水平分区。这意味着将comment表分成多个独立的分区，每个分区存储特定范围的评论。这样可以将数据分散到不同的物理存储设备上，提高查询性能。
 
 maybe i should use nosql for this app? No, I will practice sql!
+
+---
+
+CREATE TABLE Article (
+    id INT PRIMARY KEY,
+    link VARCHAR(255),
+    date DATE,
+    title VARCHAR(255)
+);
+
+CREATE TABLE comment (
+    id INT PRIMARY KEY,
+    article_id INT,
+    content TEXT,
+    parent_id INT,
+    reply_comment_ids VARCHAR(255),
+    user_id INT,
+    vote INT
+);
+
+
+---
+
+如果你希望实现父评论跟踪其所有子评论的关系，可以考虑以下两种常用的方法：
+
+嵌套集模型（Nested Set Model）：该模型使用左右值（Left and Right Values）来表示层次结构。每个评论都有一个左值和一个右值，用于定义它在树形结构中的位置。通过使用左右值，可以轻松地查询父评论及其所有子评论。这种模型对于频繁的读取操作非常高效，但对于频繁的写入和更新操作可能会复杂一些。
+
+this is not good for this project i think
+
+---
+
+first i will get all article_id comment
+
+then i need to get the real nested order
+
+the most expensive thing is update the order
+
+---
+
+ALTER TABLE comment
+ADD COLUMN user_id INT;
+ADD COLUMN vote INT;
 
 ---
