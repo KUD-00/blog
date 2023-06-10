@@ -11,6 +11,8 @@ authors:
 太困难了，nuxt3好奇怪，数据库也连不上，暂时放弃了
 
 过段时间换一个数据库用用，比如说vercel的postgres
+
+2023/6/10已换vercel,好用，可能planetscale用错了之前，下次再试一下
 </Callout>
 
 next.js
@@ -86,5 +88,24 @@ the most expensive thing is update the order
 ALTER TABLE comment
 ADD COLUMN user_id INT;
 ADD COLUMN vote INT;
+
+---
+
+不用nuxt content，用vercel的情况下的坏处
+- 要连db
+- 其他人无法通过pr来贡献项目
+- 连接数据库的api设计需要注意，暴露api接口给图谋不轨的人将导致数据库坏掉
+- 紧接着上面一条，解决方法是增加用户认证，又是非常麻烦的
+
+好处：
+- db比markdown可灵活多了
+- 我能够学到很多，如果真的能做出来
+
+不用vercel，用nuxt connect的坏处
+- markdown不灵活，很多功能搞不了（很大的坏处
+- 已经做出来了，没什么新东西，和next contentlayer差不多
+
+好处：
+- 其他人无需登录即可修改内容，只需pr即可
 
 ---
