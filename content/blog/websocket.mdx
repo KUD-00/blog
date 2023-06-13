@@ -1,0 +1,20 @@
+---
+title: WebSocket 相关
+date: "2023-06-13"
+description: ……
+image:
+authors:
+  - KUD
+---
+
+onopen, onmessage, onclose, onerror 是在特定的上下文中使用的命名约定或约定俗成的命名方式。这些命名常用于事件处理函数或回调函数的命名。
+
+具体来说：
+
+onopen 通常用于表示连接成功打开时的事件处理函数。在WebSocket、Server-Sent Events (SSE) 或其他类型的实时通信中，当连接建立并成功打开时，该事件处理函数会被调用。
+
+onmessage 通常用于表示接收到消息时的事件处理函数。在WebSocket、Server-Sent Events (SSE) 或其他实时通信协议中，当从服务器接收到新的消息时，该事件处理函数会被调用，并将消息作为参数传递给函数。
+
+onclose 通常用于表示连接关闭时的事件处理函数。在WebSocket、Server-Sent Events (SSE) 或其他实时通信协议中，当连接关闭时，该事件处理函数会被调用。
+
+onerror 通常用于表示发生错误时的事件处理函数。在WebSocket、Server-Sent Events (SSE) 或其他实时通信协议中，当出现连接错误或其他类型的错误时，该事件处理函数会被调用。

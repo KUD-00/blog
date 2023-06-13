@@ -1,0 +1,36 @@
+---
+title: git 命令参考
+date: "2023-06-12"
+description: no git no programming life
+image:
+authors:
+  - KUD
+---
+
+```sh
+git rm --cached nohup.out
+```
+
+如果一个东西已经提交过了，那么删除它需要--cached
+
+---
+
+```sh
+git filter-branch --force --index-filter "git rm --cached --ignore-unmatch <filename>"  --prune-empty --tag-name-filter cat -- --all
+```
+
+使用git filter-branch命令来修改Git仓库历史记录的操作
+
+--force：强制执行操作，即使它可能会导致数据丢失。
+
+--index-filter "git rm --cached --ignore-unmatch <filename>"：这是一个用于修改索引（即暂存区）的过滤器。它使用git rm --cached --ignore-unmatch <filename>命令来删除暂存区中的指定文件。
+
+--prune-empty：删除空的提交记录，这些记录在应用过滤器后没有任何更改的内容。
+
+--tag-name-filter cat：对标签进行过滤，并保留其内容不变。
+
+-- --all：双横线（--）之后指定了所有分支的引用，表示要对所有分支执行过滤操作。
+
+总体而言，这段代码的目的是通过git filter-branch命令，使用索引过滤器删除指定文件的所有历史记录，并在过滤过程中删除空的提交记录。这样可以改变仓库的历史状态，删除了指定文件的所有轨迹。
+
+---

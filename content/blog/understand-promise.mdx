@@ -1,0 +1,30 @@
+---
+title: 理解Promise
+date: "2023-06-13"
+description: 谁能给我一个Promise
+image:
+authors:
+  - KUD
+---
+
+
+```typescript
+fetch('http://api.example.com/users')
+  .then(response => response.json())
+  .then(data => {
+    console.log(data); // 将返回的JSON数据打印到控制台
+    const username = data.username; // 假设JSON响应中有一个名为username的字段
+    console.log(`Username: ${username}`);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+```
+
+.json()方法将响应解析为JSON格式，并返回一个包含解析后的数据的Promise
+
+response.json() 方法返回一个 Promise 对象，该对象在成功解析响应体为 JSON 数据后被解析为具体的值。这意味着你可以在 .then() 方法中访问到 JSON 数据。
+
+当调用 .then() 方法时，它的回调函数将在前一个 Promise 对象（在这种情况下是 response.json() 返回的 Promise 对象）成功解析为 JSON 数据之后被触发。回调函数接收到的参数 data 将是 JSON 数据的解析结果，即解析后的 JavaScript 对象或数组。
+
+用async/await重写可以更简洁，不过和.then()台面下的操作是一样的。async/await 提供了一种更具同步风格的编码方式来处理异步操作

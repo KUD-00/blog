@@ -1,0 +1,121 @@
+---
+title: flux 数据架构初探
+description: 逃不过，useState还是太简单了？
+image:
+date: "2023-06-13"
+authors:
+  - KUD
+---
+
+其实我记得react最近多搞了几个hook可以达到redux的效果，好像有什么useDispatcher还是什么玩意的，我也忘了。
+
+不过既然第三方库用的这么多，比如说zustand，那么一定有他好的道理。
+
+---
+
+在 Flux 架构中，数据流确实是单向的，从存储（stores）流向视图（views）。视图本身不能直接改变数据，而是通过触发动作（actions）并将其发送给 Dispatcher 来请求对数据进行更改。
+
+视图通过调用特定的动作创建函数（action creators）来触发动作。这些动作创建函数会生成描述要执行的操作的动作对象，并将其传递给 Dispatcher 进行分发。动作对象通常包含一个动作类型（action type）和携带的数据。
+
+Dispatcher 的核心特点是它是单例的（Singleton）。这意味着整个应用程序中只有一个 Dispatcher 实例。这样做的目的是确保所有的动作都通过同一个调度器进行分发，保持数据流的一致性和可预测性
+
+Dispatcher 不处理业务逻辑，它只负责分发动作。业务逻辑应该位于存储中进行处理。这样的设计可以保持代码的清晰性和可维护性，并使得应用程序的状态管理更加可靠和可扩展
+
+---
+
+一种flux的基础实现：
+
+```js
+// 存储 A
+const storeA = {
+  state: {
+    // 状态数据
+    counterA: 0,
+  },
+  handleAction(action) {
+    if (action.type === 'INCREMENT_A') {
+      this.state.counterA += action.payload;
+      this.emitChange();
+    }
+  },
+  emitChange() {
+    // 发送变化通知给相关视图
+    // ...
+  },
+};
+
+// 存储 B
+const storeB = {
+  state: {
+    // 状态数据
+    counterB: 0,
+  },
+  handleAction(action) {
+    if (action.type === 'INCREMENT_B') {
+      this.state.counterB += action.payload;
+      this.emitChange();
+    }
+  },
+  emitChange() {
+    // 发送变化通知给相关视图
+    // ...
+  },
+};
+
+// Dispatcher
+const dispatcher = {
+  stores: [storeA, storeB],
+  dispatch(action) {
+    for (const store of this.stores) {
+      store.handleAction(action);
+    }
+  },
+};
+
+// 分发动作
+dispatcher.dispatch({ type: 'INCREMENT_A', payload: 1 });
+dispatcher.dispatch({ type: 'INCREMENT_B', payload: 2 });
+```
+
+分发动作时，Dispatcher 会遍历所有存储，并调用每个存储的 handleAction 方法来处理相应的动作。存储可以根据动作的类型执行适当的逻辑来修改自己的状态
+
+---
+
+一种redux的用法示意：
+```js
+import React from 'react';
+import { connect } from 'react-redux';
+
+// Action types
+const INCREMENT = 'INCREMENT';
+
+// Action creators
+const incrementCounter = () => ({ type: INCREMENT });
+
+// React component
+const Counter = ({ counter, incrementCounter }) => {
+  return (
+    <div>
+      <h1>Counter: {counter}</h1>
+      <button onClick={incrementCounter}>Increment</button>
+    </div>
+  );
+};
+
+// Connect the component to Redux store
+const mapStateToProps = state => ({
+  counter: state.counter
+});
+
+const mapDispatchToProps = dispatch => ({
+  incrementCounter: () => dispatch(incrementCounter())
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Counter);
+```
+
+mapStateToProps 是一个用于连接 React 组件与 Redux 存储（Redux store）的函数。它用于将存储中的状态映射到组件的属性（props），以便在组件中可以方便地访问存储的数据
+
+mapStateToProps 接收一个参数 state，代表整个 Redux 存储的状态对象。它返回一个对象，该对象的属性将成为组件的 props，以便组件可以通过 this.props 访问它们
+
+---
