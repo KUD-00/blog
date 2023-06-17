@@ -16,14 +16,14 @@ git rm --cached nohup.out
 ---
 
 ```sh
-git filter-branch --force --index-filter "git rm --cached --ignore-unmatch <filename>"  --prune-empty --tag-name-filter cat -- --all
+git filter-branch --force --index-filter "git rm --cached --ignore-unmatch \<filename\>"  --prune-empty --tag-name-filter cat -- --all
 ```
 
 使用git filter-branch命令来修改Git仓库历史记录的操作
 
 --force：强制执行操作，即使它可能会导致数据丢失。
 
---index-filter "git rm --cached --ignore-unmatch <filename>"：这是一个用于修改索引（即暂存区）的过滤器。它使用git rm --cached --ignore-unmatch <filename>命令来删除暂存区中的指定文件。
+--index-filter "git rm --cached --ignore-unmatch \<filename\>"：这是一个用于修改索引（即暂存区）的过滤器。它使用git rm --cached --ignore-unmatch \<filename\>命令来删除暂存区中的指定文件。
 
 --prune-empty：删除空的提交记录，这些记录在应用过滤器后没有任何更改的内容。
 
@@ -34,3 +34,62 @@ git filter-branch --force --index-filter "git rm --cached --ignore-unmatch <file
 总体而言，这段代码的目的是通过git filter-branch命令，使用索引过滤器删除指定文件的所有历史记录，并在过滤过程中删除空的提交记录。这样可以改变仓库的历史状态，删除了指定文件的所有轨迹。
 
 ---
+
+## 一次冲突解决
+
+我在笔记本上修改了一篇blog,然后做了提交，但是我的台式机上也修改了同一篇blog，这样就出现了冲突
+
+
+```shellscript
+  λ git pull
+hint: You have divergent branches and need to specify how to reconcile them.
+hint: You can do so by running one of the following commands sometime before
+hint: your next pull:
+hint:
+hint:   git config pull.rebase false  # merge
+hint:   git config pull.rebase true   # rebase
+hint:   git config pull.ff only       # fast-forward only
+hint:
+hint: You can replace "git config" with "git config --global" to set a default
+hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+hint: or --ff-only on the command line to override the configured default per
+hint: invocation.
+fatal: Need to specify how to reconcile divergent branches.
+```
+
+```shellscript
+  λ git pull --rebase
+Auto-merging content/blog/about.mdx
+CONFLICT (content): Merge conflict in content/blog/about.mdx
+CONFLICT (modify/delete): nohup.out deleted in HEAD and modified in ee6ffb7 (update posts).  Version ee6ffb7 (update posts) of nohup.out left in tree.
+error: could not apply ee6ffb7... update posts
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply ee6ffb7... update posts
+```
+
+```shellscript
+  λ git status
+interactive rebase in progress; onto 4f914ae
+Last command done (1 command done):
+   pick ee6ffb7 update posts
+No commands remaining.
+You are currently rebasing branch 'main' on '4f914ae'.
+  (fix conflicts and then run "git rebase --continue")
+  (use "git rebase --skip" to skip this patch)
+  (use "git rebase --abort" to check out the original branch)
+
+Changes to be committed:
+  (use "git restore --staged \<file\>..." to unstage)
+	new file:   content/hint/front-end-speed.mdx
+
+Unmerged paths:
+  (use "git restore --staged \<file\>..." to unstage)
+  (use "git add/rm \<file\>..." as appropriate to mark resolution)
+	both modified:   content/blog/about.mdx
+	deleted by us:   nohup.out
+```
+
+![git-conflict](/images/blog/git-conflict.png)
