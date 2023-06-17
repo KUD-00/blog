@@ -2,7 +2,7 @@
 title: git 命令参考
 date: "2023-06-12"
 description: no git no programming life
-image:
+image: /images/blog/raiden-shokun.jpg
 authors:
   - KUD
 ---
@@ -57,6 +57,8 @@ hint: invocation.
 fatal: Need to specify how to reconcile divergent branches.
 ```
 
+直接pull不行，得用rebase。merge好像是在合并分支的时候用的，我这里就一个branch好像应该不用merge。
+
 ```shellscript
   λ git pull --rebase
 Auto-merging content/blog/about.mdx
@@ -69,6 +71,8 @@ hint: You can instead skip this commit: run "git rebase --skip".
 hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
 Could not apply ee6ffb7... update posts
 ```
+
+看一眼现在的状况：
 
 ```shellscript
   λ git status
@@ -92,4 +96,21 @@ Unmerged paths:
 	deleted by us:   nohup.out
 ```
 
+unmerged path指现在还没有解决的冲突
+
+先用git rm删掉nohup.out， 然后打开about.mdx这个文件，发现git已经帮你标注出来了冲突的地方：
+
 ![git-conflict](/images/blog/git-conflict.png)
+
+修改一下然后：
+
+```shellscript
+  λ git rebase --continue
+[detached HEAD 02ba8d2] update posts
+ 3 files changed, 69 insertions(+), 2 deletions(-)
+ create mode 100644 content/hint/front-end-speed.mdx
+ create mode 100644 public/images/blog/git-conflict.png
+Successfully rebased and updated refs/heads/main.
+```
+
+就成功解决了冲突
