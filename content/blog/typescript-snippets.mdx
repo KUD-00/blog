@@ -17,10 +17,10 @@ export type LocaleType = DeepPartial<typeof cn>;
 export type RequiredLocaleType = typeof cn;
 ```
 
-DeepPartial\<T\> 是一个泛型类型，它接受一个类型 T 作为参数。它的作用是将 T 类型的所有属性变为可选，并且递归地应用到嵌套对象上。
+`DeepPartial<T>` 是一个泛型类型，它接受一个类型 T 作为参数。它的作用是将 T 类型的所有属性变为可选，并且递归地应用到嵌套对象上。
 
-T extends object ? { [P in keyof T]?: DeepPartial\<T[P]\1>; } : T; 这是一个条件类型（conditional type）的定义。它检查 T 是否是一个对象类型，如果是，则将对象的每个属性变为可选属性，并递归地应用 DeepPartial 类型到每个属性的值上；如果不是对象类型，则返回 T 自身。
+`T extends object ? { [P in keyof T]?: DeepPartial<T[P]>; } : T`; 这是一个条件类型（conditional type）的定义。它检查 T 是否是一个对象类型，如果是，则将对象的每个属性变为可选属性，并递归地应用 DeepPartial 类型到每个属性的值上；如果不是对象类型，则返回 T 自身。
 
-export type LocaleType = DeepPartial\<typeof cn\>; 定义了一个类型别名 LocaleType，它使用 DeepPartial 类型将 cn 的类型（typeof cn）进行处理。这意味着 LocaleType 将拥有与 cn 类型相同的结构，但所有的属性都是可选的。
+`export type LocaleType = DeepPartial<typeof cn>`; 定义了一个类型别名 LocaleType，它使用 DeepPartial 类型将 cn 的类型（typeof cn）进行处理。这意味着 LocaleType 将拥有与 cn 类型相同的结构，但所有的属性都是可选的。
 
-export type RequiredLocaleType = typeof cn; 定义了另一个类型别名 RequiredLocaleType，它直接将 cn 的类型（typeof cn）赋值给 RequiredLocaleType。这意味着 RequiredLocaleType 将拥有与 cn 类型相同的结构，并且所有属性都是必需的（非可选的）。
+`export type RequiredLocaleType = typeof cn`; 定义了另一个类型别名 RequiredLocaleType，它直接将 cn 的类型（typeof cn）赋值给 RequiredLocaleType。这意味着 RequiredLocaleType 将拥有与 cn 类型相同的结构，并且所有属性都是必需的（非可选的）。
