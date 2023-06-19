@@ -1,0 +1,18 @@
+---
+title: curl相关
+date: "2023-06-19"
+description: 传统
+image:
+authors:
+  - KUD
+---
+
+在 cURL 中添加参数可以使用 -G 选项以 GET 请求的形式发送数据，并通过 -d 选项指定参数
+```bash
+curl -L -G \
+  -H "Accept: application/vnd.github+json" \
+  -H "Authorization: Bearer <YOUR-TOKEN>" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  --data-urlencode "page=2" \
+  https://api.github.com/user/starred
+```
