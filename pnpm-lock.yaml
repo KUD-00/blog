@@ -1,8 +1,4 @@
-lockfileVersion: '6.1'
-
-settings:
-  autoInstallPeers: true
-  excludeLinksFromLockfile: false
+lockfileVersion: '6.0'
 
 dependencies:
   '@editorjs/code':
@@ -6059,8 +6055,8 @@ packages:
       micromark-util-types: 1.0.2
     dev: true
 
-  /micromark-extension-math@2.1.1:
-    resolution: {integrity: sha512-4rTUTTwHuXNL/sHy/LpmTEku+YOJIK4VYdILxv8bRI4unSpfdd/UzOv/DBV2KqgBeGQiyA3vmsARrKS7WQWwxw==}
+  /micromark-extension-math@2.1.2:
+    resolution: {integrity: sha512-es0CcOV89VNS9wFmyn+wyFTKweXGW4CEvdaAca6SWRWPyYCbBisnjaHLjWO4Nszuiud84jCpkHsqAJoa768Pvg==}
     dependencies:
       '@types/katex': 0.16.0
       katex: 0.16.7
@@ -7453,7 +7449,7 @@ packages:
     dependencies:
       '@types/mdast': 3.0.11
       mdast-util-math: 2.0.2
-      micromark-extension-math: 2.1.1
+      micromark-extension-math: 2.1.2
       unified: 10.1.2
     dev: false
 

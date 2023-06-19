@@ -23,7 +23,7 @@ git filter-branch --force --index-filter "git rm --cached --ignore-unmatch <file
 
 --force：强制执行操作，即使它可能会导致数据丢失。
 
---index-filter "git rm --cached --ignore-unmatch <filename>"：这是一个用于修改索引（即暂存区）的过滤器。它使用git rm --cached --ignore-unmatch <filename>命令来删除暂存区中的指定文件。
+--index-filter "git rm --cached --ignore-unmatch \<filename\>"：这是一个用于修改索引（即暂存区）的过滤器。它使用git rm --cached --ignore-unmatch \<filename\>命令来删除暂存区中的指定文件。
 
 --prune-empty：删除空的提交记录，这些记录在应用过滤器后没有任何更改的内容。
 
