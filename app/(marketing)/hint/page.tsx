@@ -10,7 +10,7 @@ export const metadata = {
   title: "Hint",
 }
 
-export default async function BlogPage() {
+export default async function Hint() {
   const hints = allHints
     .sort((a, b) => {
       return compareDesc(new Date(a.date), new Date(b.date))
