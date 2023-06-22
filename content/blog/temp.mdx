@@ -1,0 +1,61 @@
+```rust
+extern crate num; 
+use num::Complex;
+
+#[allow(dead_code)]
+fn complex_square_add_loop(c: Complex<f64>) {
+let mut z = Complex { re: 0.0, im: 0.0 }; loop {
+z = z * z + c; }
+}
+
+struct Complex<T> {
+re: T,
+im: T 
+}
+
+```
+
+Complex 还是一个泛型(generic)结构体，代码中跟在类型名后面的 <T> 可以理解为“任 何类型 T”
+
+```rust
+extern crate num; use num::Complex;
+fn escape_time(c: Complex<f64>, limit: u32) -> Option<u32> {
+let mut z = Complex { re: 0.0, im: 0.0 }; for i in 0..limit {
+z = z * z + c;
+if z.norm_sqr() > 4.0 {
+return Some(i); }
+}
+None }
+```
+
+函数的返回值是一个 Option<u32>。Rust 标准库是这样定义 Option 类型的:
+```rust
+enum Option<T> { 
+None,
+Some(T), 
+}
+```
+
+z.norm_sqr() 方法调用返回 z 到原点距离的平方。为确定 z 是否离开了半径为 2 的圆，不计算平方根，而用距离的平方与 4.0 比较会更快。
+
+```rust
+use std::str::FromStr;
+/// 解析字符串s，格式为一对坐标值，如"400x600"或"1.0,0.5" ///
+/// 特别地，s的格式应该是"<左值><分隔符><右值>"的形式，其中<分隔符>
+/// 就是separator参数传入的字符，而<左值>和<右值>都是字符串，可以通过
+/// T::from_str来解析
+///
+/// 如果s的格式没错，就返回Some<(x, y)>。如果解析出错，则返回None
+fn parse_pair<T: FromStr>(s: &str, separator: char) -> Option<(T, T)> {
+match s.find(separator) { None => None,
+Some(index) => {
+match (T::from_str(&s[..index]), T::from_str(&s[index + 1..])) {
+                     (Ok(l), Ok(r)) => Some((l, r)),
+_ => None }
+} }
+}
+#[test]
+fn test_parse_pair() {
+assert_eq!(parse_pair::<i32>("", assert_eq!(parse_pair::<i32>("10,", assert_eq!(parse_pair::<i32>(",10", assert_eq!(parse_pair::<i32>("10,20", assert_eq!(parse_pair::<i32>("10,20xy", ','), None); assert_eq!(parse_pair::<f64>("0.5x", 'x'), None); assert_eq!(parse_pair::<f64>("0.5x1.5", 'x'), Some((0.5, 1.5)));
+}
+```
