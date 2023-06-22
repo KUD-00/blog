@@ -50,3 +50,188 @@ Rust 的机器整数类型名反映了它们的大小及有无符号，比如 i3
 4 个空格的缩进是 Rust 风格
 
 默认情况下，一个变量被初始化之后，它的值就不能变了。但是，像前面那样在参数 n 和 m 前加上 mut（发音为 [mjut]，是 mutable 的简写）关键字，则表示可以在函数体内给它们赋值
+
+! 符号表示这是一个宏调用，不是函数调用。与 C 和 C++ 中的 assert 宏类似，Rust 中的 assert! 宏会检查自己的参数是不是 true，如果不是，则终止程序并输出相关信息，包含检查失败的代码在源代码中的位置。这种突然的终止在 Rust 中叫诧异（panic）。与 C 和 C++ 中的断言可以跳过不同，Rust 不管程序是如何编译的都会检查断言。不过也有一个 debug_assert! 宏，它会在程序为速度而编译时被跳过
+
+Rust 只在函数体内推断变量类型，函数参数和返回值则必须明确写出类型
+
+如果函数体中最后一行代码是一个表达式，且表达式末尾没有分号，那这个表达式的值就是函数的返回值。用花括号括起来的任何代码块都可以看作一个表达式
+
+这种在控制流“离开函数末尾”时生成函数值的方式是 Rust 特有的。return 语句一般只用于在函数的中间提前返回。
+
+<Callout>
+感觉也不是很特别……
+</Callout>
+
+```rust
+#[test]
+fn test_gcd() {
+    assert_eq!(gcd(14, 15), 1);
+    assert_eq!(gcd(2 * 3 * 5 * 11 * 17,
+                   3 * 7 * 11 * 13 * 19),
+               3 * 11);
+}
+```
+#[test] 表示 test_gcd 是一个测试函数，在常规编译中会被跳过，但在通过 cargo test 命令运行程序时会包含并自动调用
+
+#[test] 标记是属性（attribute）的一个例子。属性是一种开放式标记机制，用于给函数或其他声明添加补充说明，就像 C++ 和 C# 中的属性和 Java 中的注解一样。属性可以用于控制编译器报警和代码风格检查、有条件地包含代码（比如 C 和 C++ 中的 #ifdef）、告诉 Rust 如何与其他语言的代码互操作
+
+```rust
+use std::io::Write;
+use std::str::FromStr;
+fn main() {
+    let mut numbers = Vec::new();
+    for arg in std::env::args().skip(1) {
+        numbers.push(u64::from_str(&arg)
+                     .expect("error parsing argument"));
+    }
+    if numbers.len() == 0 {
+        writeln!(std::io::stderr(), "Usage: gcd NUMBER ...").unwrap();
+        std::process::exit(1);
+    }
+    let mut d = numbers[0];
+    for m in &numbers[1..] {
+        d = gcd(d, *m);
+    }
+    println!("The greatest common divisor of {:?} is {}",
+             numbers, d);
+}
+```
+任何实现 Write 特型的类型都有用于将格式化文本写入输出流的 `write_fmt` 方法。std::io::Stderr 类型实现了 Write，而我们要使用 writeln! 宏来打印错误消息，这个宏展开之后的代码要使用 `write_fmt` 方法
+
+任何实现 FromStr 特型的类型都有用于从字符串解析出该类型值的 `from_str` 方法。u64 类型实现了 FromStr，而我们会调用 `u64::from_str` 来解析命令行参数
+
+尽管向量是可扩展和收缩的，但要向向量末尾推入数值，Rust 还要求必须给变量加上 mut 标记
+
+std::env::args 函数返回一个迭代器（iterator），而迭代器会按需生成每一个参数，并在没有更多参数时指出来。迭代器在 Rust 中极其常用，标准库中也包含多种迭代器，比如迭代向量元素的、迭代文件的每一行的、迭代收到的每条消息的，总之，可以通过循环处理的任何数据都有对应的迭代器。Rust 的迭代器效率很高，编译器通常可以把它们转换成跟手写循环一样的代码
+
+除了与 for 循环配合使用，迭代器本身也提供了很多能直接使用的方法。比如，std::env::args 返回的迭代器的第一个值始终是当前运行的程序的名字。我们想跳过这个值，因此可以调用迭代器的 skip 方法，从而生成一个不包含第一个值的新迭代器
+
+`u64::from_str` u64 类型的方法，跟 C++ 或 Java 中的静态方法类似。而且 `from_str` 函数也不直接返回一个 u64 值，而是返回一个表示解析成功或失败的 Result 类型的值。Result 类型的值有两种：
+- Ok(v) 表示解析成功，v 为得到的值；
+- Err(e) 表示解析失败，e 为包含错误信息的值
+
+所有涉及输入、输出或其他与操作系统交互的函数，都会返回 Result 类型的值。如果返回的是 Ok 值，则其中会包含操作成功的结果，可能是传输的字节数，也可能是打开的文件，等等；如果返回的是 Err 值，则其中会包含系统返回的错误码
+
+Rust 没有异常的概念：所有错误都使用 Result 或诧异来处理
+
+使用 Result 的 expect 方法检查解析的结果。如果结果是某种 Err(e)，expect 就会输出 e 中包含的错误消息并立即退出程序。而如果结果是 Ok(v)，expect 则直接返回 v
+
+调用 writeln! 宏向标准错误输出流（由 std::io::stderr() 返回）中写入错误消息。最后调用 .unwrap() 是检查输出错误消息这个操作本身没有失败的一种快捷方式；当然调用 expect 也可以检查，只是没必要那么小题大做
+
+现在要迭代一个向量，其大小并不确定，有可能会非常大。Rust 对待这种值非常慎重，它希望程序员来控制内存用度，明确指出每个值存活多久，同时还要保证不需要时立即释放内存
+
+为此在迭代向量时要告诉 Rust，向量的所有权仍然属于 numbers，循环中仅仅是借用其元素而已。&numbers[1..] 中的 & 操作符表示从向量的第二个元素开始，借用每个元素的引用。for 循环迭代的是每个元素的引用，进而让 m 再去借用每个元素。*m 中的 * 操作符表示对 m 解引用，即取得引用所指的值，也就是要传给 gcd 函数的第二个 u64 值。最终，因为还是 numbers 拥有向量，所以 Rust 会在 numbers 脱离 main 函数末尾的函数作用域时自动将向量释放
+
+Rust 认为只要 main 函数返回了，程序就成功结束了。只有明确调用 expect 或 std::process::exit 才会导致程序以某个错误状态码终止
+
+```rust
+extern crate iron;
+#[macro_use] extern crate mime;
+use iron::prelude::*;
+use iron::status;
+fn main() {
+    println!("Serving on http://localhost:3000...");
+    Iron::new(get_form).http("localhost:3000").unwrap();
+}
+fn get_form(_request: &mut Request) -> IronResult<Response> {
+    let mut response = Response::new();
+    response.set_mut(status::Ok);
+    response.set_mut(mime!(Text/Html; Charset=Utf8));
+    response.set_mut(r#"
+ <title>GCD Calculator</title>
+ <form action="/gcd" method="post">
+ <input type="text" name="n"/>
+ <input type="text" name="n"/>
+ <button type="submit">Compute GCD</button>
+ </form>
+ "#);
+    Ok(response)
+}
+```
+extern crate 指令，分别将 Cargo.toml 文件中指定的 iron 和 mime 引入程序中。extern crate mime 这一行前头的 #[macro_use] 属性会提醒 Rust，我们打算使用这个包导出的宏
+
+按照约定，如果模块的名字叫 prelude，那就说明它所导出的特性是使用该包的任何用户都可能要用到的一些通用特性。因此这里在 use 指令中使用通配符 * 更合理一些
+
+<Callout>
+_request 变量前面加下划线的作用是告诉编译器这个变量是未使用的。在 Rust 语言中，如果定义了一个变量但没有使用它，会触发编译器警告。为了避免这个警告，可以在变量名前面加上下划线，表示这个变量是有意为之不使用的。这样做可以提醒其他开发者或代码审查者，表明这个变量是故意未使用的，并且不会对程序逻辑产生影响。
+
+这段代码中，虽然函数 get_form 的参数_request 没有在函数体内被使用，但是它是为了满足 Iron 框架的要求而定义的
+
+根据 Iron 框架的要求，处理请求的函数必须具有以下函数签名：
+`fn(&mut Request) -> IronResult<Response>`
+</Callout>
+
+考虑到响应文本包含很多双引号，这里使用了 Rust 的“原始字符串”语法，即在 r（raw）后跟一个或多个 # 和一个双引号，然后是字符串内容，最后以另一个双引号及相同个数的# 结尾。原始字符串中的任何字符都无须转义，包括双引号。事实上，原始字符串中出现的以 \ 开头的转义序列（如 \"）也不会被认为是转义序列。为避免歧义，通过在双引号两侧添加更多的 #，总是可以明确标识字符串的结束位置
+
+
+```rust
+extern crate urlencoded;
+use std::str::FromStr;
+use urlencoded::UrlEncodedBody;
+fn post_gcd(request: &mut Request) -> IronResult<Response> {
+    let mut response = Response::new();
+    let form_data = match request.get_ref::<UrlEncodedBody>() {
+        Err(e) => {
+            response.set_mut(status::BadRequest);
+            response.set_mut(format!("Error parsing form data: {:?}\n", e));
+            return Ok(response);
+        }
+        Ok(map) => map
+    };
+    let unparsed_numbers = match form_data.get("n") {
+        None => {
+            response.set_mut(status::BadRequest);
+            response.set_mut(format!("form data has no 'n' parameter\n"));
+            return Ok(response);
+        }
+        Some(nums) => nums
+    };
+    let mut numbers = Vec::new();
+    for unparsed in unparsed_numbers {
+        match u64::from_str(&unparsed) {
+            Err(_) => {
+                response.set_mut(status::BadRequest);
+                response.set_mut(
+                    format!("Value for 'n' parameter not a number: {:?}\n",
+                            unparsed));
+                return Ok(response);
+            }
+            Ok(n) => { numbers.push(n); }
+        }
+    }
+    let mut d = numbers[0];
+    for m in &numbers[1..] {
+        d = gcd(d, *m);
+    }
+    response.set_mut(status::Ok);
+    response.set_mut(mime!(Text/Html; Charset=Utf8));
+    response.set_mut(
+        format!("The greatest common divisor of the numbers {:?} is <b>{}</b>\n",
+                numbers, d));
+    Ok(response)
+}
+```
+对某个 Result 值 res 而言，可以使用像下面这样的 match 表达式来检查它是哪种结果，并访问其中的值：
+
+```rust
+match res {
+ Ok(success) => { ... },
+ Err(error) => { ... }
+}
+```
+使用 match 表达式，程序必须先检查 Result 是哪种变量，然后才能访问它的值。因此我们永远不会错误地把一个失败的值当作成功的值。这正是 match 表达式精妙的地方。在 C 和 C++ 中，忘记检查错误码或空指针是一个常见的错误。而在 Rust 中，这类错误会在编译时被捕获到。这个简单的手段大幅提升了程序的可用性（usability）。
+
+Rust 支持以包含值的变体创建类似 Result 的自定义类型，然后使用 match 表达式来对其分解求值。Rust 称这种自定义类型为枚举（enum），有的语言可能会称其为代数数据类型（algebraic data type）
+
+<Callout>
+就是说 result 类型像一个 enum 一样
+</Callout>
+
+`<UrlEncodedBody>` 是一种类型参数（type parameter），表示要取得 Request get_ref 的哪一部分。在此，UrlEncodedBody 类型指的是作为 URL 编码的查询字符串解析的请求主体
+
+在使用互斥量协调多线程修改共享数据结构的情况下，Rust 可以保证只有持有锁的线程才能存取数据，而且操作完成后会自动释放锁。在 C 和 C++ 中，互斥量与它所保护数据的这种关系只能靠注释来描述
+
+绘制曼德布洛特集合属于所谓的“尴尬并行”（embarrassingly parallel）算法，因为线程间的通信模式简单到让人尴尬。
+
+无穷循环，使用了 Rust 专门为此编写的语法——loop 语句
