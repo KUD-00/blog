@@ -25,9 +25,9 @@ export default async function Project() {
             <div className="stats shadow">
               <div className="stat">
                 <div className="stat-title">阅读programming in rust</div>
-                <div className="stat-value">46/501</div>
+                <div className="stat-value">80/501</div>
                 <div className="stat-desc">开始生锈！</div>
-                <progress className="progress w-56" value={10} max="100"></progress>
+                <progress className="progress w-56" value={16} max="100"></progress>
               </div>
             </div>
           </div>
