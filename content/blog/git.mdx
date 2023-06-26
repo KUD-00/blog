@@ -27,7 +27,7 @@ git filter-branch --force --index-filter "git rm --cached --ignore-unmatch \<fil
 
 --force：强制执行操作，即使它可能会导致数据丢失。
 
---index-filter "git rm --cached --ignore-unmatch \<filename\>"：这是一个用于修改索引（即暂存区）的过滤器。它使用git rm --cached --ignore-unmatch \<filename\>命令来删除暂存区中的指定文件。
+--index-filter `git rm --cached --ignore-unmatch <filename>`：这是一个用于修改索引（即暂存区）的过滤器。它使用git rm --cached --ignore-unmatch \<filename\>命令来删除暂存区中的指定文件。
 
 --prune-empty：删除空的提交记录，这些记录在应用过滤器后没有任何更改的内容。
 
@@ -127,9 +127,9 @@ To see a list of commits for all the branches in your local repository, you must
 
 git checkout可以回溯到之前的一个commit。HEAD 指针将直接指向提交，而不是指向分支。这意味着您将处于 Git（可怕地）称为分离 HEAD 状态的状态，不建议在处于分离 HEAD 状态（即不在分支上）时对存储库进行任何更改。你通常需要在分支上进行提交，因为分支比提交哈希更容易记住和引用，并且因为 Git 被设计为与分支一起使用
 
-git push <shortname> -d <branch_name>  删除远程分支和关联的远程跟踪分支
+`git push <shortname> -d <branch_name>`  删除远程分支和关联的远程跟踪分支
 
-git branch -d <branch_name> 删除本地分支
+`git branch -d <branch_name>` 删除本地分支
 
 在 Git 项目中可能遇到的规则的一个示例是，个人应仅处理自己的主题分支，避免处理其他人的主题分支。这有助于避免合并冲突
 
