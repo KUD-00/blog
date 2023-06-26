@@ -7,6 +7,10 @@ authors:
   - KUD
 ---
 
+记一点和git学习过程，包括阅读`learning git`的笔记
+
+---
+
 ```sh
 git rm --cached nohup.out
 ```
@@ -114,3 +118,21 @@ Successfully rebased and updated refs/heads/main.
 ```
 
 就成功解决了冲突
+
+---
+
+merge 有两种， 快速合并以及三向合并(three-way merge)
+
+To see a list of commits for all the branches in your local repository, you must use the git log command with the --all option.
+
+git checkout可以回溯到之前的一个commit。HEAD 指针将直接指向提交，而不是指向分支。这意味着您将处于 Git（可怕地）称为分离 HEAD 状态的状态，不建议在处于分离 HEAD 状态（即不在分支上）时对存储库进行任何更改。你通常需要在分支上进行提交，因为分支比提交哈希更容易记住和引用，并且因为 Git 被设计为与分支一起使用
+
+git push <shortname> -d <branch_name>  删除远程分支和关联的远程跟踪分支
+
+git branch -d <branch_name> 删除本地分支
+
+在 Git 项目中可能遇到的规则的一个示例是，个人应仅处理自己的主题分支，避免处理其他人的主题分支。这有助于避免合并冲突
+
+git branch -vv -all
+
+git pull实际上是git fetch和git merge的合体

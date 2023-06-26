@@ -1,0 +1,117 @@
+---
+title: linux 二三事
+date: "2023-06-25"
+description: 我爱 linux,吗？
+image: /images/blog/lycoris.jpg
+authors:
+  - KUD
+---
+
+记点关于 linux 的东西包括
+- 阅读 practical linux system
+  - 第五章 ssh 控制访问可以再看看
+
+有`.bash_logout`这个东西相对于`.bashrc`，感觉后者名字这么一看不太直观啊
+
+搞不懂 hyprland 的 shell 是怎么回事了，
+
+/etc/bashrc 文件主要被其他 Linux 发行版如 Ubuntu、CentOS 等用于设置系统整体的默认 Bash 配置。但 Arch 采用了分离的/etc/bash.bashrc 和/etc/profile.d/机制。
+
+对于 Arch Linux 用户来说,如果要设置默认的 Bash 配置,应该修改/etc/bash.bashrc 文件或添加脚本到/etc/profile.d/目录。
+- /etc/profile 用于设置环境变量等全局设置,影响所有命令(它是入口，它调 bash.bashrc 和 profile.d/*)
+- /etc/bash.bashrc 用于设置 Bash 特定的别名、选项等,只影响 Bash
+- /etc/profile.d/模块化地扩展/etc/profile 的功能，在用户登录 shell 时运行,用来设置环境变量、PATH 等。
+
+这使得 Arch Linux 的默认配置更清晰、模块化,也更易于管理和扩展。
+
+
+arch linux 用户不需要在~/.bashrc 里面加载系统的配置，因为已经自动加载了。其他发行版需要这一步骤，来自 Claude：
+
+<Callout>
+你的.bashrc 文件只影响你自己的 Bash 配置,不需要加载系统默认的配置。
+系统默认的 Bash 配置已经在用户登录时通过/etc/profile 和/etc/profile.d/脚本被加载了。
+</Callout>
+
+来自 Claude：
+
+需要在.bash_profile 中加载.bashrc 的主要原因有两个:
+- 如果只在.bashrc 中设置环境变量,在非交互式 shell(比如 cron 任务)中这些变量将不可用。所以需要将环境变量设置放在.bash_profile。
+- 但 alias 和函数等 bash 特定的设置,应该放在.bashrc。
+
+---
+
+/etc/skel 目录是一个特殊的目录，用于保存您希望在创建用户帐户时每个用户都收到的文件
+
+```shell
+  λ ls /etc/skel
+.rw-r--r--  21 root 21 May 20:56  .bash_logout
+.rw-r--r--  57 root 21 May 20:56  .bash_profile
+.rw-r--r-- 172 root 21 May 20:56  .bashrc
+```
+
+---
+
+chage 命令主要用于管理用户账号的密码参数,包括密码的有效期、警告期和过期日期等。
+
+---
+
+nobody:x:65534:65534:Kernel Overflow User:/:/sbin/nologin
+
+通常情况下你可以通过/etc/passwd 文件来识别服务账号，因为在该文件中看到的用户帐号没有分配 shell。服务账户具有/sbin/nologin, 而不是用户应该拥有的 shell。这意味着服务帐户没有交互式 Shell 或密码。这并不意味着他们的密码为空或 null 值，而只是不存在。换句话说，如果一个用户帐号将/sbin/nologin 作为其 Shell，则不能使用任何密码登录系统。甚至 root 用户也无法 su 或 sudo 到那些帐户：
+
+由于服务账号没有交互式 Shell，并且没有通过 su 或 sudo 切换到交互式 Shell 的方法，在系统上拥有此类账号并不存在安全漏洞问题。但一些系统管理员可能不知道服务账号通常没有交互式 Shell 或密码而产生了疑虑和质疑。对于某些需要交互式 Shell 才能运行其功能的服务，则应采取极端审查和其他安全措施以防止潜在的秘密登录。
+
+nobody 账户在 Linux 中是一个特殊的系统账号。它有以下几个主要 caracteristics:
+- UID 为 65535,GID 也为 65534。即高位的 UID 和 GID。
+- 没有实际登录的权限,主要用作默认的文件所有者。
+- 没有任何特权。拥有非常有限的权限。
+
+nobody 账户的主要用途:
+- 为没有指定所有者的新文件提供默认所有者。
+- 限制那些只需要有限权限运行的程序和进程。
+- 作为 Web 服务器上安全的默认所有者。
+- 为匿名用户提供有限的访问。
+
+举个例子:
+- 在 Apache 或 Nginx 上,新建的文件和目录默认都由 nobody 所有。
+- 运行在非交互式终端(比如守护进程) 的程序,其默认用户也是 nobody。
+
+---
+
+关于分配 ip 地址时
+- 静态寻址: 管理员来手动分配
+- 动态寻址: 靠 DHCP 服务器
+
+---
+
+虽然 SSH 守护进程（SSHD）通过其加密通道具有内置安全性，但其通信仍然容易受到攻击。有多种方法可以保护 SSH 以使攻击对攻击者来说不那么成功。
+
+使用两个文件来限制访问：/etc/hosts.allow 和/etc/hosts.deny。它们不是配置文件，因此无需重新启动服务，系统在每次客户端访问服务时都会检查这些文件。 /etc/hosts.allow 文件比两者中更重要，其覆盖 /etc/hosts.deny 文件
+
+```text
+If you find that setting such an entry in /etc/hosts.allow doesn’t work for you, then you need to check for tcp_wrapper integration in sshd using the following command:
+
+$ sudo ldd /path/to/binary | grep libwrap
+If you receive no response, your sshd wasn’t compiled with tcp_wrappers enabled and is likely deprecated for your distribution. This is, unfortunately, the case with many packaged sshd installations. The response you’re looking for is similar to the following:
+
+$ sudo ldd /usr/sbin/sshd | grep libwrap
+        libwrap.so.0 => /lib/x86_64-linux-gnu/libwrap.so.0 (0x00007fc6c2ab2000)
+You have three options if your sshd doesn’t have tcp_wrappers support:
+
+Use other methods to secure sshd (firewall rules, iptables, nftables).
+
+Compile openssh_server with tcp_wrappers enabled.
+
+Find and replace your current sshd with an openssh_server package that has tcp_wrappers enabled.
+
+To give you options for firewalld, iptables, and nftables, consider the following commands that perform similar functions to adding entries into /etc/hosts.allow and /etc/hosts.deny.
+```
+
+---
+
+`sudo make uninstall`， make from source 的软件卸载时需要在安装文件夹(根据 makefile)里跑这个（long live for package management tools like pacman)
+
+确实挺烦的，看来还得留着安装文件夹，所以说 make clean 是有用的
+
+---
+

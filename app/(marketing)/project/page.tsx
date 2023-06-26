@@ -35,6 +35,38 @@ export default async function Project() {
             <p>2023/6/21:再开！这书第二章感觉不是很好啃啊，要不就是我太菜了</p>
           </div>
         </div>
+        <div className="collapse bg-base-200">
+          <input type="checkbox" />
+          <div className="collapse-title text-xl font-medium">
+            <div className="stats shadow">
+              <div className="stat">
+                <div className="stat-title">阅读learning git</div>
+                <div className="stat-value">9/12</div>
+                <div className="stat-desc">多了解一点</div>
+                <progress className="progress w-56" value={31} max="100"></progress>
+              </div>
+            </div>
+          </div>
+          <div className="collapse-content">
+            <p>2023/6/24:好歹也掌握一下branch和rebase</p>
+          </div>
+        </div>
+        <div className="collapse bg-base-200">
+          <input type="checkbox" />
+          <div className="collapse-title text-xl font-medium">
+            <div className="stats shadow">
+              <div className="stat">
+                <div className="stat-title">阅读practical linux system</div>
+                <div className="stat-value">7/15</div>
+                <div className="stat-desc">多了解一点linux</div>
+                <progress className="progress w-56" value={20} max="100"></progress>
+              </div>
+            </div>
+          </div>
+          <div className="collapse-content">
+            <p>2023/6/25:还是有些新东西的</p>
+          </div>
+        </div>
       </div>
     </div>
   )
