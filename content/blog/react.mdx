@@ -1,10 +1,14 @@
 ---
-title: React代码片段
+title: React 代码片段
 date: "2023-06-13"
 description: 前端塞尔达
 image: /images/blog/arora.jpg
 authors:
   - KUD
+---
+
+包括 Learn React with Typescript 笔记
+
 ---
 
 React 中，你可以使用 PropTypes 或 TypeScript 来声明和验证组件属性的类型
@@ -13,7 +17,7 @@ PropTypes: PropTypes 是 React 提供的一个轻量级的类型检查机制。�
 
 ---
 
-创建一个任意位置可点击的空div
+创建一个任意位置可点击的空 div
 ```html
 <div style={{ width: '100%', height: '100%' }} onClick={() => navigate(Path.Home)}>
   &nbsp;
@@ -21,3 +25,130 @@ PropTypes: PropTypes 是 React 提供的一个轻量级的类型检查机制。�
 ```
 
 ---
+```typescript
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'add':
+      return { ...state, total: state.total + action.amount };
+    case ...
+      ...
+    default:
+      return state;
+  }
+}
+
+const [state, dispatch] = useReducer(reducer, initialState);
+
+const [state, dispatch] = useReducer<Reducer<State, Action>>(
+  reducer,
+  initialState
+);
+
+dispatch({ type: 'add', amount: 2 });
+```
+There is no defined structure for an action, but it is common practice for it to contain a property, such as type, to specify the type of change. Other properties in the action can vary depending on the type of change
+
+---
+
+useRef Hook 的常见用途是以命令式的方式访问 HTML 元素。在 JSX 中，HTML 元素有一个 ref 属性，可以将其分配给 ref。以下是一个示例：
+
+```typescript
+function MyComponent() {
+  const inputRef = useRef<HTMLInputElement>(null);
+  function doSomething() {
+    console.log(
+      inputRef.current
+    );
+  }
+  return <input ref={inputRef} type="text" />;
+}
+```
+
+这里使用的 ref 称为 inputRef，并最初为 null。因此，它明确地赋予了 HTMLInputElement 类型，这是输入元素的标准类型。然后，在 JSX 中将 ref 分配给输入元素上的 ref 属性。然后可以通过 ref 对象的 current 属性访问所有输入框的属性和方法。
+
+All the standard HTML elements have corresponding TypeScript types for React.
+
+```typescript
+useEffect(() => {
+  if (!loading) {
+    addButtonRef.current?.focus();
+  }
+}, [loading]);
+```
+The optional chaining (?.) operator accesses an object's property or calls a function. If the object accessed or function called using this operator is undefined or null, the expression short circuits and evaluates to undefined instead of throwing an error.
+
+---
+
+```typescript
+const memoizedValue = useMemo(
+  () => expensiveCalculation(a, b),
+  [a, b]
+);
+```
+
+使用 useMemo 可以缓存函数的计算结果，并在依赖项发生变化时重新计算。这样，只有在需要时才会进行计算，而不是每次组件重新渲染时都执行计算操作。
+
+---
+
+```typescript
+ const memoizedValue = useCallback<() => void>(
+  () => someFunction (a, b),
+  [a, b]
+);
+```
+
+useCallback 的常见用途是防止不必要地重新渲染子组件
+
+尽管这种重绘行为通常不会导致性能问题，但如果计算成本高昂的组件经常被重绘或具有缓慢副作用的组件经常被重绘，则可能导致性能问题。例如，在具有获取数据副作用的组件中避免不必要地进行多次重复呈现。
+
+React 中有一个名为 memo 的函数可用于防止不必要的重新呈现。可以将 memo 函数应用于 ChildComponent，以防止不必要的重新渲染：
+
+```typescript
+export const ChildComponent = memo(() => {
+  return <span>A child component</span>;
+});
+```
+
+memo 函数：
+- 使用场景：当你有一个函数组件，并且它的输出只受到组件的 props 变化的影响时，可以使用 memo 函数进行组件的记忆化。它将在组件 props 没有变化时，阻止不必要的重新渲染。
+- 工作原理：memo 函数会对组件进行浅比较，仅当组件的 props 发生变化时才会重新渲染。这对于那些具有稳定输入的组件（例如纯展示型组件）非常有用，可以避免不必要的渲染和重复计算。
+
+useCallback 函数：
+- 使用场景：当你需要将一个回调函数传递给子组件，并且该回调函数依赖于某个值，但你又不希望在该值变化时重新创建回调函数时，可以使用 useCallback 函数。
+- 工作原理：useCallback 函数会返回一个记忆化的回调函数。它只会在依赖项发生变化时重新创建回调函数，并在其他情况下返回缓存的回调函数。这有助于避免不必要的函数创建，以提高性能。
+
+```typescript
+import React, { useCallback } from 'react';
+
+function ParentComponent() {
+  const handleClick = useCallback(() => {
+    // 处理点击事件
+  }, []); // 依赖项为空数组，表示回调函数不依赖任何值
+
+  return <ChildComponent onClick={handleClick} />;
+}
+```
+
+<Callout>
+usecallback 注册的函数只有在它的依赖项改变的时候才会重新创建，其所属组件重新渲染的时候不会重新创建
+</Callout>
+
+---
+CSS 模块是一个 CSS 文件，文件名具有扩展名.module.css。这个特殊的扩展名允许 webpack 区分 CSS 模块文件和普通的 CSS 文件，以便它们可以被不同地处理。
+
+
+CSS 模块（CSS Modules）是一种用于解决 CSS 类名冲突和作用域隔离的技术。它是在构建 Web 应用程序时用于管理 CSS 样式的一种模块化方案。
+
+传统的 CSS 在全局作用域下工作，这意味着样式类名容易发生冲突，尤其是在大型项目中或多人协作开发时。这可能导致样式覆盖、命名冲突和不可预测的样式行为。
+
+CSS 模块通过在构建过程中将类名进行哈希处理，从而实现样式的局部作用域和唯一性。它将 CSS 类名和对应的样式声明封装在一个模块中，确保模块内部的类名不会与其他模块冲突。
+
+```typescript
+import React from 'react';
+import styles from './MyComponent.module.css';
+
+function MyComponent() {
+  return <div className={styles.container}>Hello, CSS Modules!</div>;
+}
+```
+生成的类名赋值给 styles.container。styles.container 是一个对象，它包含了处理后的唯一类名，可以直接应用于组件的 className 属性。
