@@ -136,3 +136,11 @@ git checkout可以回溯到之前的一个commit。HEAD 指针将直接指向提
 git branch -vv -all
 
 git pull实际上是git fetch和git merge的合体
+
+---
+
+回到上个commit（现在暂时没有commit）
+
+```shellscript
+git reset --hard HEAD
+```

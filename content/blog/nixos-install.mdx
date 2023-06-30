@@ -59,4 +59,17 @@ nixos的受众必须具有一定Linux基础，一个没怎么用过Linux的人�
 
 nix的option有些在home manager里面**不能**使用，建议查home manager的options来对照
 
+原始字符串需要这么写：''hello''
+
+更新channel
+
+```shellscript
+sudo nix-channel --add https://channels.nixos.org/nixos-unstable nixos
+sudo nix-channel --update
+```
+
+使用 --impure 选项执行 nixos-rebuild 命令会引入一些潜在的不可逆影响。--impure 选项允许在系统配置中引入一些不纯的元素，例如从全局状态中读取信息或者执行命令。这可能导致配置不再是纯函数，并可能导致一些问题，例如不确定性、依赖于系统状态的行为和难以复现的问题。
+
+我有一次用了绝对路径，所以得到了impure的警告
+
 ---
