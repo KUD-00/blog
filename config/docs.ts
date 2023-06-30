@@ -22,20 +22,19 @@ export const docsConfig: DocsConfig = {
       ],
     },
     {
-      title: "Documentation",
+      title: "NixOS",
       items: [
         {
-          title: "Introduction",
-          href: "/docs/documentation",
+          title: "开始",
+          href: "/docs/nixos/",
         },
         {
-          title: "Contentlayer",
-          href: "/docs/in-progress",
-          disabled: true,
+          title: "安装",
+          href: "/docs/nixos/install",
         },
         {
-          title: "Components",
-          href: "/docs/documentation/components",
+          title: "简介",
+          href: "/docs/nixos/introduction",
         },
         {
           title: "Code Blocks",

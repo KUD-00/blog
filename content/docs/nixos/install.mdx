@@ -1,0 +1,19 @@
+---
+title: 安装NixOS
+description: 这是你第几次安装Linux了？
+---
+
+NixOS 官网提供Gnome/Plasma/Minimal三个iso版本
+
+这里只提Minimal，也就是没有DE（桌面环境）的安装步骤，其余两个是有assistant帮助你安装的。
+
+---
+
+从Minimal iso安装主要参考[NixOS_Installation_Guide](https://nixos.wiki/wiki/NixOS_Installation_Guide)，照着做就行
+
+整个时长不超过15分钟
+
+可以在boot from usb的状况下，通过flakes来执行nixos-install
+
+重启进入系统后的常见问题:
+- 如果忘记在systemPackaes里面加vim，只能使用NixOS自带的nano补救
