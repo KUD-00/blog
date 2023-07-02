@@ -57,14 +57,31 @@ export default async function Project() {
             <div className="stats shadow">
               <div className="stat">
                 <div className="stat-title">阅读practical linux system</div>
-                <div className="stat-value">7/15</div>
+                <div className="stat-value">13/15</div>
                 <div className="stat-desc">多了解一点linux</div>
-                <progress className="progress w-56" value={20} max="100"></progress>
+                <progress className="progress w-56" value={58} max="100"></progress>
               </div>
             </div>
           </div>
           <div className="collapse-content">
             <p>2023/6/25:还是有些新东西的</p>
+            <p>2023/7/01:although i begin to use nixos, this book still gives me some inspiration</p>
+          </div>
+        </div>
+        <div className="collapse bg-base-200">
+          <input type="checkbox" />
+          <div className="collapse-title text-xl font-medium">
+            <div className="stats shadow">
+              <div className="stat">
+                <div className="stat-title">阅读docker: up and running</div>
+                <div className="stat-value">4/14</div>
+                <div className="stat-desc">nix alternative</div>
+                <progress className="progress w-56" value={10} max="100"></progress>
+              </div>
+            </div>
+          </div>
+          <div className="collapse-content">
+            <p>2023/7/02:need to know more. to find jobs i think</p>
           </div>
         </div>
       </div>

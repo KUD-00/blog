@@ -115,3 +115,72 @@ To give you options for firewalld, iptables, and nftables, consider the followin
 
 ---
 
+`dracut -f`是一个Linux命令，用于创建或重新创建initramfs（初始RAM文件系统）映像。
+
+Initramfs是一个临时的root文件系统，被用于在系统的真正root文件系统被挂载前提供一些必要的工具和服务。
+
+`-f`选项是强制重新创建initramfs映像，即使现有的映像文件是最新的。
+
+---
+
+check /var/log for application logs?
+
+```shell
+$ cd /var/log
+$ sudo grep -ir "Syntax error" *
+Binary file journal/027dd8a8c9624671b26d07e94eae8f1d/system.journal matches
+```
+
+`journalctl -xe` 是用于查看 journal logs 的一个命令选项，这个选项将会显示日志的额外上下文并且默认滚动到最末尾的条目。具体来说：
+- `-x` 选项是 `--catalog` 的短形式，它会尝试显示在 log message 旁边的附加的解释性文本。这些文本来自 systemd 的 "message catalog"，为某些消息提供了更详细的解释或者故障排除信息。
+- `-e` 选项是 `--pager-end` 的短形式，这会使得 less（默认的分页器）在打开日志时就滚动到末尾，这样你可以看到最新的日志条目。
+
+---
+
+购买服务器系统时应始终选择具备冗余电源、多个NIC和充足内存的配置。将磁盘设置为RAID 10等阵列模式可以避免因故障而影响您的晚上和周末
+
+热量是电子设备的敌人，这就是为什么数据中心看起来风大、冷冻的原因之一。散热是任何良好数据中心的重要问题和主要设计特点之一
+
+内存“条”通常会完全失效，我从未见过它们部分失效。当内存条失败时，在启动过程中RAM计数不会完全完成。例如，如果系统包含64 GB的RAM，可能只能识别48 GB。尽管内存条可以单独出现故障，但它们是成对读取的。因此，如果您的系统有八个8 GB内存条（每个8个为一组共64 GB），并且其中一个出现故障，则RAM计数将按组失败。
+
+---
+
+`lscpu`  `lspci`  `lsblk`
+
+---
+
+create a daily report
+
+```shell
+#!/bin/bash
+
+#Daily Report Script
+
+today=`date +%m-%d-%Y`
+
+touch /opt/note/$today.html
+
+echo "<pre>" >> /opt/note/$today.html
+
+echo "Last Log " >> /opt/note/$today.html
+last | grep root >> /opt/note/$today.html
+
+echo "Non-privileged accounts in the Last Log " >> /opt/note/$today.html
+last | grep -v root >> /opt/note/$today.html
+
+echo " " >> /opt/note/$today.html
+
+echo "Root Accounts " >> /opt/note/$today.html
+grep :0 /etc/passwd >> /opt/note/$today.html
+
+echo " " >> /opt/note/$today.html
+
+echo "Files modified since yesterday " >> /opt/note/$today.html
+find /etc -mtime -1 >> /opt/note/$today.html
+
+echo "</pre>" >> /opt/note/$today.html
+```
+
+入侵者很少锁定系统管理员，因为这样做会引起行动和纠正措施。相反，入侵者试图掩盖自己的行动，并利用系统进行数据外泄或攻击当前网络内部或外部的其他系统。
+
+您可以通过特定错误筛选日志，或将其他命令的输出重定向到文件中，例如防火墙状态检查。将您用于检查系统安全性的命令放在此脚本中，并设置一个cron作业以www-data身份每天运行该脚本，并在开始工作时立即检查它以进行一些取证调查或轻松继续您的工作。确保www-data用户对/opt/note目录具有读、写和执行权限。

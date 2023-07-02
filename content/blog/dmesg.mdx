@@ -198,12 +198,147 @@ ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留。
 系统采用了 GB 级别的页面来进行直接映射。
 
 ```text
-[    0.004889] Incomplete global flushes, disabling PCID
-[    0.005132] Secure boot disabled
+[0.004889] Incomplete global flushes, disabling PCID
+[0.005132] Secure boot disabled
 ```
 系统的安全启动（Secure Boot）功能已被禁用。
 
 ```text
-[    0.005133] RAMDISK: [mem 0x58d0e000-0x5b486fff]
+[0.005133] RAMDISK: [mem 0x58d0e000-0x5b486fff]
 ```
 创建了一个 RAM 磁盘（RAMDISK），也就是一部分 RAM 被模拟成硬盘使用，这部分 RAM 的地址范围是 0x58d0e000-0x5b486fff。
+
+```text
+[0.005136] ACPI: Early table checksum verification disabled
+```
+系统禁用了早期 ACPI 表校验和验证
+
+```text
+[0.005137] ACPI: RSDP 0x000000007451E014 000024 (v02 ALASKA)
+[0.005140] ACPI: XSDT 0x000000007451D728 000114 (v01 ALASKA A M I    01072009 AMI  01000013)
+[0.005144] ACPI: FACP 0x000000007451B000 000114 (v06 ALASKA A M I    01072009 AMI  01000013)
+[0.005147] ACPI: DSDT 0x000000007448F000 08BFEC (v02 ALASKA A M I    01072009 INTL 20200717)
+[0.005149] ACPI: FACS 0x000000007471E000 000040
+[0.005151] ACPI: MCFG 0x000000007451C000 00003C (v01 ALASKA A M I    01072009 MSFT 00000097)
+[0.005152] ACPI: FIDT 0x000000007448E000 00009C (v01 ALASKA A M I    01072009 AMI  00010013)
+[0.005154] ACPI: SSDT 0x000000007448C000 00038C (v02 PmaxDv Pmax_Dev 00000001 INTL 20200717)
+[0.005156] ACPI: SSDT 0x0000000074486000 005D34 (v02 CpuRef CpuSsdt  00003000 INTL 20200717)
+[0.005157] ACPI: SSDT 0x0000000074483000 002935 (v02 SaSsdt SaSsdt   00003000 INTL 20200717)
+[0.005159] ACPI: SSDT 0x000000007447F000 003339 (v02 INTEL  IgfxSsdt 00003000 INTL 20200717)
+[0.005161] ACPI: HPET 0x000000007447E000 000038 (v01 ALASKA A M I    01072009 AMI  01000013)
+[0.005162] ACPI: APIC 0x000000007447D000 0001DC (v05 ALASKA A M I    01072009 AMI  01000013)
+[0.005164] ACPI: MCFG 0x000000007447C000 00003C (v01 ALASKA A M I    01072009 AMI  01000013)
+[0.005165] ACPI: SSDT 0x000000007447A000 001F1A (v02 ALASKA Ther_Rvp 00001000 INTL 20200717)
+[0.005167] ACPI: NHLT 0x0000000074478000 00002D (v00 ALASKA A M I    01072009 AMI  01000013)
+[0.005168] ACPI: LPIT 0x0000000074477000 0000CC (v01 ALASKA A M I    01072009 AMI  01000013)
+[0.005170] ACPI: SSDT 0x0000000074473000 002357 (v02 ALASKA TbtTypeC 00000000 INTL 20200717)
+[0.005172] ACPI: SSDT 0x0000000074470000 002A83 (v02 ALASKA PtidDevc 00001000 INTL 20200717)
+[0.005173] ACPI: DBGP 0x000000007446F000 000034 (v01 ALASKA A M I    01072009 AMI  01000013)
+[0.005175] ACPI: DBG2 0x000000007446E000 000054 (v00 ALASKA A M I    01072009 AMI  01000013)
+[0.005176] ACPI: SSDT 0x000000007446D000 000C1F (v02 ALASKA UsbCTabl 00001000 INTL 20200717)
+[0.005178] ACPI: DMAR 0x000000007446C000 000050 (v02 INTEL  EDK2     00000002      01000013)
+[0.005179] ACPI: FPDT 0x000000007446B000 000044 (v01 ALASKA A M I    01072009 AMI  01000013)
+[0.005181] ACPI: SSDT 0x0000000074469000 001DA0 (v02 INTEL  xh_adls3 00000000 INTL 20200717)
+[0.005183] ACPI: SSDT 0x0000000074465000 003AEA (v02 SocGpe SocGpe   00003000 INTL 20200717)
+[0.005184] ACPI: SSDT 0x0000000074461000 0039DA (v02 SocCmn SocCmn   00003000 INTL 20200717)
+[0.005186] ACPI: SSDT 0x0000000074460000 000144 (v02 Intel  ADebTabl 00001000 INTL 20200717)
+[0.005187] ACPI: VFCT 0x0000000074455000 00AC84 (v01 ALASKA A M I    00000001 AMD  31504F47)
+[0.005189] ACPI: BGRT 0x0000000074454000 000038 (v01 ALASKA A M I    01072009 AMI  00010013)
+[0.005191] ACPI: WPBT 0x000000007432B000 000040 (v01 ALASKA A M I    00000001 ASUS 00000001)
+[0.005192] ACPI: TPM2 0x000000007432A000 00004C (v04 ALASKA A M I    00000001 AMI  00000000)
+[0.005194] ACPI: PHAT 0x0000000074329000 0005F1 (v01 ALASKA A M I    00000005 MSFT 0100000D)
+[0.005196] ACPI: WSMT 0x0000000074476000 000028 (v01 ALASKA A M I    01072009 AMI  00010013)
+```
+每一个 ACPI: 后的大写字母组合代表了一种特定的 ACPI 表，例如 RSDP、XSDT、FACP、DSDT 等，这些都是 ACPI 规范中定义的不同类型的表。每种表包含了特定的系统配置信息，例如硬件设备的信息、电源管理策略等。
+
+每个表都有一个内存地址，如 0x000000007451E014，后面的一串数字（如 000024）是表的大小，v02 代表版本，然后是表的供应商，供应商版本和日期。
+
+在这些日志中，您可以看到很多 SSDT 表，这是系统描述表（Secondary System Descriptor Table，SSDT），用于存放 ACPI 设备的定义。
+
+```text
+[0.005197] ACPI: Reserving FACP table memory at [mem 0x7451b000-0x7451b113]
+[0.005198] ACPI: Reserving DSDT table memory at [mem 0x7448f000-0x7451afeb]
+[0.005198] ACPI: Reserving FACS table memory at [mem 0x7471e000-0x7471e03f]
+[0.005199] ACPI: Reserving MCFG table memory at [mem 0x7451c000-0x7451c03b]
+[0.005199] ACPI: Reserving FIDT table memory at [mem 0x7448e000-0x7448e09b]
+[0.005200] ACPI: Reserving SSDT table memory at [mem 0x7448c000-0x7448c38b]
+[0.005200] ACPI: Reserving SSDT table memory at [mem 0x74486000-0x7448bd33]
+[0.005200] ACPI: Reserving SSDT table memory at [mem 0x74483000-0x74485934]
+[0.005201] ACPI: Reserving SSDT table memory at [mem 0x7447f000-0x74482338]
+[0.005201] ACPI: Reserving HPET table memory at [mem 0x7447e000-0x7447e037]
+[0.005202] ACPI: Reserving APIC table memory at [mem 0x7447d000-0x7447d1db]
+[0.005202] ACPI: Reserving MCFG table memory at [mem 0x7447c000-0x7447c03b]
+[0.005203] ACPI: Reserving SSDT table memory at [mem 0x7447a000-0x7447bf19]
+[0.005203] ACPI: Reserving NHLT table memory at [mem 0x74478000-0x7447802c]
+[0.005204] ACPI: Reserving LPIT table memory at [mem 0x74477000-0x744770cb]
+[0.005204] ACPI: Reserving SSDT table memory at [mem 0x74473000-0x74475356]
+[0.005204] ACPI: Reserving SSDT table memory at [mem 0x74470000-0x74472a82]
+[0.005205] ACPI: Reserving DBGP table memory at [mem 0x7446f000-0x7446f033]
+[0.005205] ACPI: Reserving DBG2 table memory at [mem 0x7446e000-0x7446e053]
+[0.005206] ACPI: Reserving SSDT table memory at [mem 0x7446d000-0x7446dc1e]
+[0.005206] ACPI: Reserving DMAR table memory at [mem 0x7446c000-0x7446c04f]
+[0.005207] ACPI: Reserving FPDT table memory at [mem 0x7446b000-0x7446b043]
+[0.005207] ACPI: Reserving SSDT table memory at [mem 0x74469000-0x7446ad9f]
+[0.005208] ACPI: Reserving SSDT table memory at [mem 0x74465000-0x74468ae9]
+[0.005208] ACPI: Reserving SSDT table memory at [mem 0x74461000-0x744649d9]
+[0.005209] ACPI: Reserving SSDT table memory at [mem 0x74460000-0x74460143]
+[0.005209] ACPI: Reserving VFCT table memory at [mem 0x74455000-0x7445fc83]
+[0.005209] ACPI: Reserving BGRT table memory at [mem 0x74454000-0x74454037]
+[0.005210] ACPI: Reserving WPBT table memory at [mem 0x7432b000-0x7432b03f]
+[0.005210] ACPI: Reserving TPM2 table memory at [mem 0x7432a000-0x7432a04b]
+[0.005211] ACPI: Reserving PHAT table memory at [mem 0x74329000-0x743295f0]
+[0.005211] ACPI: Reserving WSMT table memory at [mem 0x74476000-0x74476027]
+```
+为 ACPI（高级配置和电源接口）的各种表预留内存的信息。每个 "Reserving" 后面的表名就是 ACPI 的表名，"at [mem xxx-xxx]" 部分则指示了该表在物理内存中的位置。
+
+例如，ACPI: Reserving FACP table memory at [mem 0x7451b000-0x7451b113] 这行表示系统为 FACP（固定 ACPI 描述表，用于电源管理）预留了位于物理内存 0x7451b000-0x7451b113 的空间。
+
+```text
+[0.005374] No NUMA configuration found
+```
+系统没有找到 NUMA（Non-Uniform Memory Access）配置。NUMA 是一种用于多处理器系统的内存设计，使得每个处理器都有自己的本地内存。
+
+```text
+[0.005374] Faking a node at [mem 0x0000000000000000-0x000000087f7fffff]
+```
+系统正在模拟一个内存节点，其地址范围从 0x0000000000000000 到 0x000000087f7fffff。
+
+```text
+[0.005376] NODE_DATA(0) allocated [mem 0x87f7fa000-0x87f7fffff]
+```
+系统为节点 0 分配了一块内存用于存放节点的数据。
+
+```text
+[0.005401] Zone ranges:
+[0.005402]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[0.005402]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[0.005403]   Normal   [mem 0x0000000100000000-0x000000087f7fffff]
+[0.005404]   Device   empty
+[0.005404] Movable zone start for each node
+```
+系统中不同内存区域的范围。这些区域包括 DMA、DMA32、Normal 和 Device。例如，Normal 区域的范围是 [mem 0x0000000100000000-0x000000087f7fffff]。
+
+```text
+[0.005405] Early memory node ranges
+[0.005405]   node   0: [mem 0x0000000000001000-0x000000000009dfff]
+[0.005406]   node   0: [mem 0x000000000009f000-0x000000000009ffff]
+[0.005406]   node   0: [mem 0x0000000000100000-0x0000000064840fff]
+[0.005407]   node   0: [mem 0x0000000064842000-0x000000006589bfff]
+[0.005407]   node   0: [mem 0x000000006589d000-0x00000000705aafff]
+[0.005407]   node   0: [mem 0x0000000075fff000-0x0000000075ffffff]
+[0.005408]   node   0: [mem 0x0000000100000000-0x000000087f7fffff]
+```
+系统早期阶段，节点 0 的内存范围。例如，其中一个范围是 [mem 0x0000000000100000-0x0000000064840fff]。
+
+```text
+[0.005409] Initmem setup node 0 [mem 0x0000000000001000-0x000000087f7fffff]
+[0.005412] On node 0, zone DMA: 1 pages in unavailable ranges
+[0.005412] On node 0, zone DMA: 1 pages in unavailable ranges
+[0.005425] On node 0, zone DMA: 96 pages in unavailable ranges
+[0.006790] On node 0, zone DMA32: 1 pages in unavailable ranges
+[0.006975] On node 0, zone DMA32: 1 pages in unavailable ranges
+[0.007110] On node 0, zone DMA32: 23124 pages in unavailable ranges
+[0.039102] On node 0, zone Normal: 8192 pages in unavailable ranges
+[0.039115] On node 0, zone Normal: 2048 pages in unavailable ranges
+```
+在节点 0 的特定区域（xxx）中，有 yyy 页内存是无法使用的。

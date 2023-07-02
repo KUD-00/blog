@@ -1,0 +1,52 @@
+---
+title: about docker
+date: "2023-07-02"
+description: nix alternative
+image: /images/blog/ruby.jpg
+authors:
+  - KUD
+---
+
+an OCI image is specifically an image that meets the Open Container Initiative standard and is guaranteed to work with any OCI-compliant tool.
+
+Heroku是一个完整的环境，不仅仅是一个容器引擎。虽然Docker并不试图包含在Heroku中的所有内容，但它提供了责任清晰分离和依赖封装，从而实现类似的生产力提升。与Heroku相比，Docker还允许开发人员更加精细地控制一切，甚至可以控制应用程序随附的确切文件和软件包版本。构建在Docker之上的一些工具和编排器（例如Kubernetes、Docker Swarm模式和Mesos）旨在复制像Heroku这样系统的简单性。但即使这些平台围绕着Docker提供了更强大且更复杂的环境，只使用Docker作为基础平台仍然能够提供所有核心流程优势，并避免了较大系统所带来的额外复杂性。
+
+如果您所有的工具都建立在Docker和Linux容器周围，则您可以以与云无关的方式部署应用程序，从而获得以前无法实现的新灵活性。
+
+2017年，Docker将其containerd运行时捐赠给Cloud Native Computing Foundation（CNCF），并于2019年晋升为毕业项目状态。
+
+在2022年，我们看到Docker开始失去服务器市场份额，被不再需要Docker守护程序的最新版本Kubernetes所取代，但即使是这些Kubernetes发布版也非常依赖于最初由Docker开发的containerd运行时
+
+This is the primary high-level OCI-certified runtime:
+- containerd, which is the default high-level runtime in modern versions of Docker and Kubernetes.
+
+These lower-level OCI-certified runtimes can be used by containerd to manage and create containers:
+- runc is often used as the default lower-level runtime by containerd.
+- crun is written in C and designed to be fast and have a small memory footprint.
+- Kata Containers from Intel, Hyper, and the OpenStack Foundation is a virtualized runtime that can run a mix of containers and virtual machines.
+- gVisor from Google is a sandboxed runtime, implemented entirely in user space.
+- Nabla Containers provide another sandboxed runtime designed to significantly reduce the attack surface of Linux containers.
+
+there is a third component called the registry, which stores Docker images and their metadata
+
+Each Docker host will normally have one Docker server running that can manage any number of containers
+
+docker命令行工具和dockerd守护进程可以通过Unix套接字和网络端口进行通信。
+
+不要在Docker中使用网络端口，因为Docker守护进程内部缺乏用户身份验证和基于角色的访问控制功能。 Unix套接字在不同操作系统上可能位于不同路径中，在大多数情况下可以找到此位置：/var/run/docker.sock.
+
+docker container run
+--rm：这个选项表示一旦容器停止，就自动删除它。这可以避免因旧容器堆积导致的存储空间浪费。
+
+```shell
+sudo dockerd -H unix:///var/run/docker.sock \
+  --config-file /etc/docker/daemon.json
+```
+
+dockerd是Docker守护进程的名字，这是Docker的后台服务，它负责创建、运行和管理Docker容器。dockerd可以处理来自Docker客户端的各种请求，例如启动或停止一个容器，拉取一个镜像等等。
+
+Docker使用Unix Socket进行客户端和服务器（也就是Docker守护进程）之间的通信。Unix Socket是一种在同一台机器上进行进程间通信的机制，其性能非常高效。当你在命令行输入一个Docker命令（例如docker run），Docker客户端会通过Unix Socket将这个请求发送给Docker守护进程，Docker守护进程收到请求后，会执行相应的操作，然后将结果返回给Docker客户端。在这个过程中，Unix Socket就像是客户端和服务器之间的通信桥梁。
+
+特权容器允许我们浏览底层主机，但当添加单独的能力或系统调用权限足够时，请不要养成使用特权容器的习惯
+
+Dockerfile中的每一行都会创建一个新的镜像层，并由Docker进行存储。该层包含所有由该命令引起的更改。这意味着当您构建新镜像时，Docker只需要构建与先前构建不同的层：您可以重用所有未更改的层。
