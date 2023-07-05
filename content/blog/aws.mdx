@@ -1,0 +1,39 @@
+---
+title: learning aws
+description: the boss of cloud
+image: /images/blog/
+date: "2023-07-03"
+authors:
+  - Kud
+---
+
+网店包括动态内容（例如产品及其价格）和静态内容（例如公司标志）。将它们分开可以减轻Web服务器负载，并通过内容传递网络（CDN）传送静态内容来提高性能。
+
+AWS按秒计费虚拟机，最低计费时间为60秒。因此，Nick在启动批处理作业时会启动一个虚拟机，并在作业完成后立即终止它。这样做可以让他只在实际使用计算基础设施时付费。与传统数据中心相比，这是一个重大的改变，因为Nick以前不管使用多少都需要每月支付每台机器的费用。
+
+AWS以大幅折扣提供其数据中心的闲置容量。对于Nick来说，在特定时间运行批处理作业并不重要。他可以等待直到有足够的闲置容量可用再执行批处理作业，因此AWS向他提供了75%折扣的虚拟机。
+
+由于AWS采用API驱动，您可以实现一切自动化：编写代码创建网络、启动虚拟机集群或部署关系型数据库。自动化能够提高可靠性并改善效率。
+
+系统的依赖越多，它就变得越复杂。人类很容易失去全局视角，而计算机则能够处理任意规模的相互连接系统。在计算机根据蓝图解析所有这些依赖关系以创建系统时，您应该专注于人类擅长的任务——例如描述一个系统
+
+谷歌云平台（GCP）专注于希望构建复杂分布式系统的开发人员。谷歌将他们全球基础设施结合起来，提供可扩展且容错性强的服务（如Google Cloud负载均衡）。我们认为，GCP更加关注原生于云端的应用程序，而不是将本地托管应用迁移到云端。
+
+- EC2—Virtual machines
+- ECS and Fargate—Running and managing containers
+- Lambda—Executing functions
+- S3—Object store
+- Glacier—Archiving data
+- EBS—Block storage for virtual machines
+- EFS—Network filesystem
+- RDS—SQL databases
+- DynamoDB—NoSQL database
+- ElastiCache—In-memory key-value store
+- VPC—Virtual network
+- ELB—Load balancers
+- Simple Queue Service—Distributed queues
+- CodeDeploy—Automating code deployments
+- CloudWatch—Monitoring and logging
+- CloudFormation—Automating your infrastructure
+- IAM—Restricting access to your cloud resources
+

@@ -1,5 +1,5 @@
 ---
-title: typescript 代码片段
+title: typescript 代码片段(with javascript)
 date: "2023-06-13"
 description: 当js有了类型，感觉就可以写一些抽象的东西了
 image: /images/blog/snow-with-miku.jpg
@@ -24,3 +24,34 @@ export type RequiredLocaleType = typeof cn;
 `export type LocaleType = DeepPartial<typeof cn>`; 定义了一个类型别名 LocaleType，它使用 DeepPartial 类型将 cn 的类型（typeof cn）进行处理。这意味着 LocaleType 将拥有与 cn 类型相同的结构，但所有的属性都是可选的。
 
 `export type RequiredLocaleType = typeof cn`; 定义了另一个类型别名 RequiredLocaleType，它直接将 cn 的类型（typeof cn）赋值给 RequiredLocaleType。这意味着 RequiredLocaleType 将拥有与 cn 类型相同的结构，并且所有属性都是必需的（非可选的）。
+
+---
+
+数组切片：let slice = fruits.slice(start, end);
+
+---
+
+Math.ceil()  Math.floor()  Math.round
+
+---
+
+这么写好吗……
+
+```jsx
+function MyComponent() {
+  const numOfElements = 5;
+
+  return (
+    <div>
+      {Array.from({length: numOfElements}, (_, index) => (
+        <div key={index}>This is item {index + 1}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+Array.from()方法接受第二个参数，这个参数是一个映射函数（和map()函数的参数类似），它可以应用到新数组的每个元素上
+
+---
+
