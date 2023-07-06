@@ -79,7 +79,7 @@ const PostList = () => {
               return (
                 <input
                   onClick={handleClick}
-                  className="join-item btn btn-square"
+                  className="btn-square join-item btn"
                   type="radio"
                   name="options"
                   aria-label={index.toString()}
@@ -90,7 +90,7 @@ const PostList = () => {
               return (
                 <input
                   onClick={handleClick}
-                  className="join-item btn btn-square"
+                  className="btn-square join-item btn"
                   type="radio"
                   name="options"
                   aria-label={index.toString()}
