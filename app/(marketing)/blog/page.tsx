@@ -6,11 +6,6 @@ import { compareDesc } from "date-fns"
 import { useState } from "react"
 import { formatDate } from "@/lib/utils"
 
-
-export const metadata = {
-  title: "Blog",
-}
-
 export default async function BlogPage() {
   const posts = allPosts
     .filter((post) => post.published)
@@ -70,13 +65,6 @@ export default async function BlogPage() {
       ) : (
         <p>No posts published.</p>
       )}
-      <div>
-        {
-          Array.from({ length: computedPage }, (_, index) => (
-            <button onClick={() => setPage(index)}></button>
-          ))
-        }
-      </div>
     </div>
   )
 }
