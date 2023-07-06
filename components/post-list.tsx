@@ -82,7 +82,7 @@ const PostList = () => {
                   className="join-item btn btn-square"
                   type="radio"
                   name="options"
-                  aria-label={index}
+                  aria-label={index.toString()}
                   checked
                 />
               );
@@ -93,7 +93,7 @@ const PostList = () => {
                   className="join-item btn btn-square"
                   type="radio"
                   name="options"
-                  aria-label={index}
+                  aria-label={index.toString()}
                 />
               );
             }
