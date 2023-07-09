@@ -18,3 +18,4 @@ forked from taxonomy by shadcn
 * [ ] 添加 tag 功能
 * [ ] 添加搜索功能
 * [ ] 添加显示 tweet 功能（需要理解 server component 好像）
+config.ts @没有生效
