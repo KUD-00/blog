@@ -97,80 +97,97 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <>
-    <article className="container relative max-w-3xl py-6 lg:py-10">
-      <Link
-        href="/blog"
-        className={cn(
-          buttonVariants({ variant: "ghost" }),
-          "absolute left-[-200px] top-14 hidden xl:inline-flex"
-        )}
-      >
-        <Icons.chevronLeft className="mr-2 h-4 w-4" />
-        See all posts
-      </Link>
-      <div>
-        {post.date && (
-          <time
-            dateTime={post.date}
-            className="block text-sm text-muted-foreground"
-          >
-            Published on {formatDate(post.date)}
-          </time>
-        )}
-        <h1 className="mt-2 inline-block font-heading text-4xl leading-tight lg:text-5xl">
-          {post.title}
-        </h1>
-        {authors?.length ? (
-          <div className="mt-4 flex space-x-4">
-            {authors.map((author) =>
-              author ? (
-                <Link
-                  key={author._id}
-                  href={`https://twitter.com/${author.twitter}`}
-                  className="flex items-center space-x-2 text-sm"
-                >
-                  <Image
-                    src={author.avatar}
-                    alt={author.title}
-                    width={42}
-                    height={42}
-                    className="rounded-full bg-white"
-                  />
-                  <div className="flex-1 text-left leading-tight">
-                    <p className="font-medium">{author.title}</p>
-                    <p className="text-[12px] text-muted-foreground">
-                      @{author.twitter}
-                    </p>
-                  </div>
-                </Link>
-              ) : null
-            )}
-          </div>
-        ) : null}
-      </div>
-      {post.image && (
-        <Image
-          src={post.image}
-          alt={post.title}
-          width={720}
-          height={405}
-          className="my-8 rounded-md border bg-muted transition-colors"
-          priority
-        />
-      )}
-      <Mdx code={post.body.code} />
-      <hr className="mt-12" />
-      <div className="flex justify-center py-6 lg:py-10">
-        <Link href="/blog" className={cn(buttonVariants({ variant: "ghost" }))}>
+      <article className="container relative max-w-3xl py-6 lg:py-10">
+        <Link
+          href="/blog"
+          className={cn(
+            buttonVariants({ variant: "ghost" }),
+            "absolute left-[-200px] top-14 hidden xl:inline-flex"
+          )}
+        >
           <Icons.chevronLeft className="mr-2 h-4 w-4" />
           See all posts
         </Link>
-      </div>
-      <div className="flex flex-col">
-          <textarea placeholder='input here' className="textarea-bordered textarea textarea-lg w-full max-w-xs flex-initial" ></textarea>
-          <button className="btn-outline btn mt-4 w-1/4 shrink">submit</button>
+        <div>
+          {post.date && (
+            <time
+              dateTime={post.date}
+              className="block text-sm text-muted-foreground"
+            >
+              Published on {formatDate(post.date)}
+            </time>
+          )}
+          <h1 className="mt-2 inline-block font-heading text-4xl leading-tight lg:text-5xl">
+            {post.title}
+          </h1>
+          {authors?.length ? (
+            <div className="mt-4 flex space-x-4">
+              {authors.map((author) =>
+                author ? (
+                  <Link
+                    key={author._id}
+                    href={`https://twitter.com/${author.twitter}`}
+                    className="flex items-center space-x-2 text-sm"
+                  >
+                    <Image
+                      src={author.avatar}
+                      alt={author.title}
+                      width={42}
+                      height={42}
+                      className="rounded-full bg-white"
+                    />
+                    <div className="flex-1 text-left leading-tight">
+                      <p className="font-medium">{author.title}</p>
+                      <p className="text-[12px] text-muted-foreground">
+                        @{author.twitter}
+                      </p>
+                    </div>
+                  </Link>
+                ) : null
+              )}
+            </div>
+          ) : null}
         </div>
-    </article>
+        {post.image && (
+          <Image
+            src={post.image}
+            alt={post.title}
+            width={720}
+            height={405}
+            className="my-8 rounded-md border bg-muted transition-colors"
+            priority
+          />
+        )}
+        <Mdx code={post.body.code} />
+        <hr className="mt-12" />
+        <div className="flex justify-center py-6 lg:py-10">
+          <Link href="/blog" className={cn(buttonVariants({ variant: "ghost" }))}>
+            <Icons.chevronLeft className="mr-2 h-4 w-4" />
+            See all posts
+          </Link>
+        </div>
+
+
+
+        <div className="flex flex-row grid gap-4 grid-cols-2">
+          <div className="flex flex-col ">
+            <textarea placeholder='input here' className="textarea-bordered textarea textarea-lg w-full max-w-xs flex-initial" ></textarea>
+            <button className="btn-outline btn mt-4 w-1/2 shrink">submit</button>
+          </div>
+          <div>
+            <div className="chat chat-start">
+              <div className="chat-bubble chat-bubble-primary">What kind of nonsense is this</div>
+            </div>
+            <div className="chat chat-start">
+              <div className="chat-bubble chat-bubble-secondary">Put me on the Council and not make me a Master!??1111111111111111111111111111</div>
+            </div>
+            <div className="chat chat-end">
+              <div className="chat-bubble chat-bubble-info">Calm down, Anakin.</div>
+            </div>
+          </div>
+        </div>
+
+      </article>
       <Script
         id="remove-Katex"
         dangerouslySetInnerHTML={{
