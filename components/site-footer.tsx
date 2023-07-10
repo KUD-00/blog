@@ -4,6 +4,7 @@ import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
 import { ModeToggle } from "@/components/mode-toggle"
+import { LocaleToggle } from "./locale-toggle"
 
 export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
   return (
@@ -42,7 +43,10 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
             .
           </p>
         </div>
-        <ModeToggle />
+        <div>
+          <ModeToggle />
+          <LocaleToggle />
+        </div>
       </div>
     </footer>
   )

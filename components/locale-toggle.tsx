@@ -1,9 +1,10 @@
-"use client"
+'use client'
 
 import * as React from "react"
-import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
+import { changeLang } from "@/locales"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,30 +13,24 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Icons } from "@/components/icons"
 
-export function ModeToggle() {
-  const { setTheme } = useTheme()
-
+export function LocaleToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 px-0 pr-2">
-          <Icons.sun className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
+          <Icons.languages className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Icons.moon className="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
+          <span className="sr-only">Toggle Locale</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
+        <DropdownMenuItem onClick={() => changeLang("cn")}>
           <Icons.sun className="mr-2 h-4 w-4" />
-          <span>Light</span>
+          <span>简体中文</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem onClick={() => changeLang("en")}>
           <Icons.moon className="mr-2 h-4 w-4" />
-          <span>Dark</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          <Icons.laptop className="mr-2 h-4 w-4" />
-          <span>System</span>
+          <span>English</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

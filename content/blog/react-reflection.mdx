@@ -1,0 +1,19 @@
+---
+title: "react反思"
+date: "2023-07-10"
+description: "oh no, its react"
+image: /images/blog/
+authors:
+  - KUD
+---
+
+2023-07-10:
+用next.js遇到的问题有
+- 搞不清楚server components和client components
+  - 有的组件use client之后就挂掉了，pnpm dev一片空白，chrome控制台报成百上千个水合错误
+  - 什么东西需要use client
+  - 说到底，为什么react不能有这样一个hook，他能够接受一个“有限状态”，并且以server components的模式SSR渲染
+  - use client的东西也出“Text content does not match server-rendered HTML“这种问题
+
+- typescript 写不明白
+  - 类型真的好魔幻

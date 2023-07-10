@@ -23,6 +23,7 @@ import {
   Twitter,
   User,
   X,
+  Languages,
   type Icon as LucideIcon,
 } from "lucide-react"
 
@@ -50,6 +51,7 @@ export const Icons = {
   sun: SunMedium,
   moon: Moon,
   laptop: Laptop,
+  languages: Languages,
   gitHub: ({ ...props }: LucideProps) => (
     <svg
       aria-hidden="true"
