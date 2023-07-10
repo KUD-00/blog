@@ -11,7 +11,8 @@ forked from taxonomy by shadcn
 * [x] 首页只加载 10 个 post
 * [x] latex support
   - 实现稍微不太好，有渲染后和渲染前的 latex 文字都显示的情况，现在是将其用 script 在页面加载完后执行去掉特定 class,但希望能从根本解决（但可能很困难，我对 taxonomy 代码理解的不多）(move to bugs)
-* [ ] blog 界面添加翻页功能
+* [x] blog 界面添加翻页功能
+* [ ] post-list is shit, need to refactor
 * [x] hint 做成和 post 一样的
   - 还可以改进改进
 * [ ] 添加 update_time 属性

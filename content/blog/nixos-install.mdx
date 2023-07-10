@@ -73,3 +73,21 @@ sudo nix-channel --update
 我有一次用了绝对路径，所以得到了impure的警告
 
 ---
+
+我们至少需要一个 nixpkgs 实例（每个系统）。问题是谁来持有它。
+
+如果你的 flake 除了 nixpkgs 没有其他依赖，使用其中之一并没有区别。问题出现在当 flake A 依赖于 flake B，并且两者都创建自己的 nixpkgs 实例时。规模扩大后，这将成为一个问题。
+
+如果你的所有 flakes 使用 nixpkgs.legacyPackages，并且它们都“跟随”同一个 nixpkgs flake，那么这是确保只使用一个 nixpkgs 实例的好方法
+
+---
+
+系统的回滚也变得非常简单，只需要切换到上一个 commit 即可：
+
+```shell
+git checkout HEAD^1
+```
+
+---
+
+NixOS 不遵循 FHS (File Hierachy System)标准，因此你从网上下载的二进制程序在 NixOS 上大概率是跑不了的。 为了在 NixOS 上跑这些非 NixOS 的二进制程序，需要做一些骚操作
