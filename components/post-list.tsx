@@ -14,7 +14,7 @@ const PostList = () => {
       return compareDesc(new Date(a.date), new Date(b.date))
     })
 
-  const [page, setPage] = React.useState<number>(1)
+  const [page, setPage] = React.useState<number>(0)
   const blogCount = 10
   const computedPage = Math.ceil(posts.length / blogCount)
   const postSlice = posts.slice(page * blogCount, page * blogCount + blogCount)

@@ -11,27 +11,29 @@ import { Icons } from "@/components/icons"
 import { allHints } from "contentlayer/generated"
 import { compareDesc } from "date-fns"
 import { formatDate } from "@/lib/utils"
+import Locale from "@/locales";
+import { useEffect } from "react";
 
 export default async function IndexPage() {
   const posts = allPosts
         .sort((a, b) => {
           return compareDesc(new Date(a.date), new Date(b.date))
         })
-        .slice(0, 10)
+        .slice(0, 5)
 
   const hints = allHints
         .sort((a, b) => {
           return compareDesc(new Date(a.date), new Date(b.date))
         })
-        .slice(0, 15)
-
+        .slice(0, 5)
+  
   return (
     <>
       <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10">
         <div className="container max-w-[64rem] flex-row gap-4 text-center md:flex">
           <div className="flex-initial flex-col md:w-2/3">
             <h2 className="mb-10 inline-block font-heading text-3xl leading-tight lg:text-4xl">
-              New Posts
+              {Locale.Blog.Title}
             </h2>
             {posts?.length ? (
               <div className="grid gap-10 sm:grid-cols-1">

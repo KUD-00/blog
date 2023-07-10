@@ -166,6 +166,10 @@ export default async function PostPage({ params }: PostPageProps) {
           See all posts
         </Link>
       </div>
+      <div className="flex flex-col">
+          <textarea placeholder='input here' className="flex-initial textarea textarea-bordered textarea-lg w-full max-w-xs" ></textarea>
+          <button className="mt-4 w-1/4 shrink btn btn-outline">submit</button>
+        </div>
     </article>
       <Script
         id="remove-Katex"
