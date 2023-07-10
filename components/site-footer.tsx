@@ -43,8 +43,10 @@ export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
             .
           </p>
         </div>
-        <ModeToggle />
-        <LocaleToggle />
+        <div>
+          <ModeToggle />
+          <LocaleToggle />
+        </div>
       </div>
     </footer>
   )
