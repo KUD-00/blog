@@ -167,6 +167,9 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
       </div>
       <div className="flex flex-col">
+          <h3 className="text-lg mb-4 flex-initial">
+            Comments
+          </h3>
           <textarea placeholder='input here' className="textarea-bordered textarea textarea-lg w-full max-w-xs flex-initial" ></textarea>
           <button className="btn-outline btn mt-4 w-1/4 shrink">submit</button>
         </div>
