@@ -12,7 +12,6 @@ import { allHints } from "contentlayer/generated"
 import { compareDesc } from "date-fns"
 import { formatDate } from "@/lib/utils"
 import Locale from "@/locales";
-import { useEffect } from "react";
 
 export default async function IndexPage() {
   const posts = allPosts
@@ -26,7 +25,7 @@ export default async function IndexPage() {
           return compareDesc(new Date(a.date), new Date(b.date))
         })
         .slice(0, 5)
-  
+
   return (
     <>
       <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10">

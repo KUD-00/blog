@@ -6,6 +6,7 @@ import { allPosts } from "contentlayer/generated"
 import { compareDesc } from "date-fns"
 import * as React from "react"
 import { formatDate } from "@/lib/utils"
+import Locale from "@/locales"
 
 const PostList = () => {
   const posts = allPosts
@@ -24,10 +25,10 @@ const PostList = () => {
       <div className="flex flex-col items-start gap-4 md:flex-row md:justify-between md:gap-8">
         <div className="flex-1 space-y-4">
           <h1 className="inline-block font-heading text-4xl tracking-tight lg:text-5xl">
-            Blog
+            {Locale.Blog.Title}
           </h1>
           <p className="text-xl text-muted-foreground">
-            生活琐事
+            {Locale.Blog.TitleDescriptionn}
           </p>
         </div>
       </div>

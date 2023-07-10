@@ -1,6 +1,7 @@
 const cn = {
   Blog: {
     Title: "博客",
+    TitleDescriptionn: "生活琐事",
   },
 };
 
