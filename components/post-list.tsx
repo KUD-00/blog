@@ -28,7 +28,7 @@ const PostList = () => {
             {Locale.Blog.Title}
           </h1>
           <p className="text-xl text-muted-foreground">
-            {Locale.Blog.TitleDescriptionn}
+            {Locale.Blog.TitleDescription}
           </p>
         </div>
       </div>
@@ -68,7 +68,7 @@ const PostList = () => {
       ) : (
         <p>No posts published.</p>
       )}
-      <div className="mt-10">
+      <div className="mt-10 grid justify-center">
         <div className="join">
           {Array.from({ length: computedPage }, (_, index) => {
             const handleClick = () => {
