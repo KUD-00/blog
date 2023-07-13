@@ -9,7 +9,7 @@ const cn = {
     System: "随系统变化",
   },
   Site: {
-    Name: "",
+    Name: "Kud的博客",
     Description: "",
     url: "",
     links: {

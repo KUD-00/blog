@@ -17,12 +17,14 @@ export type { LocaleType, RequiredLocaleType } from "./cn";
 export const AllLangs = [
   "en",
   "cn",
+  "jp",
 ] as const;
 export type Lang = (typeof AllLangs)[number];
 
 export const ALL_LANG_OPTIONS: Record<Lang, string> = {
   cn: "简体中文",
   en: "English",
+  jp:"日本語",
 };
 
 const LANG_KEY = "lang";
@@ -53,7 +55,6 @@ function getLanguage() {
 
 export function getLang(): Lang {
   const savedLang = getItem(LANG_KEY);
-  console.log(savedLang)
   if (AllLangs.includes((savedLang ?? "") as Lang)) {
     return savedLang as Lang;
   }
