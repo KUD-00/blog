@@ -10,13 +10,14 @@ const cn = {
   },
   Site: {
     Name: "Kud的博客",
-    Description: "",
+    Description: "所书即生活",
     url: "",
     links: {
       twitter: "https://twitter.com/KUD_LAIN",
       github: "https://github.com/KUD-00/blog",
     },
-  }
+  },
+
 };
 
 type DeepPartial<T> = T extends object

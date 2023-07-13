@@ -1,5 +1,6 @@
 import CN from "./cn";
 import EN from "./en";
+import JP from "./jp";
 
 
 function merge(target: any, source: any) {
@@ -24,24 +25,24 @@ export type Lang = (typeof AllLangs)[number];
 export const ALL_LANG_OPTIONS: Record<Lang, string> = {
   cn: "简体中文",
   en: "English",
-  jp:"日本語",
+  jp: "日本語",
 };
 
 const LANG_KEY = "lang";
 const DEFAULT_LANG = "en";
 
 function getItem(key: string) {
-    try {
-      return localStorage.getItem(key)
-    } catch {
-      return null
-    }
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
 }
 
 function setItem(key: string, value: string) {
   try {
     localStorage.setItem(key, value);
-  } catch {}
+  } catch { }
 }
 
 function getLanguage() {
@@ -73,6 +74,7 @@ export function getLocale(): typeof CN {
   const targetLang = {
     en: EN,
     cn: CN,
+    jp: JP,
   }[getLang()]; // 这里使用了 getLang 函数
 
   // if target lang missing some fields, it will use fallback lang string
@@ -90,6 +92,7 @@ const fallbackLang = EN;
 const targetLang = {
   en: EN,
   cn: CN,
+  jp: JP,
 }[getLang()] as typeof CN;
 
 // if target lang missing some fields, it will use fallback lang string

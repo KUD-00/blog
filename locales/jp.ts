@@ -1,25 +1,26 @@
 import { Darker_Grotesque } from "next/font/google";
 import { RequiredLocaleType } from "./index";
 
-const en: RequiredLocaleType = {
+const jp: RequiredLocaleType = {
   Blog: {
-    Title: "Blog",
-    TitleDescription: "full of blabla",
+    Title: "ブログ",
+    TitleDescription: "日常",
   },
   Settings: {
-    LightMode: "Light Mode",
-    DarkMode: "Dark Mode",
-    System: "System",
+    LightMode: "ライトモード",
+    DarkMode: "ダークモード",
+    System: "システム",
   },
   Site: {
-    Name: "Kud's Blog",
-    Description: "I write my life",
+    Name: "Kudのブログ",
+    Description: "生活記事",
     url: "",
     links: {
       twitter: "https://twitter.com/KUD_LAIN",
       github: "https://github.com/KUD-00/blog",
     },
-  }
+  },
+
 };
 
-export default en;
+export default jp;

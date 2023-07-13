@@ -1,3 +1,4 @@
+
 import { notFound } from "next/navigation"
 import Script from 'next/script';
 import { allAuthors, allPosts } from "contentlayer/generated"
@@ -8,11 +9,13 @@ import "@/styles/mdx.css"
 import { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
+import Locale from "@/locales"
 
 import { env } from "@/env.mjs"
 import { absoluteUrl, cn, formatDate } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
+
 
 interface PostPageProps {
   params: {
@@ -166,11 +169,10 @@ export default async function PostPage({ params }: PostPageProps) {
             See all posts
           </Link>
         </div>
-
         <div className="grid grid-cols-2 flex-row gap-4">
           <div className="flex flex-col">
             <textarea placeholder='input here' className="textarea-bordered textarea textarea-lg w-full max-w-xs flex-initial" ></textarea>
-            <button className="btn-outline btn mt-4 w-1/2 shrink">submit</button>
+            <button className="btn-outline btn mt-4 w-1/2 shrink">SUBMIT</button>
           </div>
           <div>
             <div className="chat chat-start">

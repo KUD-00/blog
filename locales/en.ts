@@ -19,7 +19,8 @@ const en: RequiredLocaleType = {
       twitter: "https://twitter.com/KUD_LAIN",
       github: "https://github.com/KUD-00/blog",
     },
-  }
+  },
+
 };
 
 export default en;
