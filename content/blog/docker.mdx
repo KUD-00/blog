@@ -50,3 +50,115 @@ Docker使用Unix Socket进行客户端和服务器（也就是Docker守护进程
 特权容器允许我们浏览底层主机，但当添加单独的能力或系统调用权限足够时，请不要养成使用特权容器的习惯
 
 Dockerfile中的每一行都会创建一个新的镜像层，并由Docker进行存储。该层包含所有由该命令引起的更改。这意味着当您构建新镜像时，Docker只需要构建与先前构建不同的层：您可以重用所有未更改的层。
+
+```Dockerfile
+FROM node:18.13.0
+
+ARG email="anna@example.com"
+LABEL "maintainer"=$email
+LABEL "rating"="Five Stars" "class"="First Class"
+
+USER root
+
+ENV AP /data/app
+ENV SCPATH /etc/supervisor/conf.d
+
+RUN apt-get -y update
+
+# The daemons
+RUN apt-get -y install supervisor
+RUN mkdir -p /var/log/supervisor
+
+# Supervisor Configuration
+COPY ./supervisord/conf.d/* $SCPATH/
+
+# Application Code
+COPY *.js* $AP/
+
+WORKDIR $AP
+
+RUN npm install
+
+CMD ["supervisord", "-n"]
+```
+
+<Callout>
+Supervisor 的配置文件应该包含了需要运行的应用或者服务的相关信息，比如在这个案例中，应该会包含如何运行 node.js 应用。
+</Callout>
+
+ARG参数提供了一种设置变量及其默认值的方式，这些变量仅在镜像构建过程中可用：
+
+ENV指令允许您设置用于配置正在运行的应用程序的shell变量，并且这些变量也可在构建过程中使用
+
+通过为镜像和容器添加LABEL，可以使用键/值对添加元数据，以便以后搜索和识别Docker镜像和容器。可以使用docker image inspect命令查看应用于任何image的LABLE
+
+默认情况下，Docker在容器内部以root身份运行所有进程，但可以使用USER指令来更改此设置
+
+尽管容器可以在一定程度上与底层操作系统隔离，但它们仍然运行在主机内核上。由于潜在的安全风险，生产环境中的容器几乎总是应该以非特权用户的身份运行。
+
+COPY指令用于将文件从本地文件系统复制到映像中。通常情况下，这将包括您的应用程序代码和任何所需的支持文件。由于COPY将文件复制到映像中，一旦映像被构建完成后就不再需要访问本地文件系统来访问它们
+
+WORKDIR指令，您可以更改镜像中剩余构建指令和任何生成容器时启动的默认进程所在的工作目录
+
+Dockerfile中命令的顺序对构建时间有很大影响。你应该尽量将每次构建都会改变的部分放在底部，这意味着添加代码和类似步骤应该推迟到最后。当重新构建镜像时，第一个引入更改之后的每个层都需要重新构建
+
+CMD指令来定义容器内要运行的进程命令
+
+容器中只运行一个进程是最佳实践。核心思想是容器应该提供单一功能，以便在架构中轻松水平扩展各个功能
+
+.dockerignore文件允许您定义不希望在构建镜像时上传到Docker主机的文件和目录
+
+使用supervisord来监视应用程序
+
+在构建命令的末尾，你会注意到一个句号。这表示构建上下文，告诉Docker应该上传哪些文件到服务器以便构建我们的镜像。在许多情况下，你只会看到一个句号作为构建命令的结尾，因为单个句号代表当前目录。这个构建上下文是由.dockerignore文件过滤的
+
+Docker假设Dockerfile位于当前目录中，但如果不是，则可以使用-f参数直接指向它。
+
+为了提高构建速度，Docker在认为安全的情况下会使用本地缓存。这有时可能会导致意外问题，因为它并不总是注意到较低层发生了变化。如果看到⇒ CACHED [2/8] RUN apt-get -y update，那么说明Docker决定使用缓存。你可以通过在docker image build命令中使用--no-cache参数来禁用构建缓存。
+
+```shell
+$ docker container run --rm -d -p 8080:8080 example/docker-node-hello:latest
+```
+
+这个命令告诉Docker从带有example/docker-node-hello:latest标签的镜像创建一个后台运行的容器，并将容器中的端口8080映射到Docker主机上的端口8080。如果一切顺利，新的Node.js应用程序应该在主机上以容器形式运行。
+
+change the arg by using --build-arg in rebuilding:
+
+```shell
+$ docker image build --build-arg email=me@example.com -t example/docker-node-hello:latest .
+```
+
+use go template like `docker container ls --format "table {{.ID}}\t{{.Image}}\t{{.Status}}"` to limit the output to the three fields you care about
+
+某些情况下，与使用别人创建的镜像相比，构建自己的基础镜像可能更可取。其中一个原因是在所有部署方法（硬件、虚拟机和容器）中保持一致的操作系统映象。另一个原因是大幅减小映象大小。例如，如果您的应用程序是静态构建的C或Go应用程序，则没有必要传输整个Ubuntu发行版。您可能会发现您只需要定期使用调试工具以及其他一些Shell命令和二进制文件即可
+
+两种方法之间的一个常见折中方案是使用Alpine Linux构建镜像，它被设计为非常小巧，并且作为Docker镜像的基础而广受欢迎。为了保持发行版尺寸非常小，Alpine Linux基于现代轻量级musl标准库，而不是传统的GNU C库（glibc）。一般来说，这并不是一个大问题，因为许多软件包都支持musl，但需要注意。它对基于Java的应用程序和DNS解析产生最大影响。然而由于其微小的镜像大小，在生产环境中被广泛使用。Alpine Linux在空间上进行了高度优化，这也是它默认安装/bin/sh而不是/bin/bash的原因。然而，在需要时您也可以在Alpine Linux上安装glibc和bash，并且在JVM容器中经常会这样做
+
+Public Registry: Docker Hub和Quay.io
+
+许多公司考虑的另一个选择是在内部托管某种类型的Docker镜像仓库，该仓库可以与Docker客户端交互，支持推送、拉取和搜索镜像。开源项目Distribution提供了大多数其他注册表所构建的基本功能。
+
+configure the Docker daemon to use a custom registry mirror or a pull-through image cache.
+
+Docker has written a dotfile for you in your home directory to cache this information. The permissions are set to 0600 as a security precaution against other users reading your credentials
+
+Docker客户端配置文件中的auth值仅进行了base64编码，而没有加密。这通常只在多用户Linux系统上是一个重要问题，因为没有默认的全局凭证管理器可供使用，并且系统上其他特权用户可能会读取您的Docker客户端配置文件并访问这些秘密信息。在Linux上可以配置gpg或pass来加密这些文件。
+
+本地构建镜像时，registry and repository名称可以任意设置。然而，在要上传图像到真正的registry时，需要与登录信息匹配。
+
+可以通过运行以下命令并将`${<myuser>}`替换为您的Docker Hub用户名来轻松编辑已创建的图像标签：
+```shell
+$ docker image tag example/docker-node-hello:latest \
+docker.io/${<myuser>}/docker-node-hello:latest
+
+$ docker image push ${<myuser>}/docker-node-hello:latest
+```
+
+`docker search` command to find images that might be useful.
+
+TODO: Running a Private Registry
+
+You can then use the container ID that you obtained from running the previous command to export the files in the container into a tarball, which can be easily examined:
+```shell
+$ docker container export ddc3f61f311b -o web-app.tar
+```
