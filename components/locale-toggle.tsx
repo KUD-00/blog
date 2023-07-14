@@ -32,6 +32,10 @@ export function LocaleToggle() {
           <Icons.moon className="mr-2 h-4 w-4" />
           <span>English</span>
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLang("jp")}>
+          <Icons.moon className="mr-2 h-4 w-4" />
+          <span>日本語</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -9,14 +9,15 @@ const cn = {
     System: "随系统变化",
   },
   Site: {
-    Name: "",
-    Description: "",
+    Name: "Kud的博客",
+    Description: "所书即生活",
     url: "",
     links: {
       twitter: "https://twitter.com/KUD_LAIN",
       github: "https://github.com/KUD-00/blog",
     },
-  }
+  },
+
 };
 
 type DeepPartial<T> = T extends object
