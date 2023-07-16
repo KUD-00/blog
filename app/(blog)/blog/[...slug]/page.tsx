@@ -172,10 +172,7 @@ export default async function PostPage({ params }: PostPageProps) {
             See all posts
           </Link>
         </div>
-          <Comment></Comment>
- 
-
-
+          <Comment postId={post.slug}></Comment>
       </article>
       <Script
         id="remove-Katex"
