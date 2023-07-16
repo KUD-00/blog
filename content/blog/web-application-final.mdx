@@ -7,15 +7,18 @@ authors:
   - KUD
 ---
 
+# Plan
+Liu & Xie: Basically do the frontend, including writing css and build the template(without logic) of components
+
+Wen & Qi: Basically do the logic and backend, including database, i18n support, and deploy to production
+
 # UI, UX
 “minimal” style
 
 ### User friendly
-- multi-lingual support
+- multi-lingual support(i18n)
 - dark/light mode support
 - responsive design
-
-Attractiveness: ?
 
 ---
 
@@ -28,18 +31,30 @@ Next.js 13 Framework:
 
 TailwindCSS: (responsive) css becomes easy
 
+Database: use sqlite to save the comments
+
+contentlayer: to parse the markdown file
+
 Vercel Deployment: access the production build, anywhere, for free
 
+We use GitHub for collaboration, you can find all commits and PRs there
+
 ---
 
-Code and error:
+# Code and error:
+- The comment is not working on deployment because we use sqlite now in development and it is not supported by vercel
+  - We will move to other database like vercel postgres or suspase
 - We have a hydration runtime error when implementing multi-lingual support ( not influence the production build, only occurred in development side )
-- We have a unique key warning
-
-all error and warning don't affect the production build
+  - the error and warning don't affect the production build
 
 ---
 
-Report
-Installation and usage:
-- Clone the project
+# The future
+
+- a search bar(easy)
+- change sqlite to other db(normal)
+- add animations, transitions to the site, by using tailwind CSS animations(normal)
+- refactor the code
+  - examine server/client components more carefully
+  - we do have some inconsistence because collaboration, and it affect the code quality
+- try more things in backed, maybe graphQL or something(hard)

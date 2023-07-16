@@ -64,9 +64,9 @@ export default function Comment(props: CommentPageProps) {
         {comments?.map((comment) => {
           return (
             <>
-              <div>
-                <span className="">{comment.name}</span>
-                <span className="text-left">{comment.createdAt.toString()}</span>
+              <div className="grid grid-cols-1 justify-items-center">
+                <span className="probe">{comment.name}</span>
+                <span className="probe">{comment.createdAt.toString()}</span>
                 <div className="card rounded-box grid h-20 place-items-center bg-base-300">{comment.content}</div>
                 <div className="divider"></div>
               </div>
