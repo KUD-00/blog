@@ -169,23 +169,30 @@ export default async function PostPage({ params }: PostPageProps) {
             See all posts
           </Link>
         </div>
-        <div className="grid grid-cols-2 flex-row gap-4">
-          <div className="flex flex-col">
-            <textarea placeholder='input here' className="textarea-bordered textarea textarea-lg w-full max-w-xs flex-initial" ></textarea>
-            <button className="btn-outline btn mt-4 w-1/2 shrink">SUBMIT</button>
+
+        <div className="flex flex-col">
+          <input type="text" placeholder="your name" className="input-bordered input mb-8 w-full max-w-xs" />
+          <textarea placeholder='input here' className="textarea-bordered textarea textarea-lg w-full max-w-xs flex-initial" ></textarea>
+          <button className="btn-outline btn mt-4 w-1/4 shrink">SUBMIT</button>
+        </div>
+
+        <div className="flex w-full flex-col">
+          <div className="divider"></div>
+          <div>
+            <span className="badge">Name</span>
+            <span className="badge text-left">7/16 13:00</span>
+            <div className="card rounded-box grid h-20 place-items-center bg-base-300">content</div>
+            <div className="divider"></div>
           </div>
           <div>
-            <div className="chat chat-start">
-              <div className="chat-bubble chat-bubble-primary">What kind of nonsense is this</div>
-            </div>
-            <div className="chat chat-start">
-              <div className="chat-bubble chat-bubble-secondary">Put me on the Council and not make me a Master!??1111111111111111111111111111</div>
-            </div>
-            <div className="chat chat-end">
-              <div className="chat-bubble chat-bubble-info">Calm down, Anakin.</div>
-            </div>
+            <span className="badge">Name</span>
+            <span className="badge text-left">7/16 13:00</span>
+            <div className="card rounded-box grid h-20 place-items-center bg-base-300">content</div>
+            <div className="divider"></div>
           </div>
+
         </div>
+
 
       </article>
       <Script
