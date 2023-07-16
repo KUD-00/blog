@@ -15,6 +15,7 @@ import { env } from "@/env.mjs"
 import { absoluteUrl, cn, formatDate } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
+import Comment from "@/components/comment"
 
 
 interface PostPageProps {
@@ -98,6 +99,8 @@ export default async function PostPage({ params }: PostPageProps) {
     allAuthors.find(({ slug }) => slug === `/authors/${author}`)
   )
 
+  const onComment = () => {}
+
   return (
     <>
       <article className="container relative max-w-3xl py-6 lg:py-10">
@@ -169,29 +172,8 @@ export default async function PostPage({ params }: PostPageProps) {
             See all posts
           </Link>
         </div>
-
-        <div className="flex flex-col">
-          <input type="text" placeholder="your name" className="input-bordered input mb-8 w-full max-w-xs" />
-          <textarea placeholder='input here' className="textarea-bordered textarea textarea-lg w-full max-w-xs flex-initial" ></textarea>
-          <button className="btn-outline btn mt-4 w-1/4 shrink">SUBMIT</button>
-        </div>
-
-        <div className="flex w-full flex-col">
-          <div className="divider"></div>
-          <div>
-            <span className="badge">Name</span>
-            <span className="badge text-left">7/16 13:00</span>
-            <div className="card rounded-box grid h-20 place-items-center bg-base-300">content</div>
-            <div className="divider"></div>
-          </div>
-          <div>
-            <span className="badge">Name</span>
-            <span className="badge text-left">7/16 13:00</span>
-            <div className="card rounded-box grid h-20 place-items-center bg-base-300">content</div>
-            <div className="divider"></div>
-          </div>
-
-        </div>
+          <Comment></Comment>
+ 
 
 
       </article>

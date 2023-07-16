@@ -1,0 +1,8 @@
+-- CreateTable
+CREATE TABLE "comments" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "blog" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
