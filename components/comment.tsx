@@ -23,10 +23,11 @@ export default function Comment(props: CommentPageProps) {
   const onComment = async () => {
     const payload = {
         name: nameRef.current?.value,
-        comment: commentRef.current?.value,
+        content: commentRef.current?.value,
         blog: props.postId,
     }
-    const response = await fetch('/api/comment', {
+    console.log(payload)
+    const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,7 +38,7 @@ export default function Comment(props: CommentPageProps) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch('/api/comment', {
+      const response = await fetch('/api/comments', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
