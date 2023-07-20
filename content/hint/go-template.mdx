@@ -1,0 +1,18 @@
+---
+title: go template
+date: "2023-07-12"
+---
+
+Go 模板（Go template）是 Go 语言的一部分。Go 模板设计为可以由开发人员进行扩展，并能够程序化地向模板引擎传递数据对象和附加功能
+
+```text
+It can {{ "output" }} something.
+It also
+{{- " demonstrates" }} trim markers.
+{{/* it has a comment */}}
+It can {{ "output" }} something.
+It can demonstrate {{ "output" | print }} using pipelines.
+It also {{ $A := "assigns variables" }}{{ $A }}.
+And conditionals:
+{{ $B := 2 }}{{ if eq $B 1 }}B is 1{{ else }}B is 2{{ end }}
+```

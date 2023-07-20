@@ -1,0 +1,15 @@
+---
+title: JWT是？
+date: "2023-07-14"
+---
+JavaScript Web Tokens（JWT）是一种用于安全地传输信息的开放标准（RFC 7519）。这种信息可以在两个方之间安全地传输，并且因为信息被签名，所以能验证信息的发送者和防止数据被篡改。
+
+JWT主要由三部分组成：Header（头部）、Payload（载荷）和Signature（签名）。它们以点（.）分隔，形如 xxxxx.yyyyy.zzzzz。
+
+Header：头部通常包含两部分：token类型（即JWT）和采用的加密算法。
+
+Payload：载荷是存放有效信息的地方，这些信息叫做claims（声明）。声明是关于实体（通常是用户）和其他数据的一些事实。根据数据的类型，claims可分为三种：registered（注册的）、public（公共的）和private（私有的）。
+
+Signature：签名是对头部和载荷信息进行加密的部分，确保了这个token的完整性和可信任性。
+
+JWTs常用于认证和授权。用户登录后，服务器创建一个包含用户信息的JWT，并返回给用户。然后，用户可以使用这个token来验证自己的身份，或者获取权限。

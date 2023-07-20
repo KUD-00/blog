@@ -2,6 +2,7 @@ import { Darker_Grotesque } from "next/font/google";
 import { RequiredLocaleType } from "./index";
 
 const jp: RequiredLocaleType = {
+  LANG: "jp",
   Blog: {
     Title: "ブログ",
     TitleDescription: "日常",
@@ -10,6 +11,12 @@ const jp: RequiredLocaleType = {
     LightMode: "ライトモード",
     DarkMode: "ダークモード",
     System: "システム",
+  },
+  Navigation: {
+    Blog: "ブログ",
+    Hint: "短文",
+    About: "私ついて",
+    Project: "プロジェクト",
   },
   Site: {
     Name: "Kudのブログ",

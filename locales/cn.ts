@@ -1,4 +1,5 @@
 const cn = {
+  LANG: "cn",
   Blog: {
     Title: "博客",
     TitleDescription: "生活琐事",
@@ -7,6 +8,12 @@ const cn = {
     LightMode: "亮色模式",
     DarkMode: "暗色模式",
     System: "随系统变化",
+  },
+  Navigation: {
+    Blog: "博客",
+    Hint: "短文",
+    About: "关于我",
+    Project: "项目",
   },
   Site: {
     Name: "Kud的博客",

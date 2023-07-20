@@ -221,3 +221,117 @@ PCI-DSS代表《支付卡行业数据安全标准》（Payment Card Industry Dat
 记录所有在请求中发送的无效输入参数
 
 这些可能揭示后端应用程序中存在需要调查的弱点。另一方面，通过请求日志还可以帮助您确定应用程序最常被谁使用以及什么时间段。当您拥有这些信息时，就可以建议何时增加或缩减资源。
+
+CI/CD为我们提供了一种自动化方式来快速、稳定地将代码更改传递给用户、质量保证（QA）测试人员和其他相关方。
+
+部署流水线是一组可重复、自动化的步骤，每当代码被推送到分支时就会执行。这样可以确保在部署过程中没有任何步骤被跳过，因为有人忘记做某事或者因为他们匆忙。
+
+构建 → 测试 → 部署到功能分支 → 测试 → 部署到预发布环境 → 测试 → 部署到生产环境
+
+QA环境
+
+这是手动测试人员检查新功能或错误修复是否通过开发者初步测试并寻找代码更改引起的任何意外回归问题。
+
+Staging环境
+
+这是集成测试发生的地方。如果你一直在处理一个特性史诗或需要合并在一起以获得准确交互情况描述的较小项，那些单独项目将经过QA测试后传递到此级别。在应用程序进入用户之前，您将能够看到第三方服务如何与应用程序配合工作。
+这是除了生产环境之外最重要的环境，因为它是在上线之前捕捉问题的最后机会。这个环境应该尽可能地与生产环境相似。这意味着它应该具有类似或者相同的数据，使用与生产环境相同的所有服务，并且触发与生产环境类似的警告和错误。拥有一个良好的预发布环境将帮助整个团队找到并调试出现的任何问题，而不会影响用户。
+
+生产环境
+
+用户将与之交互的环境。如果可以避免，在生产中不要进行任何测试。当您部署到生产时，更改应经过多轮自动化测试和手动测试。这样您和团队就可以放心地部署，而不用担心回归和漏洞问题。
+
+有许多工具可以用来设置部署流水线，包括CircleCI、Jenkins和GitHub Actions。不同的云服务提供商也有特定的工具，如Azure、GCP和AWS。
+
+首先，您需要在版本控制系统中创建不同的分支来表示不同的环境。它们可以被命名为任何你喜欢的名称。然后，您将编写一个配置文件，在合并新代码到分支时触发各种部署过程
+
+```CI
+version: 2.1
+jobs:
+  unit-tests:
+    docker:
+      - image: cimg/node:14.20.0
+    steps:
+      - checkout
+      - run:
+          name: "install dependencies"
+          command: yarn
+      - run:
+          name: "run project unit tests"
+          command: yarn redwood test
+  sast:
+    docker:
+      - image: cimg/node:14:20.0
+    steps:
+      - checkout
+      - run:
+          name: "install dependencies"
+          command: yarn
+      - run:
+          name: "execute retire.js"
+          command: cd web; retire --path web
+  build-app:
+    docker:
+      - image: cimg/node:14.20.0
+    steps:
+      - checkout
+      - run:
+          name: "install dependencies"
+          command: yarn
+      - run:
+          name: "build deploy artifact"
+          command: yarn redwood build
+  deploy-qa:
+    docker:
+      - image: cimg/node:17.1.0
+    steps:
+      - checkout
+      - run:
+          name: "deploy to QA env"
+          command: echo "Deployed to QA environment with AWS S3 bucket magic or Azure container magic"
+  dast:
+    docker:
+      - image: cimg/go:1.19.0
+    steps:
+      - checkout
+      - run: go version
+      - run:
+          name: "install nuclei-cli"
+          command: go install -v github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+      - run:
+          name: "Nuclei scan on QA"
+          command: nuclei -u https://flippedcoding.com
+
+workflows:
+  deploy-to-qa:
+    jobs:
+      - unit-tests
+      - sast
+      - build-app
+      - deploy-qa
+      - dast
+```
+
+监控是一个非常广泛的主题，并且与日志记录有些重叠
+
+在使用第三方系统时，你需要关注的主要是可用性和延迟。这些指标可以告诉你服务是否出现错误或超时。如果你使用云提供商来托管应用程序，可以查看提供商的健康仪表盘，了解是否有异常情况发生。例如，在AWS中观察图形或查看工作队列中的列表。
+
+网站可靠性工程师通常是开发人员，他们了解如何在操作层面上自动化各个工程团队对生产环境进行代码部署。他们编写脚本并使用工具来扩展资源。他们关注延迟和紧急响应流程，以及代码配置、不同环境的部署和监控。
+
+SRE听起来可能很像DevOps。实际上，它们可以很好地协同工作。DevOps主要关注根据开发人员的需求保持部署流水线清晰和最新，而SRE更专注于构建自动化来解决底层操作问题。
+
+由于SRE与任何特定的开发团队分离，他们专注于可能影响整个工程部门的高级问题。他们还学习所有项目的运作方式以及它们与不同服务之间的连接方式，因此对整体情况有独特的视角
+
+他们将应用程序容器化。将应用程序封装在容器中可以增加其可靠性，因为它们部署到不同的环境中。
+
+他们为所有项目编写文档，说明它们与各自服务的交互方式。这些文档与开发团队维护的文档不同，因为它们关注的是一组不同的知识。
+
+他们根据服务级别协议（SLAs）决定可以启动哪些功能，该协议是与用户达成的，并指定了所需的可靠性水平。
+
+他们帮助找出支持问题的根本原因。
+
+他们创建工具来帮助使项目更加一致。如果数据库或云提供商服务有重大升级可能导致停机时间，他们会帮助管理这些变更。
+
+及时向支持团队更新信息。他们是与用户进行接触的人员，在需要向某人报告答案时不要撇下他们。
+
+如果你没有独立的支持团队，那通常意味着工程部门将处理用户问题

@@ -1,21 +1,22 @@
 import { MarketingConfig } from "types"
+import Locale from "@/locales"
 
 export const marketingConfig: MarketingConfig = {
   mainNav: [
     {
-      title: "Blog",
+      title: Locale.Navigation.Blog,
       href: "/blog",
     },
     {
-      title: "Hint",
+      title: Locale.Navigation.Hint,
       href: "/hint",
     },
     {
-      title: "About Me",
+      title: Locale.Navigation.About,
       href: "/blog/about",
     },
     {
-      title: "Project",
+      title: Locale.Navigation.Project,
       href: "/project",
     },
   ],
