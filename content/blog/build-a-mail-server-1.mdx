@@ -1,0 +1,49 @@
+---
+title: 搭建邮件服务器的失败尝试1
+date: "2023-07-20"
+description: more junk mail provider
+image: /images/blog/bored-to-death-1.jpg
+authors:
+  - KUD
+---
+
+<Callout>
+本文根据我和chatgpt的对话生成
+</Callout>
+
+创建A record将服务器ip指向mail.example.com
+
+创建MX record将邮件地址user@mail.example.com指向mail.example.com，然后会根据上面的A record指向服务器
+
+优先级：如果你只有一个邮件服务器，这个可以设置为 10 或者 0。如果你有多个邮件服务器，那么你需要为它们设置不同的优先级。数字越小，优先级越高
+
+如果你的邮件服务器需要验证域名所有权，可能还需要设置 SPF (Sender Policy Framework)、DKIM (DomainKeys Identified Mail) 或 DMARC (Domain-based Message Authentication, Reporting & Conformance) 记录
+- DKIM 记录：TXT记录，它让其他邮件服务器确认从你的域名发送的邮件是否真的来自你的服务器，有助于防止伪造邮件
+- SPF 记录：TXT记录，用于指定哪些服务器被允许发送你的域名的邮件
+- DMARC 记录：DMARC 是一种基于 DKIM 和 SPF 的邮件验证系统，它给接收邮件的服务器提供了如何处理未能通过 DKIM 或 SPF 验证的邮件的策略
+
+这个错误信息表明你的邮件服务器尝试连接到 "gmail.com" 的邮件服务器（在这个例子中是 "gmail-smtp-in.l.google.com"），但是连接超时了。"os error 110" 通常意味着你的服务器在等待远程主机（在这种情况下是 Gmail 的服务器）的响应时超时了。
+
+电子邮件服务提供商如 Gmail 维护着一些复杂的机制，用于防止垃圾邮件和欺诈邮件。这些包括 IP 地址黑名单，SPF，DKIM，和 DMARC 等验证机制。如果你的邮件服务器被标记为发送垃圾邮件，或者不满足这些验证机制，Gmail 可能会拒绝来自你服务器的连接或邮件。
+
+然而，通常情况下，如果 Gmail 拒绝了一封邮件，它会给出一个明确的错误消息，而不是仅仅让连接超时。而在你给出的日志信息中，错误表明的是 "Connection timed out"，这更像是一个网络问题，而不是被 Gmail 显式拒绝。
+
+使用 telnet 或 nc (netcat) 命令：你可以尝试从你的服务器上连接到 Gmail 的 SMTP 服务器来看是否有防火墙在阻止连接。以下是一个例子：
+
+```shell
+telnet gmail-smtp-in.l.google.com 25
+```
+
+DigitalOcean 对于新账户确实默认阻止了25端口以防止垃圾邮件和其他滥用行为，这是一种普遍的网络服务供应商的做法
+
+如果 DigitalOcean 阻止了你的账户上的25端口，那么在你的 Ubuntu 服务器上修改 ufw 防火墙规则是无法解除这个限制的。这是因为这个限制是在你的 VPS（虚拟私有服务器，也就是你的 Droplet）和 Internet 之间的网络层面设置的，而不是在你的服务器的操作系统层面
+
+换句话说，尽管你的服务器允许流量通过25端口，但是在这个流量到达 Internet 之前，DigitalOcean 的网络设备已经将其阻止了
+
+SMTP（简单邮件传输协议）在邮件发送中主要扮演两个角色：MTA（邮件传输代理）和MSA（邮件提交代理）。
+- MTA的作用是邮件的发送和中继，也就是说，邮件服务器使用SMTP协议在邮件服务器之间发送和接收邮件。这通常发生在25端口，但也可能在其他端口（如2525端口）。
+- MSA的作用是接收来自邮件客户端（如Outlook或Thunderbird）的邮件，然后将其发送给MTA进行处理。这通常发生在587端口，该端口用于启动TLS（传输层安全协议）的邮件发送。
+
+按照惯例，邮件服务器会尝试在端口25上与另一个邮件服务器进行通信，这是 SMTP 协议（Simple Mail Transfer Protocol，简单邮件传输协议）的标准端口
+
+即使你的服务器在端口587上接收邮件，如果其他邮件服务器不知道这一点，他们也不会在这个端口上发送邮件。所以，虽然在非标准端口上接收邮件可能在某些情况下是可行的，但这并不是一个理想的解决方案，因为它可能会导致一些兼容性问题。如果可能的话，最好还是使用标准的25端口接收邮件。

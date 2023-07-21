@@ -1,0 +1,21 @@
+---
+title: linux上跑osx虚拟机！
+description: 还是忘不了苹果
+image: /images/blog/taro-girl.jpg
+date: "2023-07-21"
+authors:
+  - KUD
+---
+
+```shell
+sudo docker run -it
+--device /dev/kvm
+-p 50922:10022
+-v /tmp/.X11-unix:/tmp/.X11-unix
+-e "DISPLAY=${DISPLAY:-:0.0}"
+-e GENERATE_UNIQUE=true
+-e RAM=16
+-e EXTRA='-smp 16,sockets=8,cores=2'
+-e MASTER_PLIST_URL='https://raw.githubusercontent.com/sickcodes/osx-serial-generator/master/config-custom.plist'
+sickcodes/docker-osx:ventura
+```

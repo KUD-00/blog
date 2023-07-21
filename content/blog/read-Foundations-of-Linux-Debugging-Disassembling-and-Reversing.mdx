@@ -1,0 +1,86 @@
+---
+title: "读 Foundations of Linux Debugging, Disassembling, and Reversing"
+date: "2023-07-21"
+description: ""
+image: /images/blog/girl-fashion-dress.jpg
+authors:
+  - KUD
+---
+
+- %RAX：这是一个 64 位寄存器，是 %EAX 的扩展。在一些指令中，如函数返回值的返回，通常使用 %RAX。
+- %RDX：这也是一个 64 位寄存器，是 %EDX 的扩展。在一些需要两个寄存器的操作中，如乘法和除法，%RDX 通常被用作第二个操作数。例如，在乘法操作中，%RAX 和 %RDX 一起构成了一个 128 位的操作数。
+- %EAX：这是一个 32 位寄存器，是 %AX 的扩展，而 %AX 又是 %AL 和 %AH 的组合。在一些指令中，如函数返回值的返回，通常使用 %EAX。
+- %EDX：这是一个 32 位寄存器，是 %DX 的扩展，而 %DX 又是 %DL 和 %DH 的组合。在一些需要两个寄存器的操作中，如乘法和除法，%EDX 通常被用作第二个操作数。例如，在除法操作中，%EDX 通常被用来存储余数。
+
+x86 架构中，“扩展”通常指的是寄存器增加了位数。在 64 位 x86 架构（也称为 x86-64 或者 AMD64）中，一些原本 32 位的寄存器被“扩展”为 64 位。
+
+这就是说，%RAX 是 %EAX 的 64 位版本。这种情况下，如果你只查看 %RAX 的低 32 位，你会看到和 %EAX 相同的值。这是因为 %EAX 本质上是 %RAX 的一部分，%EAX 对应 %RAX 的低 32 位。
+
+在指令级别上，你可以选择使用 %RAX 或 %EAX，这取决于你需要操作的数据宽度。如果你在操作 32 位整数，你可能会使用 %EAX；而如果你在操作 64 位整数，你则会使用 %RAX。
+
+尽管 %RAX 和 %EAX 的功能基本相同（它们都用来保存整数数据），但它们的使用场景会因数据宽度的需求而有所不同。一般来说，如果你的程序运行在 64 位操作系统上，那么更常见的是使用 %RAX，因为这可以更有效地利用 64 位架构的优势。
+
+注意使用movl指令而不是mov指令。这是因为“a”和“b”可以指向32位（如%EAX或%EDX寄存器）和64位内存单元（如%RAX和%RDX寄存器）。在寄存器的情况下，从它们的名称中可以清楚地知道我们使用64位的%RAX还是32位的%EAX。但对于内存地址“a”和“b”，是否引用64位或32位单元并不清楚。我们使用movl来消除歧义，并显示我们使用足够容纳0到4294967295之间整数的32位内存单元。
+
+0x2ef2(%rip) 是编译器生成代码以计算地址“a”的方式，而不是直接指定它。这样的代码需要更少的内存空间。我们将在后面章节中解释这一点。
+
+字面常量具有$前缀，例如$0x1. 0x前缀表示以下数字为十六进制。注释中也省略了地址开头四个零
+
+反汇编输出和伪代码中，移动方向相同：从左到右。
+
+汇编语言通常并不直接使用变量名，而是使用内存地址。这就是为什么在 GDB（一种调试工具）的反汇编输出中，你会看到这样的指令：movl $0x1,0x2ef2(%rip)。在这个指令中，movl 是指令的名字，$0x1 是立即数，0x2ef2(%rip) 是一个相对地址。这个地址的计算方法是当前指令的地址加上 %rip 寄存器的值和 0x2ef2。在注释中，你可以看到这个地址实际上对应的是变量 a 的地址。
+
+在汇编语言中，我们使用ADD指令。由于AMD64和Intel EM64T架构的限制，在一个步骤（指令）中不能同时使用两个内存地址，例如add a, b。我们只能使用add register, b指令将寄存器中存储的值与内存单元b的内容相加。请记住，在这里寄存器本身就像是一个临时内存单元
+
+```assembly
+mov a , %eax
+add %eax , b
+
+// GDB
+mov    0x2ee6(%rip),%edx        # 0x555555558030 <b>
+mov    0x2edc(%rip),%eax        # 0x55555555802c <a>
+add    %edx,%eax
+mov    %eax,0x2ed8(%rip)        # 0x555555558030 <b>
+```
+
+使用指令INC和DEC，并写成
+```assembly
+incl a
+inc %eax
+decl a
+dec %eax
+```
+
+当我们需要指定32位内存单元时，我们使用incl。当我们使用“a”时会产生歧义。然而，使用%eax意味着使用32位值，所以inc是无歧义的。
+
+we use instruction IMUL (Integer MULtiply) and write
+```assembly
+mov  a, %eax
+imul b, %eax
+mov  %eax, b
+```
+The multiplication instruction means (b) * %eax -> %eax, and we must put the contents of “a” into %EAX. The multiplication result is put into the register %EAX, and its contents are saved at the location (address) “b.” Alternatively, we may put all multiplication operands into registers:
+```assembly
+mov  a, %eax
+mov  b, %edx
+imul %edx, %eax
+mov  %eax, b
+```
+In the GDB disassembly output, we may see the following code:
+```assembly
+mov    0x2ec3(%rip),%edx        # 0x555555558030 <b>
+mov    0x2eb9(%rip),%eax        # 0x55555555802c <a>
+imul   %edx,%eax
+mov    %eax,0x2eb4(%rip)        # 0x555555558030 <b>
+```
+
+当代码以优化模式进行编译时，编译器可以从简单的C/C++源代码中计算出最终结果，并生成只更新相应内存位置所需的代码: `gcc ArithmeticProjectC.cpp -O1 -o ArithmeticProjectC`
+
+地址总是占据64位内存单元或完整的64位寄存器，例如%RAX或%RBX（它们无法适应%EAX或%EBX或32位内存在）。
+
+```assembly
+lea   a, %rax        # 将地址"a"加载到%rax寄存器中
+movl  $1, (%rax)     # 使用%rax作为指针
+```
+
+同样地，在x64 Linux上看到了movl而不是mov，因为整数占据32位的内存单元，并且我们只想访问32位的内存单元。这就是x64 Linux上情况：包含整数的内存单元大小是包含地址的内存单元大小的一半（32位 vs. 64位）。
