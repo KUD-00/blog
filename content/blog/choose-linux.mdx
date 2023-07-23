@@ -1,0 +1,47 @@
+---
+title: "选择你的发行版"
+date: "2023-07-22"
+description: "distro!"
+image: /images/blog/pupa-girl.jpg
+authors:
+  - KUD
+---
+
+数据结构：
+```typescript
+const debian = {
+    name: "Debian",
+    base: ""
+    trait: {
+      rollingUpdate: false
+    }
+};
+
+const mxLinux = {
+    name: "MX Linux",
+    base: debian.name
+    trait: {
+      rollingUpdate: false
+    }
+};
+
+const distros = {
+    "debian": debian,
+    "mx-linux": mxLinux
+};
+```
+
+问题
+```typescript
+const isRollingUpdate = {
+  question: "Would you like to use a rolling-update package management system?"
+  description: "lot of things here"
+  answer: [
+    { 
+      description: "yes", 
+      handler: (distros) => {distros.filter((distro) => {distro.trait.rollingUpdate})}
+    },
+    {},
+    {},
+  ]
+```

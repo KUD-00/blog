@@ -38,7 +38,7 @@ const PostList = () => {
           {postSlice.map((post, index) => (
             <article
               key={post._id}
-              className="group relative flex flex-col space-y-2"
+              className="group relative flex flex-col space-y-2 transition delay-150 ease-in-out hover:-translate-y-1 hover:scale-110"
             >
               {post.image && (
                 <Image

@@ -7,18 +7,48 @@ authors:
   - KUD
 ---
 
-# Plan
+# Introduction
+
+We want to build a blog site, that can parse the markdown file to generate the static website.
+
+Also, we want to try the new technologies about web development.
+
+We built this on the basis of shadcn/taxonomy
+
+---
+
+# Work distribution
 Liu & Xie: Basically do the frontend, including writing css and build the template(without logic) of components
 
 Wen & Qi: Basically do the logic and backend, including database, i18n support, and deploy to production
 
+---
+
+# Installation and usage
+you can access the production build on https://blog.rughzenhaide.com
+
+### run on your own pc
+prerequisites: better use pnpm than npm, we didn't try npm recently.
+
+repo url: https://github.com/KUD-00/blog
+
+- git clone
+- pnpm install
+- pnpm dev
+
+then access localhost:3010(pay attention that is 3010 not 3000)
+
+(we will put an tarball in the submitted zip file)
+
+---
+
 # UI, UX
-“minimal” style
+“minimal” style: simple and decent
 
 ### User friendly
 - multi-lingual support(i18n)
 - dark/light mode support
-- responsive design
+- responsive design(for different devices)
 
 ---
 
@@ -26,12 +56,11 @@ Wen & Qi: Basically do the logic and backend, including database, i18n support, 
 
 Typescript: for type-safe
 
-Next.js 13 Framework:
-- using server components as default made its really fast
+Next.js 13: using server components as default made it really fast
 
-TailwindCSS: (responsive) css becomes easy
+TailwindCSS & daisyUI: css becomes easy
 
-Database: use sqlite to save the comments
+// Database: use sqlite to save the comments (not working now)
 
 contentlayer: to parse the markdown file
 
@@ -43,7 +72,7 @@ We use GitHub for collaboration, you can find all commits and PRs there
 
 # Code and error:
 - The comment is not working on deployment because we use sqlite now in development and it is not supported by vercel
-  - We will move to other database like vercel postgres or suspase
+  - We will move to other database like vercel postgres
 - We have a hydration runtime error when implementing multi-lingual support ( not influence the production build, only occurred in development side )
   - the error and warning don't affect the production build
 
@@ -53,8 +82,8 @@ We use GitHub for collaboration, you can find all commits and PRs there
 
 - a search bar(easy)
 - change sqlite to other db(normal)
-- add animations, transitions to the site, by using tailwind CSS animations(normal)
+- add animations, transitions to the site, by using tailwind CSS animations(done)
 - refactor the code
   - examine server/client components more carefully
   - we do have some inconsistence because collaboration, and it affect the code quality
-- try more things in backed, maybe graphQL or something(hard)
+- try more things in backend, maybe graphQL or something(hard)
