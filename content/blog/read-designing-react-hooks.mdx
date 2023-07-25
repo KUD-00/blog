@@ -1,0 +1,75 @@
+---
+title: "读 designing react hooks"
+date: "2023-07-25"
+description: ""
+image: /images/blog/penguin-arknights.jpg
+authors:
+  - KUD
+---
+
+Angular 是一个用于开发单页应用（SPA）的 Web 框架。它由 Google 在 2010 年发明。当时它非常革命性，因为你可以使用它构建前端应用程序。这意味着在 Angular 中编写的代码可以在运行时接管 HTML 的主体，并对其中的所有元素应用逻辑。所有代码都在浏览器级别运行
+
+```html
+<body>
+  <div ng-app="myApp" ng-controller="myCtrl">
+    <p>Name: <input type="text" ng-model="name" /></p>
+  </div>
+  <script>
+    var app = angular.module('myApp', []);
+    app.controller('myCtrl', function($scope) {
+      $scope.name= "John";
+    });
+  </script>
+</body>
+```
+
+`<div ng-app="myApp" ng-controller="myCtrl">` 这行定义了一个 AngularJS 应用，并指定了这个应用的控制器为 "myCtrl"。
+
+ng-model="name" 这个指令将 input 元素的值和 "name" 变量进行了双向绑定，也就是说当 input 元素的值改变时，"name" 变量的值也会相应地改变；反过来，当 "name" 变量的值改变时，input 元素的值也会相应地改变。
+
+angular.module('myApp', []) 这行 JavaScript 代码创建了一个名为 "myApp" 的新 AngularJS 应用。
+
+`app.controller('myCtrl', function($scope) {...` 这行 JavaScript 代码定义了一个新的控制器 "myCtrl"。控制器是 AngularJS 中用于控制 AngularJS 应用的 JavaScript 对象。
+
+`$scope.name = "John"` 这行 JavaScript 代码设置了 "name" 变量的初始值为 "John"。`$scope` 是应用在 HTML（视图）和 JavaScript（控制器）之间的桥梁。
+
+---
+
+使用 React 后，JavaScript 成为了 Web 开发的重点。
+
+---
+
+Polymer 是由 Google 开发并于 2015 年发布的，旨在使用 Web 组件构建 Web 应用程序。2018 年，Polymer 团队宣布将所有未来的开发工作转移到 LitElement 上，以创建快速且轻量级的 Web 组件
+
+React 和 LitElement 之间有很多相似之处，因为它们都允许你使用 render 函数定义类组件。但是 LitElement 的独特之处在于一旦元素被注册
+
+在将 LitElement 集成到 HTML 中时，没有明显的入口点，因为它不需要在使用之前控制 body 元素。我们可以在其他地方设计该元素，在使用时更像是使用 h1 元素。因此，它完美地保留了 HTML 文件的完整性，同时将额外的功能外包给了自定义元素，这些自定义元素可以由他人设计。
+
+LitElement 的目标是使 Web 组件能够在任何框架内的任何网页中工作。
+
+```javascript
+@customElement('my-element')
+export class MyElement extends LitElement {
+  render() {
+    return html`
+      <h1>Hello, ${this.name}!</h1>
+      <button @click=${this._onClick}>
+      Click Count: ${this.count}
+      <button>
+      <slot></slot>
+   `;
+}
+```
+`@customElement('my-element')`：这是一个装饰器，它告诉浏览器这个类是一个自定义元素，元素的名称是 'my-element'。当这个元素被添加到 DOM 中时，它将实例化这个类。
+
+`export class MyElement extends LitElement`: 这是一个类定义，它表示 MyElement 是一个从 LitElement 继承的自定义元素。
+
+render()：这是 LitElement 中的一个重要方法，当元素需要更新时，这个方法会被调用。这个方法返回一个模板，描述了元素的 UI。
+
+return html``;：这是一个模板，它使用了 JavaScript 的标签模板字符串。html 是 Lit 的一个函数，它创建了一个 HTML 模板。
+
+`<h1>Hello, ${this.name}!</h1>`：这里使用了模板字符串插值 `${this.name}`，当 this.name 的值改变时，元素将自动更新。
+
+`<button @click=${this._onClick}>`：这里，@click 是一个事件监听器，当按钮被点击时，它会调用 `_onClick` 方法。
+
+`<slot></slot>`：这是一个名为 "slot" 的 Web 组件 API，它是 shadow DOM 的一部分，允许你在自定义元素中插入内容。
