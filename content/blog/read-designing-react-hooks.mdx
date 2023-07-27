@@ -73,3 +73,291 @@ return html``;：这是一个模板，它使用了 JavaScript 的标签模板字
 `<button @click=${this._onClick}>`：这里，@click 是一个事件监听器，当按钮被点击时，它会调用 `_onClick` 方法。
 
 `<slot></slot>`：这是一个名为 "slot" 的 Web 组件 API，它是 shadow DOM 的一部分，允许你在自定义元素中插入内容。
+
+---
+
+如今，我们越来越多地使用单页应用程序（SPA），在网站上实时更新页面的部分内容，使其感觉像本机应用程序。我们追求快速响应时间。JavaScript 是实现这个目标的语言，从显示用户界面到运行应用逻辑和与 Web 服务器通信。
+
+无状态纯函数型 组件给了我们更多优化性能的机会
+
+当将 React 与其他库进行比较时，我们使用“单向传递”这个术语来指代这种行为。在 React 社区中，我们很少使用这个词，因为这是它诞生时设计的行为。
+
+---
+
+React 事件处理程序与 DOM 事件处理程序略有不同。你可以从 onClick 驼峰命名法而不是 onclick 小写命名法来看出这一点。React 事件是一个合成事件，它是浏览器原生事件的跨浏览器封装。在本书中，我们期望它们以完全相同的方式运行。
+
+由于 JavaScript 闭包的存在，我们可以直接在事件处理程序内部访问任何组件变量。count 变量不需要作为函数输入参数传递给 onClick 才能被访问。
+
+“无状态”指的是函数组件不能携带或共享值给另一个更新。简单来说，每次更新时该函数重新运行并产生相同的输出。
+
+---
+
+<Callout>
+第二章挺好看的
+</Callout>
+
+---
+
+组件并不是最小的单位。还有一种更细粒度的结构叫做 fiber，它用于表示一个元素片段。一个 fiber 执行该元素的所有任务。这个元素可以是简单的 h1、div 等，也可以是具有不同功能的人工元素。例如，“fragment”元素可以将其他元素分组而自身不显示，或者“memo”元素可以记住上次更新时的所有元素
+
+函数组件就是 fiber 所代表的一种人工元素之一。函数组件允许我们定义它能够显示哪些子级元素，因此每当被调用时，它都能确定屏幕需要更新哪些 DOM 元素
+
+React 使用 Hook 结构将 state 存储在 memoizedState 属性下
+
+我们在这里介绍的 Hook 是一个用于保存状态的结构（或类）。这并不是我们稍后要介绍的 React hook（函数）。不幸的是，React 在两个地方都使用了相同的词。为了区分它们，我们故意将结构称为 Hook（首字母大写），而将函数称为 hook（首字母小写）。
+
+Hook 结构的主要功能是通过 state 属性来保存单个状态。与数组（或对象）中有多个状态不同，多个状态通过链表连接在一起，如图 3.2 所示。一个 Hook 通过其 next 属性指向另一个 Hook。当到达列表末尾时，最后一个 Hook 的 next 属性被设置为 null。这就是编程中典型链表的工作方式。第一个 Hook （如果有）存储在 fiber 的 memoizedState 下；这样一来，fiber 就可以找到所有跟随第一个 Hook 的 Hooks。
+
+为了让引擎知道屏幕是否有任何变化，需要更新 fiber。在更新函数中，这是初始化 Hook 的地方
+
+React 通过 updateFunctionComponent 函数来更新一个函数组件。输入参数接受一个 Component 函数和它的 props 输入：
+```javascript
+let updatingFiber = ...
+function updateFunctionComponent(Component, props) {
+  prevHook = null
+  let children = Component(props)
+  ...
+}
+```
+
+update 函数的主要工作是调用 Component(props)来了解新的子元素。以 Title 组件为例，当它需要更新时，updateFunctionComponent 函数会调用 Title()。通过这样做，引擎会比较返回的元素和屏幕上显示的内容，并提交差异。
+
+在前面的 update 函数中定义了两个全局变量。它们非常容易理解。updatingFiber 表示引擎正在更新的当前 fiber，prevHook 指向此 fiber 之前使用过的 Hook。在组件被调用之前，引擎会填充 updatingFiber（如 Title），并将 prevHook 设置为 null。
+
+第一次更新组件（即挂载）时，就是创建该 fiber 对应的第一个 Hook。
+
+在挂载一个 Hook 到当前正在更新的 fiber 上时，React 会创建一个新的 Hook 对象并将其追加到链表中：
+
+<Callout>
+一个简单的 useState 的实现?
+</Callout>
+```javascript
+function mountHook() {
+  const Hook = {
+    state: null
+    next: null
+  }
+  if (prevHook === null) {
+    updatingFiber.memoizedState = Hook
+    prevHook = Hook
+  } else {
+    prevHook.next = Hook
+    prevHook = prevHook.next
+  }
+  return Hook
+}
+
+function updateHook() {
+  var Hook
+  if (prevHook === null) {
+    Hook = updatingFiber.memoizedState
+  } else {
+    Hook = prevHook.next
+  }
+  prevHook = Hook
+  return Hook
+}
+
+function _useHook(initialState) {
+  let Hook
+  if (isFiberMounting) {
+    Hook = mountHook()
+    Hook.state = initialState
+  } else {
+    Hook = updateHook()
+  }
+  return Hook.state
+}
+```
+根据组件是否通过 isFiberMounting 标志位处于挂载状态，前面的_useHook 函数获取一个持久化的 Hook。如果它在挂载阶段，React 会将初始状态赋给该 Hook。对于任何其他更新，该 Hook 不会被触碰。无论哪种情况，都会返回该 Hook 下的状态。
+
+---
+
+Fiber 是 React 团队为了改进框架的性能和可用性而引入的新架构，特别是在处理大型和复杂应用程序时。Fiber 首次在 React 16 版本中引入。
+
+在介绍 Fiber 之前，我们需要了解一些背景。React 的工作方式是将应用程序的 UI 视为一系列在不同状态下的“快照”。当应用程序的状态改变时，React 会创建一个新的 UI 树。然后，React 会将新的 UI 树与旧的 UI 树进行比较，找出两者之间的差异，然后将这些差异应用到 DOM 上。这个过程被称为“reconciliation”或者“diffing”。
+
+在旧的 React 版本中，这个过程是同步进行的，一旦开始就不能被打断。然而，对于大型和复杂的应用程序来说，这可能会导致性能问题。例如，如果 React 在浏览器需要更新界面（也就是“帧”）之前无法完成这个过程，那么用户就会看到延迟，这会让应用程序感觉“卡顿”。
+
+Fiber 的引入就是为了解决这个问题。在 Fiber 架构中，reconciliation 过程被分解成许多小的任务单元。React 可以在完成一个任务单元后，根据需要将控制权返回给浏览器，让它有机会更新界面。这意味着 React 可以将工作“暂停”，然后在稍后的一个更合适的时间点“继续”。这就使得 React 能更好地管理其工作负载，从而提供更流畅的用户体验。
+
+Fiber 还引入了一些其他的改进，比如在组件生命周期方法中支持异步执行，以及新的 API 如 React.lazy，它支持组件的动态加载。
+
+总的来说，Fiber 是 React 团队为了改进性能和可用性所做的一次重大的内部重构。尽管它对 React 的使用者来说是透明的，但是了解 Fiber 如何工作可以帮助你更好地理解 React 的行为和性能特性。
+
+---
+
+钩子是一种特殊的函数，并且有一点需要注意——它们的调用顺序。
+
+基本上，React 不使用显式键值（key），因为列表中的顺序就是键值（key），而这个键值被称为 hooks 调用顺序。只要 a 的第一个 hook 首先调用，b的第二个 hook 其次调用，存储在列表下方状态位置就能正确标记。所以我们不必有意识地跟踪键值（key），因为在编写所有 hook 语句之后，调用顺序应该已经确定。
+
+这个调用顺序并不是在代码编译期间固定下来的；相反，在运行时才决定。有什么区别呢？区别就是运行时可以改变
+
+任何涉及条件的 hook 语句都无法使用。
+
+React hook 是一个特殊函数，在函数组件中允许持久化状态。
+
+**Browser DOM** dispatch action to -> Render -> **Commit** apply change to -> Browser DOM
+
+React 对我们的作用是允许分派的动作更新变化以在屏幕上反映出来。React 将每个更新分为两个主要阶段，即渲染和提交，如上图所示。渲染会逐一遍历所有元素并收集所有变化，而提交则会一次性将这些变化应用到 UI 上。
+
+这个引擎有一个代号叫做 Fiber。为了方便处理所有这些，React 创建了一个内部对象称为 fiber 来表示每个元素。正如我们介绍过的那样，元素可以是经典元素（比如 DOM 元素）或者人工创建的元素（比如函数组件）。在物理 DOM 和 React 元素之间添加一个层级有两个好处。
+
+函数组件（或类组件）更容易让开发人员将他们的 UI 和逻辑组织成一个功能单元。拥有一个包装着这样单元的 fiber 可以提供一些通用的元素行为，并且对特定的元素添加特殊处理。例如，我们已经介绍了 updateFunctionComponent 来更新函数组件，但对于其他类型的元素，则需要使用不同的更新函数。
+
+另一方面，在 UI 引擎中增加额外层级可以进行优化。事实上，React Fiber 并不盲目地向屏幕进行更新。在第一次更新中（也就是挂载时），每个 fiber 都会被创建，并且所有的 DOM 元素都是从头开始创建的。这个更新应该与经典更新非常接近。
+
+然而，之后的一切都不同。对于新的更新，假设只有屏幕的一小部分需要调整。因此，在 React 更新屏幕之前，它会遍历存储在上一个更新中的所有 fiber，并将它们与新渲染的元素进行比较。这个比较被称为协调(reconciliation)，即将新元素与先前 DOM 元素进行比较，以得出需要在此次更新中应用的新 DOM 更改。React 使这种协调非常高效，以便仅应用必要的更改到屏幕上。
+
+优化不仅限于协调。为了确保事情能够高效完成，每个 fiber 还充当一个工作单元。在每次更新期间，所有 fiber 都被发送到一个流水线中，在那里每个 fiber 逐个进行处理。这样做有一定的优势。现在更新工作不再是全盘接受或拒绝了。引擎可以完成 10 个单位中的 9 个单位而不损害更新任务的完整性，因为当资源耗尽时可以暂停，并且一旦获得足够计算时间就可以回来完成最后一个单位。其中一个直接好处是浏览器对更紧急工作能够快速响应。
+
+实际上，对于每个元素，React 会创建两个 fiber，并且这两个 fiber 的名称分别是 current 和 workInProgress。
+
+为了在提交之前/之后实现屏幕过渡的流畅性，它使用两个内存中的场景，分别命名为 current 和 workInProgress。
+
+最初，这两个场景都是空的，因为节目还没有开始。当 current 为空时，我们在 workInProgress 场景上工作；这一步被称为 Mount（挂载）。这意味着每个组件都需要从头创建，因此挂载相对较重。一旦 workInProgress 准备好了，舞台就会旋转以使其成为 current。在编程中，这只是一个指针赋值操作。
+
+在未来的任何动作中，workInProgress 场景开始再次准备。这次工作 InProgress 不需要从头创建, 因为它可以克隆当前未改变的内容, 这一步被称为 Update（更新）。相对而言，在 DOM 访问方面更新要求比挂载要少得多。一旦 workInProgress 准备好了, 舞台就会旋转以使其成为新的 current 场景。
+
+无论是挂载还是更新期间, 我们选择 workInProgress 来处理未来场景, 同时将 current 视作上次完成工作(除非在 mount 阶段,current 为空) 。因此, 要判断任何组件是否处于 mount 或 update 状态, 我们可以检查 current 是否为空：
+
+const isFiberMounting = current === null
+
+除非你从事引擎开发工作，否则你不会同时获得两个场景，因为核心外部的开发人员使用 workInProgress 进行开发而用户观看 current。对于他们来说，只有一个场景。
+
+---
+
+至于每个 DOM 元素（例如 div）是否都有配套的两个 Fiber 节点，这其实取决于元素是否有状态变化。如果一个元素没有任何状态的变化，那么 React 并不会为它创建新的 Fiber 节点。只有在元素状态变化时，React 才会创建新的 Fiber 节点。当然，如果一个元素从来没有变化过，那么它的 Fiber 节点就会一直保持不变。
+
+所以说，React 中的每个元素并不总是对应两个 Fiber 节点（current 和 workInProgress）。只有在元素有状态变化时，才会有对应的 workInProgress 节点。
+
+---
+
+假设我们建立了一个网站，并最终得到了一棵 fiber tree。当用户执行某个操作（比如点击）时，该操作通过事件处理程序向纤维发送一个信号。我们将这个 fiber 称为源 fiber。
+
+现在，假设派发的事件将计数器从 0 更改为 1。React 应该根据这个用户操作安排更新，并准备好屏幕上所有的文档对象模型（DOM）元素。假设红线表示需要更改的纤维，那么 React 是如何找出这些要更改的纤维呢？
+
+收到更新请求后，React 从根节点开始遍历整棵 fiber 树。有很多条 fiber（灰色线条）与此次更新无关，因此它们会从之前的场景中进行克隆。当更新到达源纤维时，让我们想象一下该纤维携带着一个函数组件并调用名为 updateFunctionComponent 的更新函数：
+
+```typescript
+let updatingFiber = ...
+function updateFunctionComponent(Component, props) {
+  let prevHook = null
+  let children = Component(props)
+  ...
+  reconcileChildren(children)
+  return updatingFiber.child
+}
+```
+
+第二部分的函数接受 Component 函数返回的子元素，并通过 reconcileChildren 将它们转换为 fiber。在整个过程结束时，第一个子 fiber 告诉引擎下一步要处理什么。这个过程会一直持续，直到访问了源 fiber 下的所有 fibers，即图 4.1 中显示的红色区域。
+
+通过这种方式，状态变化会通过该分支传播到子 fibers 中。当父级更新时，在更新之前，子级会获得一组新的 props，并承载状态的影响。这基本上就是 React 生态系统中状态发挥作用的方式
+
+使 useState 正常工作所需的数据结构包括 Hook 类型、Queue 类型和 Update 类型
+
+Hook 使用一个 state 属性来存储状态，同时还有一个 next 属性指向下一个 hook。现在的新变化是为了支持 dispatch 功能，添加了一个 queue 属性，在其中提供了一个 dispatch 函数来分发带有新状态的 action 对象。在队列中，更新列表被存储在名为 pending 的属性下。队列的工作是维护对该 fiber 的待处理更新列表 - 这样用户就可以向该 fiber 分派多个更新
+
+更新(update)被定义为一个包含由用户提供的用于计算下一个状态的动作函数。每个更新通过一个名为 next 的属性与另一个更新相关联，形成循环链表。这个链表类似于 hooks 是如何链接在一起的，不同之处在于更新以圆形方式链接，其中最后一个更新始终指向第一个更新。
+
+```text
+1 -(next)-> 2 -(next)-> 3 -(next)-> 1
+pending -> 3
+```
+
+队列中有三个待处理的更新，其中最后一个更新的 pending 属性指向第一个更新。当我们需要在列表的头部或尾部插入或删除更新时，这个循环链表非常方便
+
+useState 的源代码以典型的钩子方式组织，在 mountState 或 updateState 之间选择路径，具体取决于 fiber 是否处于挂载状态还是更新状态
+
+```typescript
+function useState(initialState) {
+  if (isFiberMounting) {
+    return mountState(initialState)
+  }
+  else {
+    return updateState(initialState)
+  }
+}
+```
+
+```typescript
+function mountState(initialState) {
+    const hook = mountHook ()
+    if (typeof initialState === 'function') {
+      initialState = intialState()
+    }
+    hook.state = initialState
+    hook.queue = {
+      pending: null
+      dispatch: dispatchAction.bind(
+        null,
+        updatingFiber,
+        hook.queue
+      )
+    }
+    return [hook.state, hook.queue.dispatch]
+}
+```
+
+调度函数被设计用于派发带有新状态的动作。它是通过一个实用函数 dispatchAction 来创建的，该函数接受一个 fiber、一个队列和一个动作作为参数。
+
+在将 dispatchAction 函数分配给队列时，它会绑定更新 fiber 和队列，以便调度函数可以接受动作对象作为唯一输入参数：
+
+```typescript
+function dispatchAction(fiber, queue, action) {
+  const update = {
+    action
+    next: null
+  }
+  const pending = queue.pending
+  if (pending === null) {
+    update.next = update
+  }
+  else {
+    update.next = pending.next
+    pending.next = update
+  }
+  queue.pending = update
+  // Appendix A: Skip dispatch
+  scheduleUpdateOnFiber(fiber)
+}
+```
+
+该函数从其输入参数中获取一个动作对象，然后创建一个新的更新对象，并将其附加到队列对象中。与待处理相关的前面代码都是列表操作，所有这些操作都将更新对象追加到列表末尾，同时确保队列继续形成循环链表
+
+在更新队列完成后，它通过 scheduleUpdateOnFiber 函数请求进行更新。这个函数实质上会启动 React 引擎中我们在本章开头介绍过的更新流程。这是 React 处理用户操作的主要途径。
+
+React 引擎内部有许多优化措施。其中一些不对外公开，因为它们属于引擎代码的一部分。例如，在不调用 scheduleUpdateOnFiber 函数的情况下可以取消 dispatch 或整个更新过程的隐藏路径存在
+
+```typescript
+function updateState(initialState) {
+    const hook = updateHook()
+    const queue = hook.queue
+    let updates = queue.pending
+    queue.pending = null
+    if (updates != null) {
+      const first = updates.next
+      let newState = hook.state
+      let update = first
+      do {
+        const action = update.action
+        newState = typeof action === 'function'
+          ? action(newState) : action
+        update = update.next
+      }
+      while (update !== null && update !== first)
+      if (!Object.is(newState, hook.state)) { … }
+      hook.state = newState
+    }
+    return [hook.state, hook.queue.dispatch]
+}
+```
+一旦我们有了钩子，我们可以检查它是否在 queue.pending 对象下有任何待处理的更新。pending 对象之所以可能有任何更新，是因为调用了 dispatch 函数。它遍历第一个 pending.next 更新，并按照 update.next 的顺序迭代它们。对于每个更新，它获取存储的 action 对象并将其应用于先前存储的状态，形成一个新的 newState 对象，并最终将其存储回钩子中。
+
+更新后的 newState 对象与先前状态对象进行比较，以确定是否发生变化
+
+```typescript
+if (!Object.is(newState, hook.state)) {
+  didReceiveUpdate = true
+}
+```
