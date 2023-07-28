@@ -1,0 +1,32 @@
+---
+title: "理解React Fiber"
+date: "2023-07-28"
+description: "FIBER!纤维!"
+image: /images/blog/
+authors:
+  - KUD
+---
+
+### Fiber树结构
+
+Fiber树就如同DOM树结构一样，节点是元素，也有可能是组件（就可能会比DOM树的元素多一点）
+
+组件的Fiber节点将维护一个叫memoizedState的Hooks的链表，它保证hook的调用顺序，同时根据hook的不同往里面加的东西也不同，这个是组件首次渲染的时候就会创建的
+
+组件的Fiber节点还在运行时维护一个updateQueue的链表，存储了当前状态的“更新”， 渲染阶段react将遍历这个链表，根据更新优先级和渲染优先级决定是否应用这个更新
+
+---
+
+### 当state，props发生改变时
+
+react将标注fiber为dirty，开始reconciliation过程:
+
+react将创建一个新的名为Work-in-Progress Fiber树，与之前的Fiber树进行比较，找出更新了的部分
+
+然后开始Commit过程：将更新应用到DOM上
+
+---
+
+<Callout>
+Fiber节点包含了一些React特有的属性，如alternate（用于指向对应的WorkInProgress Fiber或current Fiber），child、sibling和return（用于形成Fiber树的结构），effect list（用于在commit阶段快速访问有副作用的Fiber）等，
+</Callout>
