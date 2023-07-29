@@ -361,3 +361,324 @@ if (!Object.is(newState, hook.state)) {
   didReceiveUpdate = true
 }
 ```
+
+在更新过程中，当调用useState钩子时，它首先检查是否处于挂载或更新状态。如果处于挂载状态，它会存储初始状态，创建一个dispatch函数，然后返回。如果处于更新状态，则会检查是否有待处理的更新，并将其应用于新的状态。无论哪种情况，都会返回[state, dispatch]。
+
+<Callout>
+重新渲染也就是要重新build fiber tree,还是需要遍历所有hook
+</Callout>
+
+新的更新是分配状态对象的地方。派发函数的目的仅仅是请求变更，但真正的变更直到下一次更新才应用
+
+调度后的状态与当前状态进行比较，以确定是否发生最终调用。这意味着并不是所有的调度都会导致状态变化
+
+React在比较两个状态时使用了Object.is函数。这是一个JavaScript原生函数，与JavaScript的严格相等运算符（===）非常相似
+
+对于JavaScript中的非原始类型，比如对象或数组，使用引用（也称为指针）来指向特定的内存空间：
+
+```typescript
+{} === {}               false
+v === v                 true
+```
+
+这意味着如果你分配了两个新对象，它们不能指向同一个内存空间。因此，即使两个对象{}和{}包含完全相同的内容，比较它们应该返回false。相反地，比较同一个对象（例如v和v）应该返回true，无论对象的内容如何变化
+
+使用Object.is函数或严格相等运算符（===）可能需要一些时间适应。你可以问自己一个简单问题：要比较的值是否可变？如果是，则按引用进行比较；如果不是，则按值进行比较。
+
+React中，连续的多个调度被设计为一起处理，就像下面的例子：
+
+```typescript
+const [state, dispatch] = useState(1)
+  const onClick = () => {
+  dispatch(3)
+  ...
+  dispatch(5)
+}
+```
+
+每个dispatch确实会调用scheduleUpdateOnFiber来启动React进行更新过程。然而，这个函数设计成等待同一操作的所有调度完成后才进行最终更新。因此，在这种功能下，多个调度可以合并成一个延迟运行的更新操作。
+
+实际上，并非所有的dispatch都能成功执行。它有一条特殊的路径，当满足条件并且发现没有状态改变时，可以提前返回而不执行dispatch：
+```typescript
+function dispatchAction(fiber, queue, action) {
+  ...
+  if (NoWorkUnderFiber) {
+    const currentState = queue.lastRenderedState
+    const newState = typeof action === 'function'
+      ? action(currentState) : action
+    if (Object.is(newState, currentState)) {
+      return
+    }
+  }
+  scheduleUpdateOnFiber(fiber)
+}
+```
+对于任何已更新的fiber，都会添加一个名为didReceiveUpdate的标志，用于指示fiber是否发生了变化。在开始处理fiber后，任何导致变化的hook都可以将此标志设置为true。之后，如果工作完成且标志仍然为false，则意味着该纤程绝对没有发生任何变化，因此React通过从上一个场景克隆它并继续下一个纤程来放弃该纤程
+
+```typescript
+let updatingFiber = ...
+function updateFunctionComponent(Component, props) {
+  let prevHook = null
+  let didReceiveUpdate = false
+  let children = Component(props)
+  if (!isFiberMounting && !didReceiveUpdate) {
+    return bailout(updatingFiber)
+  }
+  ...
+}
+```
+在前面的updateFunctionComponent函数中，在调用Component函数之后，它会检查两个标志位。一个是isFiberMounting，当站点处于挂载状态时，由于所有的fiber仍然需要被创建，所以不能放弃任何工作。另一个标志位是didReceiveUpdate。当这两个标志位都为false时，就会进入到fiber的放弃流程。
+
+通过克隆当前树中的子fiber来进行fiber的放弃操作，这样可以将所有已完成的工作包括旧属性和渲染DOM一起传递过去。基本上，在进行放弃操作时，并不需要执行常规协调工作来确定新的子fiber。更好的是，如果发现该fiber下没有任何工作要做，则整个分支都会被放弃
+
+---
+
+<Callout>
+useEffect的副作用，side-effect,就是函数式编程说的那一套
+</Callout>
+
+通常有两种策略来解决函数的不纯问题
+- 通过将依赖项添加到输入参数中来消除它们，这样它们就不再是隐藏的
+- 与其去除不纯性质，我们可以将其打包并推迟到实际执行时才执行(useEffect)
+
+```typescript
+function addFunc(c, log) {
+  function add(a, b) {
+    log(a, b)
+    return a + b + c
+  }
+  return add
+}
+```
+addFunc函数返回一个add函数。要使用add函数，我们调用addFunc来获取我们的add函数的句柄（也称为回调）：
+
+const add = addFunc(3, console.log)
+
+那么这有什么区别呢？c和log的依赖关系出现在输入参数中，所以addFunc是一个纯净函数。实质上，我们将任何不纯之处打包起来，并在更高一级声明它们，因此在addFunc的上下文中，新的add函数看起来更加纯净。
+
+从某种意义上说，我们保留了原始代码，但将其封装起来以获得一个回调函数，以便稍后执行它。这有助于保护主要代码的完整性同时重新定位不纯之处。这种延迟策略通常被称为副作用
+
+在松散连接的开放系统（如Web）中，副作用是不可避免的。如果你想执行一系列操作，并且其中一项操作恰好没有被内部系统定义，则该操作涉及访问外部系统。虽然我们无法避免副作用，但我们可以将其封装起来，在适当的时候访问外部系统。
+
+在React中，副作用指的是我们试图从外部系统读取或写入数据的情况。外部系统可以是DOM元素、文档或窗口对象等对象，也可以是与Web服务器进行通信。
+
+用户操作之后，dispatch被安排以触发渲染，随后进行commit以形成更新。在更新过程中，React不允许立即调用自定义副作用。相反，在提交结束之前，React会等待并在此时才调用它们。
+
+如果在更新过程中遇到两个副作用，则两者都会被延迟执行，并且在提交后逐个被调用。这些效果称为内部的被动效果。被动效果是React支持的多种类型效果之一。
+
+由于其在更新期间的调用方式而称为"被动"。React允许我们每次更新时或根据值变化有条件地调用一个被动效果。因此，该效果与用户事件不同，并且当值发生变化时创建、排队和稍后再次调用该效果。从某种意义上说，通过一个"被动"事件来触发该效果。
+
+一个被动效果可以建模为回调函数。在这个例子中，假设它叫做create函数。调用create函数会执行该效果，并返回一个destroy函数来执行与该效应相关联的清理工作。
+
+为了跟踪effects，React在UpdateQueue类型的fiber下创建一个updateQueue属性。在这个队列中，一系列的效果被存储在lastEffect属性下。effects通过循环链表连接在一起，类似于useState中的待处理队列
+
+useEffect钩子遵循典型的钩子设置，在isFiberMounting标志（如第3章“接入React”所述）的指导下，根据fiber是挂载还是更新，采用mountEffect或updateEffect路径。
+
+```typescript
+function useEffect(create, deps) {
+  if (isFiberMounting) {
+    mountEffect(create, deps)
+  }
+  else {
+    updateEffect(create, deps)
+  }
+}
+```
+
+```typescript
+function mountEffect(create, deps) {
+  const hook = mountHook()
+  hook.state = pushEffect(
+    create,
+    undefined,
+    deps,
+  )
+}
+
+function pushEffect(create, destroy, deps) {
+  const effect = {
+    create,
+    destroy,
+    deps,
+    next: null,
+  }
+  let queue =  updatingFiber.updateQueue
+  if (queue === null) {
+    queue = { lastEffect: null }
+    updatingFiber.updateQueue = queue
+    queue.lastEffect = effect.next = effect
+  }
+  else { …
+    queue.lastEffect = effect
+  }
+  return effect
+}
+```
+pushEffect函数创建一个包含所有效果信息的effect，例如create、destroy、deps和next。然后，在当前更新的fiber下找到updateQueue函数。如果队列为空，则附加新的effect。否则，将新的effect追加到队列中。无论哪种情况，它都将新的效果作为队列中的lastEffect对象追加进去。由于它是一个循环链表，在进行了所有先前指针操作之后，它确保lastEffect.next对象仍然指向列表中第一个效果。
+
+```typescript
+function updateEffect(create, deps) {
+  const hook = updateHook()
+  let destroy = undefined
+  const prevEffect = hook.state
+  destroy = prevEffect.destroy
+  if (deps) {
+    const prevDeps = prevEffect.deps
+    if (areDepsEqual(deps, prevDeps)) {
+      return
+    }
+  }
+  hook.state = pushEffect(
+    create,
+    destroy,
+    deps,
+  )
+}
+```
+一旦我们有了hook，就可以检查挂载点中设置的前一个effect，并比较deps数组是否发生了变化。如果deps数组与存储在prevEffect中的prevDeps对象没有发生变化，则不会将effect推送到updateQueue。
+
+effects被推入每个fiber下的队列中，但它们是在屏幕即将改变时进行调度。
+
+每个create函数都通过enqueueEffect函数收集到列表中
+
+```typescript
+function enqueueEffect(fiber, effect) {
+  effectCreateList.push(effect)
+  if (!rootDoesHaveEffects) {
+    rootDoesHaveEffects = true
+    scheduleCallback(() => { flushEffects() })
+  }
+}
+```
+前面的enqueueEffect函数接收fiber和effect作为参数，并将其推入effectsCreateList数组中。然后，它调度flushEffects回调函数。之所以数组不会立即被处理（或清空）是因为它必须等到更新结束才能进行。在这里，React使用一个全局标志（rootDoesHaveEffects）来确保只触发一次此调度。
+
+销毁函数也遵循同样的过程。对于每个更新，我们最终得到两个效果列表：一个是effectCreateList，另一个是effectDestroyList。尽管相似，但这两个列表并不一定包含相同的效果列表，因为有些效果没有销毁回调函数。此外，在组件卸载时，需要将销毁回调添加到effectDestroyList中。
+
+scheduleCallback函数非常有趣。它不会立即刷新和执行效果，而是稍后执行，就像JavaScript任务中的异步任务一样
+
+React只有在屏幕上更新了DOM更改之后，才能再次访问效果列表
+
+```typescript
+function flushEffects() {
+  effectDestroyList.forEach(effect => {
+    const destroy = effect.destroy
+    effect.destroy = undefined
+    if (typeof destroy === 'function') {
+      destroy()
+    }
+  })
+  ...
+}
+
+function flushEffects() {
+  ...
+  effectCreateList.forEach(effect => {
+    const create = effect.create
+    effect.destroy = create()
+  })
+}
+```
+注意React遍历这两个列表的顺序-它从destroy开始，然后再到create。由于这两个列表都是从所有fiber收集而来的，所以create函数可能包含对即将被销毁或清理的组件变量的引用。为了让create函数有机会充分意识到这种情况，在此之前需要调用destroy函数。简而言之，在考虑新效果之前，必须清理所有先前的效果
+
+在更新过程中，当useEffect钩子被调用时，如果组件处于挂载状态，则创建该effect。如果组件处于更新状态，则根据依赖项是否有任何更改来创建effect。如果依赖数组没有变化，则跳过该effect的执行。无论何种情况下，当创建了effect后，它都会被追加到fiber的updateQueue中，并存储在hooks的状态下。
+
+在屏幕更新之前，React会从所有fiber中获取所有effects，并安排一个刷新操作（如图5.4中的虚线所示）。在将所有fiber更改应用到DOM后，React通过逐个调用这些effects来清除它们，首先是先前的销毁效果，然后是新建的创建效果。
+
+```typescript
+function areDepsEqual(deps, prevDeps) {
+  if (!prevDeps) {
+    return false
+  }
+  for (let i = 0;
+       i < prevDeps.length && i < nextDeps.length;
+       i++)
+  {
+    if (Object.is(deps[i], prevDeps[i])) {
+      continue
+    }
+    return false
+  }
+  return true
+}
+```
+
+`useEffect(fn, [])`，对于空的依赖项，在第一次更新之外的所有更新中，areDepsEqual都会返回true，因为对于挂载而言，deps数组仍被认为是从undefined更改过来的。因此，在此之后，effect不再被创建。
+
+因此，以下是一个简要列表总结所有这些情况。
+- 它在挂载后运行一次create。
+- 对于任何deps更改，它会运行一次destroy和create。
+- 它在卸载后运行一次destroy。
+
+如果一个 effect 回调函数使用了一个变量，那么这个变量就需要在 deps 数组中。这个说法实际上是99.9%正确的。如果你有意不想在变量改变时更新屏幕，可以跳过将其添加到依赖数组中。然而，React 不推荐这样做。React 甚至还添加了一个 ESLint 插件（eslint-plugin-react-hooks）来帮助我们发现可能遗漏的潜在依赖。
+
+你可能会想知道为什么 React 不希望我们遗漏任何依赖关系。这是因为在 React 中，每个值（或状态）都应该与当前屏幕保持同步，并且默认情况下不能有例外情况。 在第8章《使用 Ref 隐藏内容》中，我们将向您展示一种推荐的方法，如果您坚持要隐藏某些东西不让 React 知道。
+
+useEffect examples
+- Finding the window size
+- Fetching an API resource
+
+关于React，最为人所知的效果是本章节中详细介绍的被动效果（passive effects）。然而，React支持不同种类的效果，并可能在未来增加更多。目前另外两种效果是变异效果（mutation effects）和布局效果（layout effects）。
+
+所有效果都有一些共享的特性，例如在屏幕更新之前从纤维（fibers）中收集。但是它们在某些方面也存在差异。以变异效果为首例。在引擎之下，这种效果是最重要的效果，因为每个变异效果都跟踪了DOM元素的添加、移除或变化。因此，所有纤维的协调最终都会产生变异效果，这些效果将被提交到屏幕。DOM元素的变异也是更新的一部分，或者更准确地说，是更新的提交阶段的一部分。在被动效果运行之后，所有变异效果都在被动效果之前发生。
+
+为了弥补被动效果在更新之后运行的事实（因为到那时可能为了执行某个操作已经太晚了），布局效果被创建出来，以便稍早一些被调用。布局效果的所有方面都与被动效果相似，只是它在变异效果之后立即被调用，并在更新结束之前被清理。所有三种效果的关系和时序可以在图5中的提交阶段概述中总结。请注意，在提交阶段，只有变异效果和布局效果被清理。被动效果在开始时被调度，后来被排队，但是在提交之后才被清理
+
+我们可以看到三个JavaScript任务。什么是任务呢？任务就是通过标准机制计划执行的任何JavaScript代码。在左侧的第一个任务中，我们完成了一个更新。通常，这就是我们需要知道的关于运行JavaScript代码的所有内容。
+
+然而，由于JavaScript是一个单线程引擎，在执行当前任务期间，可能会有更多的工作被添加到待处理队列中。典型的例子是setTimeout调用，它将回调添加到队列中，而不是在同一个任务中立即调用它。API调用（像promises）通常也归入这一类。这就是这些回调被称为异步操作的主要原因。
+
+对于每个任务应该花费多长时间，并没有具体的规定。当一个任务完成时，它会查找待处理队列中的所有工作，然后一次调用一个任务，等所有的事情都完成后，它会再次查看待处理队列。这个过程会无限重复。这就是JavaScript引擎的工作。
+
+在我们的例子中，我们有一个非常短暂的任务（图5.9中的中间任务），然后是第三个任务。猜猜看——这就是开始清理被动效果的时候。从这里我们可以确定，useEffect回调中的回调是异步调用的。
+
+我们提到，多个状态调度也是以一种延迟的方式打包和执行的——那么setState调度是否也是一个异步调用呢？为了回答这个问题，请继续阅读附录C - 调度是否异步？这一部分。
+
+调度是否异步？
+由于被动效果在一个新任务中被调用，你可能会想知道setState的调度是在同一个任务中运行还是在一个新任务中运行。这是一个非常好的问题。
+
+要回答这个问题，我们需要一个时间上的参考点。假设我们有一个事件处理器，并在其中有一个setState调度调用：
+
+```typescript
+onClick = () => { setState(1) }
+```
+
+onClick事件是通过用户操作请求的回调。假设调用onClick事件的任务称为任务1。
+
+在React 17（不是当前版本）中，setState代码是同步的，这意味着它在同一个任务1中运行整个更新。React认为在同一个任务中完成它们所有的效率更高。那么，为什么我们说setState对象通常是延迟的呢？
+
+```typescript
+  onClick = () => {
+    setState(1)
+    // state value isn't changed yet
+  }
+```
+
+这是因为在setState之后，值还没有改变。只有下一个更新会将状态设置为新版本。但是，称setState为异步操作并不完全准确（如果不是错误的话），因为所有这些过程都是在同一个JavaScript任务中执行的。
+
+如果我们将setState放在useEffect钩子中会怎么样呢？这种被动效果是否会改变同步或异步的讨论呢？
+
+```typescript
+  useEffect = (() => {
+    setState(1)
+  }, [])
+```
+
+到现在为止，我们知道useEffect的回调在一个新的JavaScript任务中被调用——假设这个任务被称为任务1。并且setState在同一个任务1中运行。这使得它的行为与事件处理器非常相似，就像我们之前讨论的onClick一样。因此，我们也可以把被动效果想象成一个比事件处理器更被动的“事件”。
+
+这并不阻止我们在真正需要的时候做一个异步调度。让我们看一个例子：
+
+```typescrpt
+  const [state, dispatch] = useState(1)
+  const onClick = () => {
+    setTimeout(() => {
+      dispatch(3)
+    }, 0)
+    dispatch(5)
+  }
+```
+
+在前面的例子中，setTimeout被用来以异步方式触发一个回调。在鼠标点击后，先调用dispatch(5)。在更新后，尽管超时时间设定为0，但仍然会调用dispatch(3)。
+
+请记住，如果你这样做，你不仅在以异步方式运行回调，而且还会跳出React的调度周期。你可能想要这样做的原因是在DOM变化期间可能会有冲突，例如在处理拖放过程中。为了在做状态改变之前完成我们的代码，我们可以将调度推到下一个JavaScript任务队列中。
+
+---
