@@ -58,3 +58,12 @@ Array.from()方法接受第二个参数，这个参数是一个映射函数（�
 ```typescript
 export type { LocaleType, RequiredLocaleType } from "./cn";
 ```
+
+---
+
+如果键值不是固定的，你可以使用索引签名来在 TypeScript 中定义这种类型。索引签名表示对象可能有许多其他属性，并且它们的名称是任意的，但它们的类型必须是一致的。这对于定义如查找表、字典等结构非常有用。
+```typescript
+type PriceMap = {
+    [key: string]: number;
+}
+```
