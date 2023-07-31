@@ -682,3 +682,139 @@ onClick事件是通过用户操作请求的回调。假设调用onClick事件的
 请记住，如果你这样做，你不仅在以异步方式运行回调，而且还会跳出React的调度周期。你可能想要这样做的原因是在DOM变化期间可能会有冲突，例如在处理拖放过程中。为了在做状态改变之前完成我们的代码，我们可以将调度推到下一个JavaScript任务队列中。
 
 ---
+```typescript
+const Title = ({ text, flag }) => {
+  const found = matchTextInArray(text)
+  ...
+}
+
+const Title = ({ text, flag }) => {
+  const [found, setFound] = useState("")
+  useEffect(() => {
+    setFound(matchTextInArray(text))
+  }, [text])
+  ...
+}
+```
+
+尽管解决方案有效，但我们希望对其进行改进，因为它使用副作用来处理任务分配，并且我们可以看到这个任务分配不必是一个副作用。由于副作用在更新后被收集起来，并且必须等待下一次更新才能执行，所以它与直接赋值（例如 a = 1）行为非常不同。最后但并非最不重要的是，在找到状态中保存了赋值的值，并且该值不必是一个状态。如果我们能够解决所有这些问题将会更好。
+
+useMemo函数的第一个输入参数是一个create函数。当调用该函数时，它会返回一个新值。第二个参数是deps依赖数组
+
+hook的状态在更新之间保持不变，每个hook函数都可以定义它想要持久化的内容（或以何种格式）。例如，useState hook存储一个状态数组，useEffect hook存储一个effect对象，现在useMemo hook则用于存储与赋值相关的内容。事实上，useMemo采用了[value, deps]形式的赋值和依赖数组。
+
+```typescript
+function useMemo(create, deps) {
+  if (isFiberMounting) {
+    return mountMemo(create, deps)
+  } else {
+    return updateMemo(create, deps)
+  }
+}
+
+function mountMemo(create, deps) {
+  const hook = mountHook()
+  const value = create()
+  hook.state = [value, deps]
+  return value
+}
+
+function updateMemo(create, deps) {
+  const hook = updateHook()
+  const prevState = hook.state
+  if (prevState !== null) {
+    if (deps !== null) {
+      const prevDeps = prevState[1]
+      if (areDepsEqual(ndeps, prevDeps)) {
+        return prevState[0]
+      }
+    }
+  }
+  const value = create()
+  hook.state = [value, deps]
+  return value
+}
+```
+空依赖：
+
+如果提供了一个deps数组，但是里面没有元素，那么意味着该值不依赖于任何东西。因此，在挂载后只会创建一次该值：
+```typescript
+const v = useMemo(() => {...}, [])
+```
+
+如果您想为所有更新保持静态值，这是一个很好的用法。您可能会想知道为什么我们不能将静态值声明移到组件外部。这是因为分配仍然可以使用组件内部的变量。
+
+当使用useMemo应用于非基本类型的值时（例如对象、数组或函数），会有一些微妙之处。当创建这些值时，你得到一个指向新内存空间的新值。这意味着当依赖条件不满足时，将使用旧的内存空间。
+
+总而言之，useMemo钩子可以用作特殊赋值来返回任何类型的值。
+
+useMemo只是在函数组件内部对计算结果进行了缓存，它并不能直接影响组件是否更新。组件的更新是由React的更新机制控制的，而不是由useMemo控制的。
+
+如果希望在父组件更新时跳过子组件的更新，可以使用React.memo高阶组件或React.PureComponent（对于类组件）。这些方法会对组件的props进行浅比较，如果props没有发生变化，就会跳过子组件的更新，从而实现性能优化。
+
+useMemo examples
+- Clicking to search
+- Debouncing the search
+
+```typescript
+const Title = () => {
+  const [text, setText] = useState('')
+  const [query, setQuery] = useState('')
+  const matched = fruits.filter(v => v.includes(query))
+  const onType = e => { setText(e.target.value) }
+  const onSearch = () => { setQuery(text) }
+  console.log('updated', text)      ➁
+  return (
+    <>
+      <input value={text} onChange={onType} />
+      <button onClick={onSearch}>Search</button>
+      {{matched.join(',')}
+    </>
+  )
+}
+```
+给定一个fn函数，如果有请求要调用它，它不会立即执行。相反，它会等待一段时间。在这段时间内，如果没有更多请求要调用它了，那么就在期限结束时进行调用。这种行为被称为防抖。
+
+防抖最初是为了解决机械开关和继电器的问题——巧合吗？为了避免按键太频繁，在键盘处理器中将按键延迟"组合"成单次击打
+
+```typescript
+const debouncedFn = debounce(fn, dt)
+
+const setDebouncedQuery = debounce(
+  t => { setQuery(t) }, 300
+)
+const onType = e => {
+  const v = e.target.value
+  setText(v)
+  setDebouncedQuery(v)
+}
+
+const setDebouncedQuery = useMemo(() => {
+  return debounce(t => {
+    console.log('clicked')
+    setQuery(t))
+  }, 300)
+}, [setQuery])
+```
+
+TODO: Appendix A and B in chapter 6
+
+---
+
+Context通过使用一个持有_currentValue值的ReactContext数据类型进行建模。
+
+上下文提供器（如UserContext.Provider）接受一个value属性来共享值。该提供器是一个特殊的组件。与函数组件不同，它有自己的更新实现。当由于值的变化而更新时，它会启动搜索。
+
+搜索会递归地遍历其子节点和子节点的子节点，直到访问完所有下层内容。对于使用上下文的所有消费者，它们都被标记为需要更新。
+
+```typescript
+const Branch = ({ user, theme }) => {
+  return (
+    <ThemeContext.Provider value={theme}>
+      <UserContext.Provider value={user}>
+        ...
+      </UserContext.Provider>
+    </ThemeContext.Provider>
+  )
+}
+```
