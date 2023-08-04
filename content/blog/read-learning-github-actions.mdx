@@ -18,3 +18,115 @@ GitHub Actions 的流程：
 这里关键部分是工作流对象。GitHub Actions 工作流是一组定义了要执行顺序和步骤集合的代码 - 类似于脚本或程序。文件本身必须以 YAML 格式编码并存储在 `<repository>/.github/workflows` 目录中。
 
 工作流文件具有特定语法结构。一个工作流包含一个或多个任务（job）。每个任务可以简单或复杂到需要多少都可以。一旦启动了一个工作流，任务就开始执行，默认情况下它们并行运行。
+
+---
+
+在高层次上，GitHub Actions 的流程如下：
+
+某个触发事件发生在 GitHub 存储库中。这个事件通常与一个唯一的 SHA1（安全散列算法 1）值和一个解析为 SHA1 值（ref）的 Git 引用相关联，比如一个分支。但它也可能是 GitHub 中不是对 ref 进行更新的事件。例如，在拉取请求中进行评论或更新问题。
+
+存储库中的专用目录 (.github/workflows) 将被搜索以查找编码为响应特定类型事件的工作流文件。许多事件还可以包含其他限定符。例如，可以设置仅当名为 main 的分支上发生推送操作时才触发工作流。
+
+相应的工作流将被识别，并触发匹配工作流的新运行。
+
+GitHub Actions的工作流是一组定义了执行顺序和步骤集的代码，类似于脚本或程序。该文件必须以YAML格式编码，并存储在<repository>/.github/workflows目录中
+
+一个工作流包含一个或多个任务。一旦启动了一个工作流，任务就开始执行，默认情况下它们并行运行。任务由步骤组成。步骤可以运行shell命令或调用预定义的GitHub操作。所有任务中的步骤都在运行器上执行。运行器可以是已设置好如何与GitHub Actions交互的服务器（虚拟或物理）或容器。
+
+一个事件可以通过多种不同的方式定义。
+- 一个人或者一个进程在 GitHub 存储库中执行某个操作。
+- 匹配外部触发器 - 即来自 GitHub 之外的事件。
+- 设置计划以在特定时间或间隔运行工作流程。
+- 手动启动工作流程 - 无需先执行任何操作。
+
+ workflow 语法中首要部分 - on: 子句。on 关键字及其后面跟随着哪些类型的触发器将与该 workflow 匹配并开始执行定义了什么。以下是一些基本类型和简单示例的语法。
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+      - 'rel/v*'
+    tags:
+      - v1.*
+      - beta
+    paths:
+      - '**.ts'
+
+on:
+  scheduled:
+    - cron: '30 5,15 * * *'
+
+on: [push, pull_request]
+
+on: [workflow-dispatch, repository-dispatch]
+
+on: workflow_call
+
+on: issue_comment
+```
+The workflow can respond to webhook events - when the webhook executes and sends a payload
+
+一些不常见的事件子集只有在工作流文件（即.github/workflows中的YAML文件）位于默认分支（通常是main）时才会触发工作流运行。对于这些事件，如果你只有其他分支上的文件并触发了通常会导致工作流运行的活动，那么什么都不会发生。
+
+步骤是您处理的基本执行单元。它们可以包含预定义操作的调用或在运行器上运行的shell命令。任何shell命令都是通过run子句来执行的。而任何预定义操作都是通过uses子句引入的。steps关键字表示一系列按顺序运行的步骤开始
+
+uses子句表示该步骤调用预定义动作。with子句用于指定传递给动作的参数/参数。而run子句则表示要在shell中运行的命令。
+
+```yaml
+steps:
+- uses: actions/checkout@v3
+- name: setup Go version
+  uses: actions/setup-go@v2
+  with:
+    go-version: '1.14.0'
+- run: go run helloworld.go
+```
+
+runners是执行工作流代码的物理或虚拟计算机或容器。它们可以是由GitHub提供和托管的系统（在其控制范围内运行），也可以是您设置、托管和控制的实例。无论哪种情况，这些系统都被配置为了解如何与GitHub Actions框架进行交互。这意味着它们可以与GitHub进行交互，访问工作流程和预定义操作，执行步骤，并报告结果。
+
+在工作流文件中，通过runs-on子句简单地定义了用于作业的runners:runs-on: ubuntu-latest
+
+jobs是将步骤聚合起来，并定义在哪个运行器上执行它们。一个单独的job通常旨在完成整体工作流程中的一个特定目标。
+
+job结果会显示在GitHub Actions界面上。成功或失败是以job为单位显示，而不是单个步骤。当确定任何一个具体任务需要完成多少job时，牢记这一点非常有帮助
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: setup Go version'
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.14.0'
+    - run: go run helloworld.go
+```
+
+一个workflow就像是一条管道。在高层次上，它首先定义了它将响应的输入类型（事件），以及在什么条件下会对其进行响应
+
+```yaml
+1. name: Simple Go Build
+2.
+3. on:
+4.   push:
+5.     branches:
+6.       - main
+7.
+8. jobs:
+9.   build:
+10.    runs-on: ubuntu-latest
+11.    steps:
+12.      - uses: actions/checkout@v3
+13.      - name: Setup Go version
+14.        uses: actions/setup-go@v2
+15.        with:
+16.          go-version: '1.15.1'
+17.      - run: go run hello-world.go
+```
+action可以指实现一个操作的代码，也可以指定义和运行这些操作的自动化环境。在本章中，我专注于理解workflow、其组件以及执行方式。
+
+workflow类似于软件管道。它们可以在trigger发生时启动（例如持续集成），并聚合一个或多个jobs来完成整体任务。每个job又会聚合一个或多个steps来执行较小的工作单元。单个job中steps的执行结果将反馈到该任务的成功/失败状态，并进一步影响整体workflow的成功/失败状态。
+
+每个job声明了它将在何种运行系统（操作系统和版本）上运行。而且，在最低级别上，step可以调用预定义的 GitHub Actions 或者在该系统上运行简单命令。

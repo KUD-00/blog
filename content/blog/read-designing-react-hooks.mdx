@@ -818,3 +818,251 @@ const Branch = ({ user, theme }) => {
   )
 }
 ```
+
+那么，在任何提供程序范围之外（例如，在D处），上下文值是什么呢？由于它恰好不是您可以在Branch组件之前找到的祖先提供程序，这就引入了defaultValue：
+
+const ThemeContext = React.createContext(defaultTheme)
+
+在内部，React使用堆栈来推入和弹出上下文，以跟踪所有提供者范围的上下文值
+
+---
+
+在上面的代码中，我们给h1元素添加了id。但是很快就遇到了一些问题。首先，Title组件被设计成可重用的。这意味着我们可以在当前屏幕上有多个<Title />实例。假设我们想要操作其中一个 - 我们如何通过id找到它？
+
+其次，更重要的是，假设我们找到了想要的元素。由于它现在被包裹在一个组件中，React管理着它的生命周期，那么我们如何知道它准确地何时挂载和卸载？如果对此不确定，我们如何安全地操作它？
+
+在所有的fiber准备好之后，React执行一次提交操作，在屏幕上创建所有的DOM元素。因此，实际上，直到完整的树在内存中更新之前，并没有真正创建物理DOM元素。只有在那时候，如果我们要求它，React才会将元素实例交给我们：
+
+```jsx
+return <h1 ref={ref}>Hello World</h1>
+```
+
+一个ref对象被传递给h1元素作为属性，并且它充当存储容器的角色，要求React一旦可用就将元素实例存储起来。这个ref容器采用特定的格式：
+
+```jsx
+ref = { current: null }
+```
+
+在DOM元素实例创建后，在Commit阶段的commitAttachRef函数中填充了前面的ref：
+
+```jsx
+function commitAttachRef(fiber, instance) {
+  const ref = fiber.ref
+  if (ref !== null) {
+    ref.current = instance
+  }
+}
+```
+
+在上述commitAttachRef函数中，当提供并初始化了ref时，它的current属性从DOM实例赋值过来。这是针对挂载操作而言。类似地，在即将移除DOM元素时，在Commit阶段的commitDetachRef函数中，current会再次被赋值为null
+
+只要我们提供一个元素的引用（ref），React在挂载和卸载时就会将该元素的实例分配给ref.current。我们可以使用ref.current来操作该元素，就像以前一样。这是访问DOM元素的React方式。
+
+这里有一个微妙之处。请注意，在准备好传递元素实例时，赋值是通过ref.current = instance而不是ref = instance完成的。这是因为React将ref设计为组件生命周期内始终可用的容器。简单地说，容器始终有效，而current属性下的值可能会在过程中发生变化。
+
+除了基本的fiber hook支持外，useRef不需要额外的数据结构
+
+就像useState和useEffect使用state来存储状态和效果一样，useRef使用state来存储引用。接下来，让我们看看它是如何实现的。
+
+useRef钩子遵循了典型的钩子设置，在isFiberMounting标志指示的mountRef或updateRef路径上进行选择，具体取决于fiber是否处于挂载或更新状态
+
+```typescript
+function useRef(initialValue) {
+  if (isFiberMounting) {
+    return mountRef(initialValue)
+  } else {
+    return updateRef()
+  }
+}
+```
+
+```typescript
+function mountRef(initialValue) {
+  const hook = mountHook()
+  const ref = { current: initialValue }
+  hook.state = ref
+  return ref
+}
+```
+
+组件挂载后，在下次更新并到达useRef钩子时，通过克隆一个hook获取该hook：
+
+```typescript
+function updateRef() {
+  const hook = updateHook()
+  return hook.state
+}
+```
+
+useRef钩子提供了基本的存储用于持久化引用。在挂载后初始化当前值之后，钩子中存储的引用永远不会被更新。
+
+如果将ref作为属性连接到一个元素上，在元素挂载或卸载时，其DOM实例会在当前属性中得到更新。
+
+尽管ref对象始终有效，但current属性并不总是有效的。在挂载完成之前，它可能存储一个空值。在卸载后，它也可以存储一个空值。因此，在使用之前为了确保不出现运行时错误，通常会添加检查：
+
+if (ref.current) ref.current.focus()
+
+有时候你会看到短路方式：ref.current && ref.current.focus()
+
+ref 对象可以附加到子组件内部的 DOM 元素上：
+
+```typescript
+const Child = ({ childRef }) => {
+  return <input ref={childRef} />
+}
+```
+
+ <Child ref={ref} />
+
+The preceding line would ask the Child function component to assign its instance to ref. But a function component cannot have a ref by default. Therefore, avoid using the ref name when passing it around. There's actually a way to attach a ref to a function component with some work
+
+useRef examples:
+- Clicking outside the menu
+- Avoiding memory leaks
+
+```typescript
+const Menu = () => {
+  const ref = useRef()
+  const [on, setOOn] = useState(true)
+
+  if (!on) return null
+  useEffect(() => {
+    const listener = e => {
+      if (!ref.current) return
+      if (!ref.current.contains(e.target)) {
+        setOn(false)
+      }
+    }
+    window.addEventListener('mousedown', listener)
+    return () => {
+      window.removeEventListener('mousedown', listener)
+    }
+  }, [])
+
+  return (
+    <ul ref={ref}>
+      <li>Home</li>
+      <li>Price</li>
+      <li>Produce</li>
+      <li>Support</li>
+      <li>About</li>
+    </ul>
+  )
+}
+```
+
+从历史上看，ref最初是用来保存DOM元素的，但后来人们发现它在解决棘手问题方面非常有效。其中一个问题是内存泄漏，在执行异步操作时会出现。异步操作的特点是回调函数稍后被调用。当处理回调时，组件（或与组件相关联的任何变量）可能已经无效了
+
+```typescript
+const Title = () => {
+  const [text, setText] = useState("")
+  useEffect(() => {
+    fetch("https://google.com").then(res => {
+    setText(res.title)
+    })
+  }, [])
+  return <h1>{text}</h1>
+}
+```
+
+```typescript
+const App = ({ flag }) => {
+  if (flag) return <Title />
+  return null
+}
+```
+
+假设你有一个App父组件根据标志(flag)来显示Title。某次更新时，标志变为false，因此Title被卸载(unmounted)，屏幕变空白。从业务逻辑上看是合理的，那么问题出在哪里呢？
+
+问题出在Title组件内部而不是App。确切地说，当Title挂载时，API请求开始，但是请求可能在卸载之前没有足够的时间完成。标志和请求是两个独立的事物。因此，在卸载后，Title可能还有未完成的任务。比如回调函数 - setText语句会发生什么？当组件已经消失时，它应该再次触发更新吗？
+
+从技术上讲，如果组件被卸载了，则无法再进行更新。此外，每个钩子都注册在fiber下面，如果fiber被移除，则不应再访问其下注册的任何内容。否则就会出现不一致性问题，例如内存泄漏。
+
+所以回到我们的情况，在卸载后异步调用返回 - 这成为一个严重的bug不能忽视。这种bug在条件语句使代码切换到另一个分支进行更新（例如路由切换）时经常发生。大多数内存泄漏很难调试，所以我们应该尽量避免它们。
+
+为了查看内存泄漏消息，您需要打开浏览器的开发者面板并切换到控制台选项卡。
+
+要解决这个错误，我们需要根据Title组件是否仍然挂载来仔细保护回调函数的内容。
+
+```typescript
+const Title = () => {
+  const [text, setText] = useState("")
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    fetch("https://google.com").then(res => {
+      if (!mountedRef.current) return
+      setText(res.title)
+    })
+
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+}
+```
+
+在上述代码中，我们添加了mountedRef来指示Title是否已挂载。我们最初将其设置为true，因为当组件更新时，我们假设可以安全地触发更多的更新。然后，在通过useEffect进行卸载之后，在destroy函数中将mountedRef标志设置为false。
+
+我们不能使用状态(state)来代替引用(ref)来实现mountRef的目的。因为在卸载后，你要求触发一次新的更新，这正是我们要避免的内存泄漏问题。在第5章《使用Effect处理副作用》中，我们学到被动效果(passive effect)的销毁函数最后调用时DOM元素已经稳定下来了，所以此时我们不应该再访问任何内部方法。
+
+当我们设计一个网页应用程序时，我们往往不使用全局变量，因为我们知道它们的使用很容易导致一些难以管理的副作用。另一方面，如果我们有一些对整个站点有效的全局信息，在幕后与应用程序的其余部分共享这些信息仍然是非常方便的，创建一个上下文来共享站点信息，这可能是一个非常昂贵的操作。如果我们不需要通知用户此更改
+
+从技术上讲，在React中没有比ref更加"current"（即最新）的东西了。
+
+当我们使用useState钩子时，我们想要找到状态的当前更新值。虽然我们使用相同的词语"current"，但在某些情况下状态可能并不那么及时更新
+
+```typescript
+function Title() {
+  const [count, setCount] = useState(0)
+  const onClick = () => {
+    setTimeout(() => {
+      console.log('clicked', count) ➀
+      setCount(count + 1)
+    }, 3000)
+  }
+  console.log('updated', count)     ➁
+  return <button onClick={onClick}>+</button>
+}
+```
+一个常见的误解是将setState称为赋值操作。现在你应该明白这是错误的，因为实际上它是请求赋值而不是执行赋值操作。这个请求需要时间来处理和执行，并且此外，由于优化原因，赋值可以被撤销。从setState得到的赋值命运并不十分清楚，而对于ref情况来说，赋值是明确、即时且无法错过。
+
+fix it:
+
+```typescript
+function Title() {
+  const [count, setCount] = useState(0)
+  const ref = useRef(0)
+  const onClick = () => {
+    setTimeout(() => {
+      ref.current++
+      setCount(ref.current)
+      console.log('clicked', ref.current) ➀
+    }, 3000)
+  }
+  console.log('updated', count)    ➁
+  ...
+}
+```
+
+a simple solution:
+
+```typescript
+const onClick = () => {
+    setTimeout(() => {
+      setCount(v => v + 1)
+    }, 3000)
+  }
+```
+
+useState 在多次调用 setState 的时候,更新状态是异步的,不能保证每次拿到的状态值都是最新的。
+
+但是用函数格式的 setState:setCount(prevCount => prevCount + 1)
+
+这里每次拿到的 prevCount 参数都是上一次的状态值,就能保证计算结果是基于最新的状态的,避免了状态的不一致问题。
+
+另外在这个函数里面,我们可以进行各种计算逻辑,同时还可以获取到最新的状态值,这给了我们更大的灵活性。
+
+所以函数格式的 setState 是更推荐的最佳实践
+
+TODO: Appendix A & B

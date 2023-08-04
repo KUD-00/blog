@@ -1,0 +1,32 @@
+---
+title: "python f-string等前缀的处理"
+date: "2023-08-04"
+description: "f-string等是解释器硬编码"
+image: /images/blog/girl-with-ice-cream.jpg
+authors:
+  - KUD
+---
+
+[from this link](https://stackoverflow.com/questions/37203589/possible-to-make-custom-string-literal-prefixes-in-python)
+
+<Callout>
+使用类似于b'bytes string'、r'raw string'或u'unicode string'的自定义字符串前缀会很酷。
+
+在Python中是否有可能创建/注册类似于m的自定义字符串字面量前缀来实行简便操作
+</Callout>
+
+这些前缀在解释器中是硬编码的，无法注册更多的前缀。
+
+不过，你可以通过使用自定义源代码编解码器来预处理你的Python文件。这是一个相当巧妙的技巧，需要你注册一个自定义编解码器，并理解和应用源代码转换。
+
+Python允许你在顶部使用特殊注释指定源代码的编码：# coding: utf-8
+
+告诉Python该源代码采用UTF-8进行编码，并在解析之前相应地对文件进行解码。Python会在codecs模块注册表中查找此编解码器。而且你也可以注册自己的编解码器。
+
+pyxl项目就利用了这个技巧，从Python文件中提取出HTML语法并将其替换为实际构建HTML所需的Python语法，在“解码”步骤中完成。请参考该项目中codec包，在其中register模块注册了一个自定义编解码器搜索函数，它会在Python实际进行分析和编译之前对源代码进行转换。一个自定义.pth文件被安装到site-packages目录下，在Python启动时加载此注册步骤。另一个执行类似操作以提取Ruby风格字符串格式化的项目是interpy。
+
+然后，你只需要构建一个类似的编解码器即可，它将分析 Python 源文件（可能使用 tokenize 模块进行标记化），并将带有你自定义前缀的字符串文字替换为 mystr(<string literal>) 调用。你可以通过在文件中标记 # coding: yourcustomcodec 来指定需要解析的文件。
+
+至于如何构建这部分，我将留给读者作为练习。祝好运！
+
+请注意，此转换的结果会被编译成字节码，并进行缓存；你的转换只需在每次源代码修订时运行一次，使用你的编解码器导入模块时都会加载缓存的字节码

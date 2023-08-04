@@ -10,3 +10,158 @@ authors:
 真实的DOM最大的问题之一就是它的性能。每当对DOM进行更改时，比如添加或删除元素，或者更改元素的文本或属性，浏览器都必须重新计算布局并重绘页面上受影响的部分。对于大型和复杂的网页来说，这个过程可能会很慢且消耗资源。
 
 例如，读取一个DOM元素的offsetWidth属性似乎是一个简单操作，但实际上它可能会触发浏览器昂贵的布局重新计算。这是因为offsetWidth是一个计算属性，依赖于元素及其祖先节点的布局信息。这意味着在返回准确值之前，浏览器需要确保布局信息是最新更新过的。
+
+一般来说，在读取类似于offsetWidth这样依赖于布局的属性时应该小心，因为它们可能导致意外的性能问题。如果我们需要多次读取此类属性的值，则应考虑将其缓存到变量中以避免引发不必要的布局重新计算。或者，我们可以使用requestAnimationFrame API将属性读取推迟到下一个动画帧，在那时浏览器已经执行了必要的布局计算。
+
+此代码选择具有ID“list”的ul元素，创建一个新的li元素，将其文本内容设置为“Item 4”，并将其附加到列表中。当我们运行此代码时，浏览器必须重新计算布局并重绘页面上受影响的部分以显示新项目。
+
+这个过程可能会很慢且资源密集，特别是对于较大的列表来说。例如，假设我们有一个包含1000个项目的列表，并且我们想要向列表末尾添加一个新项目
+
+真实DOM的性能问题对我们来说是一项重大挑战，特别是在处理庞大且复杂的网页时。虽然有一些技术可以缓解这些问题，比如优化选择器、使用事件委托或使用CSS动画等，但它们可能很复杂且难以实施。
+
+直接操作DOM并触发布局重计算（称为回流）和重绘可能会导致增加CPU使用率和处理时间，从而给用户带来延迟甚至崩溃。这对于低功耗设备上的用户尤其成问题，比如智能手机或平板电脑，它们的处理能力和内存可能有限
+
+另一个与真实DOM相关的问题是跨浏览器兼容性。不同的浏览器以不同方式实现DOM API，这可能导致Web应用程序中出现不一致和错误。在React发布时更为常见，但现在已经较少发生。尽管如此，开发人员仍然可能难以创建能够在不同浏览器和平台上无缝运行的Web应用程序。
+
+跨浏览器兼容性的主要问题之一是某些DOM元素和属性可能并非所有浏览器都支持。例如，Internet Explorer不支持HTML5 `<canvas>`元素，而其他浏览器可能不支持某些CSS属性或JavaScript方法。因此，我们必须花费额外的时间和精力来实施解决方案和备选方案，以确保他们的应用程序在所有目标平台上正常运行。
+
+此外，不同的浏览器可能以不同的方式解释CSS和JavaScript，导致布局和行为上的差异。例如，不同的浏览器可能对HTML元素应用不同的默认样式，从而导致在各个浏览器之间出现外观上的差异。此外，在不同的浏览器上JavaScript方法可能表现出不同或具有不同的性能特点，从而导致响应速度和交互水平存在差异。
+
+虽然与React没有直接相关性, 但是当使用DOM API时经常需要处理这些问题.
+
+```css
+/* Example of applying different styles to a button element on different browsers */
+#myButton {
+  color: blue;
+  background-color: white;
+  border: 1px solid black;
+}
+/* Fix for Safari */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  #myButton {
+    padding: 1px 6px;
+  }
+}
+/* Fix for Internet Explorer */
+@media screen and (min-width: 0\0) {
+  #myButton {
+    padding: 2px 5px;
+  }
+}
+```
+
+此外，我们还可以使用polyfills和shims来为不支持的功能提供回退功能。Polyfills是JavaScript代码，模拟旧版浏览器上现代Web标准的行为，而shims则是一小段代码，使得特定浏览器不支持的功能变得可用。
+
+虚拟DOM提供了一个统一、抽象的接口，在所有浏览器和平台上实现方式相同，消除了针对特定浏览器的解决方案（如polyfills）——只在DOM周围
+
+上面的React示例比直接操作DOM更好，原因有几个。
+
+首先，它抽象了直接操作DOM的复杂性，使我们更容易专注于应用程序逻辑而不是展示。我们只需要编写组件并定义它们的行为，React会在组件状态改变时自动更新DOM的必要部分。
+
+其次，React虚拟DOM允许高效和高性能地更新用户界面。当组件状态发生变化时，React会将新的虚拟DOM与之前的进行比较，并计算出更新实际DOM所需的最小更改数量。这意味着可以快速进行更新，无需重新计算整个页面布局。
+
+第三，在使用JSX时可以使用更具声明性和可读性的语法来创建UI组件。我们可以编写类似HTML代码，并让React处理渲染过程，而不是手动创建元素并将其附加到DOM中。
+
+---
+
+```typescript
+const element = React.createElement(
+  "div",
+  { className: "my-class" },
+  "Hello, world!"
+);
+```
+
+console.log(element). It looks like this:
+
+```json
+{
+  $$typeof: Symbol(react.element),
+  type: "div",
+  key: null,
+  ref: null,
+  props: {
+    className: "my-class",
+    children: "Hello, world!"
+  },
+  _owner: null,
+  _store: {}
+}
+```
+
+React元素是React应用程序的最小构建块，它们描述了屏幕上应该显示什么。每个元素都是一个简单的JavaScript对象，描述了它所代表的组件以及任何相关的props或属性。
+
+`$$typeof`：这是React使用的符号，用于确保对象是有效的React元素。在这种情况下，它是Symbol(react.element)。根据元素类型，`$$typeof`可以有其他值：
+
+Symbol(react.fragment)：当元素表示一个React片段时。
+
+Symbol(react.portal)：当元素表示一个React门户时。
+
+Symbol(react.profiler)：当元素表示一个React分析器时。
+
+Symbol(react.provider)：当元素表示一个React上下文提供者时。
+
+总体而言，`$$typeof`作为一种类型标记，用于识别React元素的类型。
+
+```typescript
+import UserContext from './UserContext'
+const Title = () => {
+  const user = useContext(UserContext)
+  return <div>{user.name}</div>
+}
+```
+
+每个fiber都会获得一个新的dependencies属性来跟踪它所消费的所有上下文。这是因为组件可以使用多个useContext，并且每个用法都会消耗不同的上下文，比如UserContext和ThemeContext。
+
+dependencies属性被设计成一个链表，其中firstContext属性保存第一个具有ContextItem类型的上下文。每个ContextItem包含一个ReactContext（前面介绍过的上下文）和指向下一个上下文的next属性。依赖列表是提供程序在传播更新时找到所有消费者的方式。
+
+```typescript
+function useContext(context) {
+  const contextItem = {
+    context: context,
+    next: null,
+  }
+  if (lastDependency === null) {
+    lastDependency = contextItem
+    updatingFiber.dependencies = {
+      firstContext: contextItem,
+    }
+  } else {
+    lastDependency =
+      lastDependency.next = contextItem
+  }
+  ...
+}
+```
+通过Provider提供上下文。如果Provider的值发生变化，它会找到所有使用该上下文的组件并传播更新。否则，它将跳过更新。
+
+在更新中，当使用给定上下文调用useContext钩子时，它会将上下文添加到Fiber的依赖列表中，并返回当前的上下文值。
+
+```typescript
+import UserContext from './UserContext'
+
+const App = ({ initialUser }) => {
+  const [user, changeUser] = useState(initialUser)
+  const value = { user, changeUser }
+  return (
+    <UserContext.Provider value={value}>
+      <div>
+        <Header />
+        <Site />
+      </div>
+    </UserContext.Provider>
+  )
+}
+```
+
+useContext examples
+- Theme context
+- Table context
+
+TODO: Chapter 7 Appendix A & B
+
+---
+
+在上面的代码中，我们给h1元素添加了id。但是很快我们就遇到了一些问题。首先，Title组件被设计成可重用的。这意味着在当前屏幕上可以有多个<Title />实例。假设我们想要操作其中一个实例 - 我们如何通过id找到它？
+
+其次，更重要的是，假设我们找到了想要的元素。由于它现在被包裹在一个组件中，React管理着它的生命周期，那么我们如何知道它准确地什么时候挂载和卸载？如果对此不确定，我们如何安全地操作它？
