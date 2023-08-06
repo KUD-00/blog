@@ -128,6 +128,12 @@ dependencies:
   '@t3-oss/env-nextjs':
     specifier: ^0.2.2
     version: 0.2.2(zod@3.21.4)
+  '@trpc/client':
+    specifier: ^10.37.1
+    version: 10.37.1(@trpc/server@10.37.1)
+  '@trpc/server':
+    specifier: ^10.37.1
+    version: 10.37.1
   '@typescript-eslint/parser':
     specifier: ^5.59.0
     version: 5.59.0(eslint@8.39.0)(typescript@4.7.4)
@@ -200,6 +206,9 @@ dependencies:
   react-textarea-autosize:
     specifier: ^8.4.1
     version: 8.4.1(@types/react@18.0.15)(react@18.2.0)
+  react-tweet:
+    specifier: ^3.0.4
+    version: 3.0.4(react-dom@18.2.0)(react@18.2.0)
   react-twitter-embed:
     specifier: ^4.0.4
     version: 4.0.4(react-dom@18.2.0)(react@18.2.0)
@@ -2785,6 +2794,18 @@ packages:
       tailwindcss: 3.3.1(postcss@8.4.23)(ts-node@10.9.1)
     dev: true
 
+  /@trpc/client@10.37.1(@trpc/server@10.37.1):
+    resolution: {integrity: sha512-OSblNfeI0Z9ERn3usgLV2x63CwwPoNOHf1FQK85cOT7F8MNaWyEHoEv7tHUwNGJwyzKXmpU+ockZ0movzX3D0g==}
+    peerDependencies:
+      '@trpc/server': 10.37.1
+    dependencies:
+      '@trpc/server': 10.37.1
+    dev: false
+
+  /@trpc/server@10.37.1:
+    resolution: {integrity: sha512-r3VeA319/braYMBIzj+XLgLKQ9lJSVglvPvP9HUv4kr5w6Y5grQMxMcExhTiZWltE9bnSJHKtBBzHafOo7KC8A==}
+    dev: false
+
   /@tsconfig/node10@1.0.9:
     resolution: {integrity: sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA==}
 
@@ -3744,6 +3765,13 @@ packages:
   /date-fns@2.29.3:
     resolution: {integrity: sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==}
     engines: {node: '>=0.11'}
+    dev: false
+
+  /date-fns@2.30.0:
+    resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
+    engines: {node: '>=0.11'}
+    dependencies:
+      '@babel/runtime': 7.21.0
     dev: false
 
   /debug@3.2.7:
@@ -7288,6 +7316,20 @@ packages:
       - '@types/react'
     dev: false
 
+  /react-tweet@3.0.4(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-cp2O8OnW3O5unYU4Txv2AW8g8HnqMx2kpFokTB4XnGbTt65zY2pzklWVM6pAg1lIO5n1Uikreh2cKszUKdAB/g==}
+    peerDependencies:
+      react: '>= 18.0.0'
+      react-dom: '>= 18.0.0'
+    dependencies:
+      '@swc/helpers': 0.5.1
+      clsx: 1.2.1
+      date-fns: 2.30.0
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      swr: 2.2.0(react@18.2.0)
+    dev: false
+
   /react-twitter-embed@4.0.4(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-2JIL7qF+U62zRzpsh6SZDXNI3hRNVYf5vOZ1WRcMvwKouw+xC00PuFaD0aEp2wlyGaZ+f4x2VvX+uDadFQ3HVA==}
     engines: {node: '>=10'}
@@ -8045,6 +8087,15 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  /swr@2.2.0(react@18.2.0):
+    resolution: {integrity: sha512-AjqHOv2lAhkuUdIiBu9xbuettzAzWXmCEcLONNKJRba87WAefz8Ca9d6ds/SzrPc235n1IxWYdhJ2zF3MNUaoQ==}
+    peerDependencies:
+      react: ^16.11.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.2.0
+      use-sync-external-store: 1.2.0(react@18.2.0)
+    dev: false
+
   /tailwind-merge@1.12.0:
     resolution: {integrity: sha512-Y17eDp7FtN1+JJ4OY0Bqv9OA41O+MS8c1Iyr3T6JFLnOgLg3EvcyMKZAnQ8AGyvB5Nxm3t9Xb5Mhe139m8QT/g==}
     dev: false
@@ -8504,6 +8555,14 @@ packages:
       detect-node-es: 1.1.0
       react: 18.2.0
       tslib: 2.5.0
+    dev: false
+
+  /use-sync-external-store@1.2.0(react@18.2.0):
+    resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /util-deprecate@1.0.2:

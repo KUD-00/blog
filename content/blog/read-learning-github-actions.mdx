@@ -29,7 +29,7 @@ GitHub Actions 的流程：
 
 相应的工作流将被识别，并触发匹配工作流的新运行。
 
-GitHub Actions的工作流是一组定义了执行顺序和步骤集的代码，类似于脚本或程序。该文件必须以YAML格式编码，并存储在<repository>/.github/workflows目录中
+GitHub Actions的工作流是一组定义了执行顺序和步骤集的代码，类似于脚本或程序。该文件必须以YAML格式编码，并存储在`<repository>/.github/workflows`目录中
 
 一个工作流包含一个或多个任务。一旦启动了一个工作流，任务就开始执行，默认情况下它们并行运行。任务由步骤组成。步骤可以运行shell命令或调用预定义的GitHub操作。所有任务中的步骤都在运行器上执行。运行器可以是已设置好如何与GitHub Actions交互的服务器（虚拟或物理）或容器。
 

@@ -1,0 +1,22 @@
+---
+title: "SSR and RSC"
+date: "2023-08-05"
+description: "twitter上看来的"
+image: /images/blog/lying-girl-with-butterfly.jpg
+authors:
+  - KUD
+---
+
+Server-side rendering (SSR) 和 React Server Components (RSC) 在服务端渲染方面的主要区别是:
+
+- SSR会在服务端提前构建整个页面的HTML,并将其发送给客户端。客户端得到的是一个可以直接渲染的完整HTML页面。
+
+- RSC会在服务端提前构建React组件,并生成与组件对应的JSON格式数据,发送给客户端。客户端得到的不是HTML,而是React组件需要的数据。
+
+也就是说:
+
+- SSR的输出是HTML页面,侧重于首屏加载性能。但服务端代码和客户端代码会有些重复。
+
+- RSC的输出是组件数据,更加关注组件级别的代码拆分。客户端需要用React重新渲染,但避免了服务端和客户端代码重复。
+
+您认为SSR更侧重页面级别的构建,而RSC更侧重组件级别的构建,这个理解是正确的。RSC让我们可以在组件粒度进行服务端渲染,这是其最大的优点。
