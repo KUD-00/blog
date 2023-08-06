@@ -81,6 +81,7 @@
     "react-hook-form": "^7.43.9",
     "react-static-tweets": "^2.0.0",
     "react-textarea-autosize": "^8.4.1",
+    "react-tweet": "^3.0.4",
     "react-twitter-embed": "^4.0.4",
     "rehype-katex": "^6.0.3",
     "remark-math": "^5.1.1",

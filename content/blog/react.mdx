@@ -8,9 +8,7 @@ authors:
 ---
 
 包括 Learn React with Typescript 笔记
-
 ---
-
 React 中，你可以使用 PropTypes 或 TypeScript 来声明和验证组件属性的类型
 
 PropTypes: PropTypes 是 React 提供的一个轻量级的类型检查机制。你可以在组件的 propTypes 属性中使用 PropTypes 对象来定义属性的类型和验证规则。PropTypes 是一种静态检查机制，在运行时进行验证，可以帮助你在开发过程中捕捉潜在的错误。PropTypes 提供了一些常见的类型检查器，例如 string、number、array、object 等，以及一些更复杂的检查器，如 shape、oneOfType 等。
@@ -168,3 +166,135 @@ function MyComponent() {
 React的主要优化策略是减少不必要的重新渲染，而不是预渲染所有可能的状态。通过使用React.PureComponent，React.memo等机制，我们可以避免在状态没有改变的情况下，对组件进行无谓的重新渲染。
 
 ---
+
+使用elementref来解决useref的类型问题
+
+```typescript
+import { useRef, ElementRef } from "react";
+
+const Component = () => {
+  const audioRef = useRef<ElementRef<"audio">>(null);
+
+  return <audio ref={audioRef}>Hello</audio>;
+};
+```
+
+---
+
+`onClick = {async() => {}}`的问题：
+1. 每次组件渲染时,会创建一个新的异步箭头函数,可能会导致额外的重渲染。
+2. 如果异步函数需要使用组件内的props或state,可能会读取到过期的闭包值。
+3. 如果传递给子组件,子组件可能会过于频繁渲染。
+4. 不利于测试和维护。
+
+所以更好的方式是:
+
+1. 使用 useCallback 包装异步函数:
+
+```jsx
+const handleClick = useCallback(async () => {
+  // 异步代码
+}, [deps])
+
+return <Button onClick={handleClick} />
+```
+
+这样可以避免重复创建函数。
+
+2. 在组件内定义异步函数:
+
+```jsx
+function Component() {
+
+  const handleClick = async () => {
+    // 异步代码
+  }
+
+  return <Button onClick={handleClick} />
+
+}
+```
+
+---
+
+`{aa && <Component />}`的问题：
+
+[link here](https://stackoverflow.com/questions/53048037/react-showing-0-instead-of-nothing-with-short-circuit-conditional-component/53048160#53048160)
+
+由于您的条件为假，因此不会返回第二个参数（<GeneralLoader />），而是返回profileTypesLoading，它是一个数字。React会渲染它，因为React跳过对typeof boolean或undefined的任何内容进行渲染，并且会渲染typeof string或number的任何内容：
+
+为了确保安全，您可以使用三元表达式{condition ? <Component /> : null}或将条件转换为布尔值{!!condition && <Component />}
+
+---
+
+useState是React Hooks中的一个函数,它允许在函数组件中添加state。
+
+useState的实现位于react源代码的packages/react-reconciler/src/ReactFiberHooks.new.js文件中。
+
+关键实现如下:
+
+1. useState内部会通过getCacheForType获取存储state的fiber对象:
+
+```js
+function useState<S>(initialState: (() => S) | S) {
+  const fiber = currentlyRenderingFiber;
+  const hook = updateWorkInProgressHook();
+  let baseState = hook.memoizedState;
+  if (baseState === null) {
+    // 初始化
+    const queue = (hook.updateQueue: StateUpdateQueue<S>);
+    const initialState = ((initialState: any): S);
+    queue.shared.pending = {
+      action: createStateAction(initialState),
+      next: null,
+    };
+
+    // 通过getCacheForType获取存储state的fiber
+    hook.memoizedState = baseState = initialState;
+
+    queue.shared.effects = [];
+  }
+  return [hook.memoizedState, dispatchAction.bind(null, currentlyRenderingFiber)];
+}
+```
+
+2. getCacheForType会从Fiber节点上的cache对象中获取存储state的fiber:
+
+```js
+function getCacheForType<T>(resourceType: () => T): T {
+  let cache = currentCache;
+  let tag = getCacheSignal();
+  if (tag !== null) {
+    let fiber = tag._reactInternals;
+    let cacheType = ((resourceType: any): mixed);
+    let key = getCacheKey(cacheType);
+    let cacheItem = cache.cache.get(key);
+    if (cacheItem === undefined) {
+      cacheItem = fiber.memoizedState;
+      cache.cache.set(key, cacheItem);
+    }
+    return (cacheItem: T);
+  }
+  // 没有cache,则创建
+  let inst = resourceType();
+  return inst;
+}
+```
+
+3. state的值通过hook.memoizedState存储在fiber对象上,并且会在组件重新渲染时从上一次的fiber对象中获取,实现状态的维护。
+
+4. 通过dispatchAction可以触发重新渲染,从而更新状态。
+
+所以useState的关键逻辑就是通过fiber对象的cache存储状态,并在重新渲染时从上一次的fiber获取状态,来实现状态的维护。具体的逻辑可以通过阅读源码进一步理解。
+
+---
+
+useId是一个新的hook,可以为组件生成一个稳定可预测的id。
+
+它可以帮助关联DOM元素与React组件,避免使用Math.random()产生冲突的id。
+
+---
+
+轻量组件(Light Components): 轻量组件目前还在提案阶段,旨在减少组件实例化的开销。
+
+通过渲染静态版本避免创建组件实例,可以提升大型应用的性能。
