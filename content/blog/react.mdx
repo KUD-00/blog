@@ -205,10 +205,20 @@ return <Button onClick={handleClick} />
 
 ```jsx
 function Component() {
+<<<<<<< HEAD
   const handleClick = async () => {
     // 异步代码
   }
   return <Button onClick={handleClick} />
+=======
+
+  const handleClick = async () => {
+    // 异步代码
+  }
+
+  return <Button onClick={handleClick} />
+
+>>>>>>> origin
 }
 ```
 
@@ -218,9 +228,15 @@ function Component() {
 
 [link here](https://stackoverflow.com/questions/53048037/react-showing-0-instead-of-nothing-with-short-circuit-conditional-component/53048160#53048160)
 
+<<<<<<< HEAD
 由于您的条件为假，因此不会返回第二个参数`<GeneralLoader />`，而是返回profileTypesLoading，它是一个数字。React会渲染它，因为React跳过对typeof boolean或undefined的任何内容进行渲染，并且会渲染typeof string或number的任何内容：
 
 为了确保安全，您可以使用三元表达式`{condition ? <Component /> : null}`或将条件转换为布尔值`{!!condition && <Component />}`
+=======
+由于您的条件为假，因此不会返回第二个参数（<GeneralLoader />），而是返回profileTypesLoading，它是一个数字。React会渲染它，因为React跳过对typeof boolean或undefined的任何内容进行渲染，并且会渲染typeof string或number的任何内容：
+
+为了确保安全，您可以使用三元表达式{condition ? <Component /> : null}或将条件转换为布尔值{!!condition && <Component />}
+>>>>>>> origin
 
 ---
 
@@ -295,5 +311,8 @@ useId是一个新的hook,可以为组件生成一个稳定可预测的id。
 轻量组件(Light Components): 轻量组件目前还在提案阶段,旨在减少组件实例化的开销。
 
 通过渲染静态版本避免创建组件实例,可以提升大型应用的性能。
+<<<<<<< HEAD
 
 ---
+=======
+>>>>>>> origin
