@@ -912,7 +912,7 @@ const Child = ({ childRef }) => {
 }
 ```
 
- <Child ref={ref} />
+`<Child ref={ref} />`
 
 The preceding line would ask the Child function component to assign its instance to ref. But a function component cannot have a ref by default. Therefore, avoid using the ref name when passing it around. There's actually a way to attach a ref to a function component with some work
 
