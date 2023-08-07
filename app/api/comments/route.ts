@@ -9,13 +9,13 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const { content, blog, name } = await request.json();
+  const { content, blog, user_name } = await request.json();
 
   await prisma.comments.create({
     data: {
       content: content,
       blog: blog,
-      name: name,
+      user_name: user_name,
     },
   });
 

@@ -10,9 +10,9 @@ interface CommentPageProps {
 interface Comment {
   id: number;
   blog: string;
-  name: string;
+  user_name: string;
   content: string;
-  createdAt: Date;
+  created_at: Date;
 }
 
 export default function Comment(props: CommentPageProps) {
@@ -22,7 +22,7 @@ export default function Comment(props: CommentPageProps) {
 
   const onComment = async () => {
     const payload = {
-        name: nameRef.current?.value,
+        user_name: nameRef.current?.value,
         content: commentRef.current?.value,
         blog: props.postId,
     }
@@ -65,8 +65,8 @@ export default function Comment(props: CommentPageProps) {
           return (
             <>
               <div className="grid grid-cols-1 justify-items-center">
-                <span className="probe">{comment.name}</span>
-                <span className="probe">{comment.createdAt.toString()}</span>
+                <span className="probe">{comment.user_name}</span>
+                <span className="probe">{comment.created_at.toString()}</span>
                 <div className="card rounded-box grid h-20 place-items-center bg-base-300">{comment.content}</div>
                 <div className="divider"></div>
               </div>
