@@ -4,7 +4,6 @@ forked from taxonomy by shadcn
 ## Bugs
 * [ ] MainNav components has a list-unique-key problem
 * [ ] latex support a little weird(now use script to remove duplicate latex)
-* [ ] vercel dont support sqlite, use vercel postgres or suspase or planetscale instead
 
 ## TODOs
 不着急，大概也不会做
@@ -16,11 +15,12 @@ forked from taxonomy by shadcn
 * [ ] post-list is shit, need to refactor
 * [x] hint 做成和 post 一样的
   - 还可以改进改进
-* [ ] add comment
+* [x] add comment
   - sqlite not supported by vercel
+  - solve by using supabase
 * [ ] i18n support
   - may need to use i18n-next or some libraries, cause it doesn't work good now
 * [ ] 添加 update_time 属性
 * [ ] 添加 tag 功能
 * [ ] 添加搜索功能
-* [ ] 添加显示 tweet 功能（需要理解 server component 好像）
+* [x] 添加显示 tweet 

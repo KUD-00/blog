@@ -3,8 +3,16 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
-  const comments = await getAllComments();
+export async function GET(request: NextRequest) {
+  const searchParams = new URL(request.url).searchParams;
+  const blog = searchParams.get('blog');
+
+  const comments = await prisma.comments.findMany({
+    where: {
+      blog: blog,
+    }
+  })
+
   return NextResponse.json(comments);
 }
 

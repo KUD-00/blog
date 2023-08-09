@@ -38,7 +38,7 @@ export default function Comment(props: CommentPageProps) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch('/api/comments', {
+      const response = await fetch(`/api/comments?blog=${props.postId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export default function Comment(props: CommentPageProps) {
         {comments?.map((comment) => {
           return (
             <>
-              <div className="grid grid-cols-1 justify-items-center">
+              <div className="grid w-full grid-cols-1 justify-items-center">
                 <span className="probe">{comment.user_name}</span>
                 <span className="probe">{comment.created_at.toString()}</span>
                 <div className="card rounded-box grid h-20 place-items-center bg-base-300">{comment.content}</div>
