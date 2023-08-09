@@ -16,13 +16,13 @@ export const appRouter = router({
       return comments;
     }),
 
-  commentCreate: publicProcedure
-    .input(z.object({ name: z.string() }))
+/*   commentCreate: publicProcedure
+    .input(z.object({ data: z.string() }))
     .mutation(async (opts) => {
       const { input } = opts;
       const comments = await db.comments.create(input);
       return comments;
-    }),
+    }), */
 });
 
 export type AppRouter = typeof appRouter;
@@ -31,4 +31,4 @@ const server = createHTTPServer({
   router: appRouter,
 });
 
-server.listen(3000);
+server.listen(3010);
