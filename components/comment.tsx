@@ -60,14 +60,14 @@ export default function Comment(props: CommentPageProps) {
           <button className="btn-outline btn mt-4 w-1/4 shrink" onClick={onComment}>SUBMIT</button>
         </div>
 
-        <div className="flex w-full flex-col">
+        <div className="mt-8 flex w-full flex-col">
         {comments?.map((comment) => {
           return (
             <>
               <div className="grid w-full grid-cols-1 justify-items-center">
                 <span className="probe">{comment.user_name}</span>
                 <span className="probe">{comment.created_at.toString()}</span>
-                <div className="card rounded-box grid h-20 place-items-center bg-base-300">{comment.content}</div>
+                <div className="card rounded-box grid h-20 w-1/2 place-items-center bg-base-300">{comment.content}</div>
                 <div className="divider"></div>
               </div>
             </>
