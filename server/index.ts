@@ -1,9 +1,34 @@
-import { router } from './trpc'
+import { db } from './db';
+import { publicProcedure, router } from './trpc';
+import { createHTTPServer } from "@trpc/server/adapters/standalone";
+import { z } from "zod";
 
-const appRouter = router({
-  // ...
+export const appRouter = router({
+  commentBySlug: publicProcedure
+    .input(z.string())
+    .query(async (opts) => {
+      const { input } = opts;
+      const comments = await db.comments.findMany({
+        where: {
+          blog: input
+        }
+      });
+      return comments;
+    }),
+
+  commentCreate: publicProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async (opts) => {
+      const { input } = opts;
+      const comments = await db.comments.create(input);
+      return comments;
+    }),
 });
 
-// Export type router type signature,
-// NOT the router itself.
 export type AppRouter = typeof appRouter;
+
+const server = createHTTPServer({
+  router: appRouter,
+});
+
+server.listen(3000);

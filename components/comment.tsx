@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useEffect, useState } from 'react'
+import { trpc } from '@/client/index'
 
 import "@/styles/mdx.css"
 
@@ -37,6 +38,8 @@ export default function Comment(props: CommentPageProps) {
   }
 
   useEffect(() => {
+    const comments = await trpc.commentBySlug.query(props.postId)
+
     const fetchData = async () => {
       const response = await fetch(`/api/comments?blog=${props.postId}`, {
         method: 'GET',
