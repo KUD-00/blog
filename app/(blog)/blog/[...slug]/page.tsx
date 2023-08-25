@@ -71,12 +71,6 @@ export async function generateMetadata({
         },
       ],
     },
-    twitter: {
-      card: "summary_large_image",
-      title: post.title,
-      description: post.description,
-      images: [ogUrl.toString()],
-    },
   }
 }
 
@@ -98,8 +92,6 @@ export default async function PostPage({ params }: PostPageProps) {
   const authors = post.authors.map((author) =>
     allAuthors.find(({ slug }) => slug === `/authors/${author}`)
   )
-
-  const onComment = () => {}
 
   return (
     <>
