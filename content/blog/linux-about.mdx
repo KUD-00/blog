@@ -242,3 +242,41 @@ okay im not interested in the following things.
 $ tree -a -I .git
 ```
 -I is good!
+
+---
+
+wlp2s0的意义：
+- wl 表示 wireless LAN
+- p 表示 PCI 接口
+- 2s0 是网卡的具体编号
+
+link/ether 表示这是一个以太网链接,无线网络适配器也会显示这一信息。
+
+查找无线网卡相关的驱动: `lspci | grep -i net`
+
+rfkill 显示的设备名称通常是 phyX,比如 phy0
+
+enp7s0u1u4c2的意义：
+
+Linux系统中,网络接口的命名规则一般如下:
+- 有线接口:enoX, enpXsY
+- 无线接口:wlX, wlpXsY
+
+其中,对于有线接口:
+- eno表示onboard设备,即主板集成的有线网卡
+- enp表示PCI-E扩展接口的有线网卡
+
+---
+
+常见的网络线缆速率区分:
+- 10BASE-T:10Mbps,用于10Mbps Ethernet,需要2对线缆。
+- 100BASE-TX:100Mbps,用于100Mbps Fast Ethernet,需要2对线缆。也称为百兆线。
+- 1000BASE-T: 1Gbps,用于1Gbps Gigabit Ethernet,需要4对线缆。也称为千兆线。
+- 10GBASE-T: 10Gbps,用于10Gbps 10G Ethernet,需要8对线缆。
+
+常见的RJ45网线分类:
+- Cat5支持100Mbps速率
+- Cat5e支持1000Mbps速率
+- Cat6支持10Gbps速率
+- 超六类(CAT.7/7A)
+

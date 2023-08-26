@@ -1,0 +1,92 @@
+---
+title: "学一点点nix打包"
+date: "2023-08-25"
+description: "为什么我就对这种宗教性质的东西很喜欢呢"
+image:
+authors:
+  - KUD
+---
+
+nix要做的就是Reproducible builds and deployments.感觉上就和虚拟环境的包管理有点像（python那种），但是实现方式上有一定区别，同时用起来比较简单
+
+2023-08-25看了一眼这个文章：[packaging-existing-software](https://nix.dev/tutorials/learning-journey/packaging-existing-software)
+
+icat.nix:
+```nix
+{ lib
+, stdenv
+, fetchFromGitHub
+, imlib2
+, xorg
+}:
+
+stdenv.mkDerivation {
+  name = "icat";
+
+  src = fetchFromGitHub {
+    owner = "atextor";
+    repo = "icat";
+    rev = "v0.5";
+    sha256 = "0wyy2ksxp95vnh71ybj1bbmqd5ggp13x3mk37pzr99ljs9awy8ka";
+  };
+
+  buildInputs = [ imlib2 xorg.libX11.dev ];
+
+  installPhase = ''
+    mkdir -p $out/bin
+    cp icat $out/bin
+  '';
+}
+```
+
+icat.nix:
+```nix
+let
+  pkgs = import <nixpkgs> { };
+in
+{
+  icat = pkgs.callPackage ./icat.nix { };
+}
+```
+
+nixpkgs是一个包含大量Nix包定义的git存储库。 `import <nixpkgs>`会导入这个存储库并返回一个包含所有可用包的集合
+
+`pkgs.callPackage`是一个在这个集合中查找和调用指定包定义的方法
+
+hello.nix自己没有显式从nixpkgs中使用任何东西。之所以可以在nixpkgs环境中工作,是因为在调用这个打包函数时,会默认传入nixpkgs中定义的一些变量,比如stdenv, fetchzip等
+
+---
+
+之所以需要`{ }`,是因为Nix中的函数调用都需要以`{ attr = value; }`的形式提供参数。
+
+即使不需要任何参数,也需要提供一个空的`{ }`,表示调用这个函数时不传入任何参数。
+
+---
+
+callPackage本身确实是一个函数,但其参数格式有点特殊。
+
+在Nix中,callPackage的完整签名是: `callPackage : PkgSet -> Path -> AttrSet -> Derivation`。它接受3个参数:
+1. PkgSet - 存放所有包定义的集合,通常是`import <nixpkgs>` 返回的结果。callPackage内部会自动使用这个pkgs集合,不需要我们传递。
+2. Path - 指向具体包定义文件的路径,如 `./hello.nix`。
+3. AttrSet - 传递给包定义函数的配置参数。
+4. Derivation - 这个->在Nix的函数签名中,指向最后一个参数是返回值类型。
+
+可以看到,尽管callPackage是一个函数调用,但其参数中既包含常规的参数(AttrSet),也包含非参数形式的参数(PkgSet和Path)。
+
+这是因为callPackage本身就是一个特殊的接口函数,它将找到包定义文件和调用包定义函数这两个动作组合在一起了。
+
+所以使用方式是: `pkgs.callPackage ./hello.nix { }`。而不是传统的`func(arg1, arg2)`形式。
+
+这实际上是Nix语言一个特殊的语法点,允许某些"函数"像语言构造一样使用,让包的导入更加方便。
+
+---
+
+pkgs不仅仅包含nixpkgs中所有包的定义,还包含一些用于操作这些包的方法,比如callPackage。
+
+具体来说,`import <nixpkgs>`返回的pkgs包含:
+- 所有nixpkgs包的定义,以属性名访问,如pkgs.stdenv
+- 一些操作包的函数,比如callPackage,buildEnv等
+- 一些系统信息,如pkgs.system等
+
+---
+

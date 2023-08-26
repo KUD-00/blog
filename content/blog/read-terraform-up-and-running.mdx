@@ -1,0 +1,88 @@
+---
+title: "读terraform up and running"
+date: "2023-08-26"
+description: "DevOps"
+image:
+authors:
+  - KUD
+---
+
+在不太遥远的过去，如果你想要建立一家软件公司，你还需要管理大量的硬件。你会设置机柜和架子，装上服务器，连接电线，安装冷却系统，构建冗余电源系统等等。有一个团队通常被称为开发者（"Devs"）专门负责编写软件，并且另外一个团队通常被称为运维人员（"Ops"），专门负责管理这些硬件。
+
+这种方法在一开始效果不错，但随着公司的发展，你最终会遇到问题。通常情况下是这样的：由于发布是手动进行的，随着服务器数量增加，发布变得缓慢、痛苦且不可预测。运维团队偶尔会出错，导致每个服务器(snowflake servers)都有微妙不同的配置（被称为配置漂移问题configuration drift）。结果就是bug数量增加了。开发人员耸耸肩说：“在我的机器上可以运行！”故障和停机时间变得更频繁。
+
+DevOps 的目标是使软件交付效率大幅提高。
+
+你可以持续集成代码，并始终保持可部署状态，而不再出现多天合并噩梦。你可以每天部署数十次甚至在每次提交后进行部署, 而不再只能每月一次地部署代码。而且，在常见故障和停机时间方面, 你构建具备弹性自愈能力的系统，并使用监控与警报来捕捉无法自动解决问题。
+
+DevOps运动有四个核心价值观：文化、自动化、度量和共享（culture, automation, measurement, and sharing。有时简称为CAMS）
+
+目标是尽可能地自动化软件交付过程。这意味着您通过编码来管理基础架构，而不是通过网页点击或手动执行Shell命令。这通常被称为基础架构即代码的概念。
+
+基础设施即代码（IaC）的理念是通过编写和执行代码来定义、部署、更新和销毁基础设施
+
+five broad categories of IaC tools:
+- Ad hoc scripts: Bash/Python/...
+- Configuration management tools: Chef、Puppet和Ansible
+- Server templating tools: Docker(Container), Packer, Vagrant(VM)
+- Orchestration tools: Kubernetes、Marathon/Mesos、Amazon Elastic Container Service（Amazon ECS）、Docker Swarm和Nomad
+- Provisioning tools
+
+```yaml
+- name: Update the apt-get cache
+  apt:
+    update_cache: yes
+
+- name: Install PHP
+  apt:
+    name: php
+
+- name: Install Apache
+  apt:
+    name: apache2
+
+- name: Copy the code from the repository
+  git: repo=https://github.com/brikis98/php-app.git dest=/var/www/html/app
+
+- name: Start Apache
+  service: name=apache2 state=started enabled=yes
+```
+
+Idempotence 幂等性
+
+编写一个只能运行一次的临时脚本并不太困难；但是要编写一个即使反复运行也能正确工作的临时脚本就要困难得多。每次在脚本中创建文件夹时，你需要记住检查该文件夹是否已经存在；每次向文件添加配置行时，你需要检查该行是否已经存在；每次想要运行一个应用程序时，你需要检查该应用程序是否已经在运行。
+
+无论运行多少次都能正常工作的代码被称为幂等代码。要使前一节中的Bash脚本具有幂等性，您需要添加许多行代码，包括大量的if语句。而另一方面，大多数Ansible函数默认情况下都是幂等的。
+
+Server templating tools与在每个服务器上运行相同代码来启动一堆服务器并对其进行配置不同，服务器模板工具的理念是创建一个捕捉操作系统（OS）、软件、文件和其他相关细节完全自包含“快照”的服务器镜像。然后您可以使用其他IaC工具将该镜像安装到所有服务器上
+
+Packer template => Packer => Server image => Ansible => servers
+
+注意，不同的服务器模板工具有稍微不同的用途。Packer通常用于创建直接在生产服务器上运行的镜像，例如在您的生产AWS帐户中运行的AMI。Vagrant通常用于创建在开发计算机上运行的镜像，例如在Mac或Windows笔记本电脑上运行的VirtualBox镜像。Docker通常用于创建单个应用程序的镜像。只要其他工具已经配置了该计算机与Docker引擎一起使用，您可以在生产或开发计算机上运行Docker映像。例如，一个常见模式是使用Packer创建安装了Docker引擎的AMI，在您AWS账户中部署该AMI到一组服务器集群，并且然后跨该集群部署单独的Docker容器来运行应用程序。
+
+<Callout>
+1. 使用Packer工具创建一个安装了Docker引擎的AMI镜像。Packer可以自动化创建AMI的过程。
+2. 在你的AWS账户中,使用创建的AMI镜像部署一组EC2实例作为服务器集群。所有这些实例都已经预装了Docker引擎。
+3. 在这组EC2实例上,你可以使用DockerCompose等工具,在集群内的各个节点上部署你的Docker容器化应用。每个节点上可以运行应用的不同服务。
+4. 这样就可以实现在AWS服务器集群上跨节点部署 Docker容器来运行分布式应用程序。
+
+主要好处是通过Packer预装Docker可以标准化环境;而Docker容器化可以方便部署和管理分布式应用;集群化可以提供高可用和伸缩性。
+</Callout>
+
+服务器模板化是迁移到不可变基础架构（immutable infrastructure） 的关键组成部分。这个想法受到函数式编程启发，在函数式编程中变量是不可变动态绑定值得对象, 一旦你将一个变量设置为某个值之后就不能再改变它. 如果需要更新某些东西, 比如部署代码新版本, 那么你会从现有服务模板中创建一个新映像并将其部署到新服务器上. 因为服务器永远不会更改, 所以更容易理解部署的内容。
+
+服务器模板化工具非常适用于创建虚拟机和容器，但是如何实际管理它们呢？对于大多数真实世界的使用情况，您需要以下方式来完成：
+1. 部署虚拟机和容器，并有效利用硬件资源。
+2. 通过滚动部署、蓝绿部署(blue-green development)和金丝雀(canary deployment)发布等策略，在现有的虚拟机和容器群中进行更新。
+3. 监控虚拟机和容器的健康状态，并自动替换不健康的实例（自动修复）。
+4. 根据负载情况，自动调整虚拟机和容器数量（自动扩缩容）。
+5. 在虚拟机和容器之间分发流量（负载均衡）。
+6. 使得您的虚拟机和容器能够在网络上找到并相互通信（服务发现）。
+
+<Callout>
+在 canary deployment 中，新版本的应用程序或服务会首先被部署到一小部分用户或服务器上（称为 "canary group"），然后观察其表现如何。如果没有出现问题，可以继续将新版本扩展到更多用户或服务器上。如果发现了任何问题，可以快速回滚到之前的稳定版本。
+
+同时维护两个相同的生产环境（蓝色和绿色），其中一个环境处于活动状态（蓝色），而另一个环境则处于非活动状态（绿色）。通过这种方式，可以实现无缝地进行软件更新和回滚操作。举例来说，在 blue-green deployment 中，当需要发布新版本时，先将新版本部署到非活动环境（绿色），然后切换流量至该环境以测试其稳定性。如果出现问题，可以立即切换回原始的活动环境（蓝色）以保持系统正常运行。这样就能够最大程度地减少对用户的影响，并确保高可用性。
+</Callout>
+
+这第一章怎么这么复杂……
