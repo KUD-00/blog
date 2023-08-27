@@ -67,3 +67,25 @@ type PriceMap = {
     [key: string]: number;
 }
 ```
+
+ES6模块是JavaScript在ES6（ECMAScript 2015）规范中引入的官方模块系统。之前，JavaScript并没有官方的模块系统，开发者通常使用CommonJS（Node.js使用的模块系统，如 `module.exports` 和 `require()`）或AMD等模块系统。
+
+以下是ES6模块和CommonJS模块的一些主要区别：
+
+1. 静态与动态：ES6模块是静态的，这意味着你不能动态地导入或导出模块。这使得在编译时就能确定模块的依赖关系，有利于性能优化。例如，静态导入使得[tree shaking（摇树优化） ↗](https://webpack.js.org/guides/tree-shaking/)成为可能，这是一种去除未使用代码的技术。相比之下，CommonJS模块是动态的，这意味着你可以在运行时导入或导出模块。
+2. 语法：ES6模块使用 `import` 和 `export` 关键字，而CommonJS模块使用 `require()` 和 `module.exports`。
+3. 作用域：在ES6模块中，顶级作用域是模块作用域，这意味着定义在模块内部的变量、函数和类在模块外部是不可见的，除非显式地导出它们。相比之下，CommonJS模块的顶级作用域是全局作用域。
+4. 兼容性：由于ES6模块是JavaScript的官方标准，因此它在现代浏览器中具有更好的原生支持。然而，CommonJS模块由于Node.js的广泛使用，仍然在服务器端JavaScript环境中广泛使用。
+
+这就是ES6模块和CommonJS模块的一些主要区别。正如你所见，两者都各有优势，所使用的模块系统取决于你的具体需求和目标环境。
+
+```typescript
+function sayHello(){
+  alert('Hello I am Webpack');
+}
+
+export { sayHello };
+// module.exports = sayHello
+```
+---
+
