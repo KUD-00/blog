@@ -1,0 +1,56 @@
+---
+title: 读React文档
+date: "2023-08-30"
+description: 前端塞尔达
+image: 
+authors:
+  - KUD
+---
+
+# API
+
+[关于portal](https://zh-hans.react.dev/reference/react-dom/createPortal)
+
+我的理解就是可以控制一段jsx在dom树的其他地方渲染，但是本身存在于react树的这个位置，所以事件冒泡什么的会出一点问题
+
+这能做到很多奇妙的事情，上面的链接里有很好的示例
+
+非客户端/服务端的API仅剩这个和不常用的flushSync，findDOMNode/hydrate/render/unmountComponentAtNode全部将被废弃
+---
+
+## 客户端API
+
+hydrateRoot 用于在服务端渲染(SSR)的应用中"激活" React 组件树。
+
+hydrateRoot的作用是将服务端预渲染好的HTML代码"激活"成一个可响应用户交互的React组件树。
+
+具体来说,在服务端我们会调用renderToString先渲染出组件的静态HTML字符串,并发送给客户端。客户端收到HTML后,会首先把它直接展示出来,用户可以看到页面内容,但此时还只是一个静态的HTML页面。
+
+接下来客户端需要通过hydrateRoot把收到的HTML"激活"。hydrateRoot会遍历HTML,找到里面对应的React组件,将其连接到React虚拟DOM上,添加事件监听等,使其变成一个"活"的React组件树。
+
+这样就实现了服务端渲染的优点——首屏内容快速展示,同时又变成了一个功能完整的React应用。
+
+所以简单来说,hydrateRoot的作用是将服务端渲染的静态HTML激活成一个可交互的React组件树,这是React服务器渲染必须的一个步骤。
+
+---
+
+React 将会连接到内部有 domNode 的 HTML 上，然后接管其中的 domNode。一个完全由 React 构建的应用只会在其根组件中调用一次 hydrateRoot 方法。
+
+hydrateRoot() 期望渲染内容与服务端渲染的内容完全相同。你应该将不匹配视为错误并进行修复。
+
+你的应用程序可能只有一个 hydrateRoot() 函数调用。如果你使用框架，则可能会为你完成此调用。
+
+如果你的应用程序是客户端渲染，并且没有已渲染好的 HTML，则不支持使用 hydrateRoot()。请改用 createRoot()。hydrateRoot会遍历HTML
+
+导致 hydrate 错误的最常见原因包括：
+- 根节点 React 生成的 HTML 周围存在额外的空白符（如换行符）。
+- 在渲染逻辑中使用 typeof window !== 'undefined' 这样的判断。
+- 在渲染逻辑中使用仅限于浏览器端的 API，例如 window.matchMedia。
+- 在服务器和客户端渲染不同的数据。
+
+---
+
+我的理解：还没怎么理解，也没试过，这都是框架帮我搞好了的。
+
+hydrateRoot似乎是用了SSR之后的createRoot，SSR会生成一个脱水的html，发给客户端，然后客户端先显示能显示的，根据react部分注水，也就是调用hydrateRoot
+

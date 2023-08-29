@@ -1,0 +1,25 @@
+---
+title: "这个网站的改进"
+date: "2023-08-29"
+description: "需求要写下来，然后实现它"
+image: 
+authors:
+  - KUD
+---
+
+2023-8-29：
+- /blog路由吃的资源太多了，需要分页。
+    - 看了一下好像query parameters不能做server components
+    - 那就只好`/blog/<blogtitle>`不变的基础上，加一个`/blog/page/<pageid>`的路由
+- 添加搜索功能
+  - 现在的实现会卡死/search，不知道为什么，我太菜了
+
+TODO:
+- MainNav components has a list-unique-key problem
+- latex support a little weird(now use script to remove duplicate latex)
+- add trpc
+- post-list is shit, need to refactor
+- i18n support
+- may need to use i18n-next or some libraries, cause it doesn't work good now
+- 添加 update_time 属性
+- 添加 tag 功能

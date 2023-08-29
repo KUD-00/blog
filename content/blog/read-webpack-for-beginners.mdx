@@ -18,3 +18,49 @@ Webpack只会做这些吗？如果你曾经使用过像gulp或Grunt这样的构�
 开箱即用，webpack不需要你使用配置文件。然而，它会假设你的项目入口点是src/index，并将结果输出到dist/main.js中，经过压缩和优化以供生产使用。
 
 development mode下webpack生成的捆绑文件，包括一些被认为是“不良实践”的部分，比如著名的eval函数！在production mode下是不会出现这种情况的。所以在开发阶段/模式中，webpack并不关心质量或性能等方面；目标是交付结果，并生成一个正常工作的代码
+
+loader一方面告诉webpack如何解释、转换和处理你的源代码（例如，从CoffeeScript到普通JavaScript，或者从SASS到CSS）
+
+plugin则可以做任何加载器无法完成的事情。Webpack将其视为核心的支柱。你会发现它们类似于对象，可以接受参数，并且也可以实例化以执行许多操作或添加功能到编译过程中，比如优化打包结果。
+
+```typescript
+const path = require('path');
+
+module.exports = {
+    watch: true,
+    mode: 'development',
+    entry: './src/index.js',
+    devtool: "cheap-module-eval-source-map",
+    output: {
+      filename: 'main.js',
+      path: path.resolve(__dirname, 'dist'),
+    },
+    module: {
+        rules: [
+          {
+            test: /\.m?js$/,
+            exclude: /(node_modules|bower_components)/,
+            use: {
+              loader: 'babel-loader',
+              options: {
+                presets: ['@babel/preset-env']
+              }
+            }
+          }
+        ]
+      }
+  };
+```
+<Callout>
+mjs 是 JavaScript 模块文件的扩展名，它代表了一个使用 ECMAScript 模块（ESM）语法的 JavaScript 文件。ECMAScript 模块是 JavaScript 的官方模块系统，被设计用于替代 CommonJS 和 AMD 等早期的 JavaScript 模块系统。
+
+mjs 扩展名的引入是为了解决 JavaScript 运行环境（例如 Node.js）如何区分 CommonJS 模块和 ECMAScript 模块的问题。在 .mjs 文件中，你可以使用 import 和 export 关键字来导入和导出模块，而这在 .js 文件中并不总是可能的（这取决于你的环境和配置）。
+
+bower_components 是一个目录名，通常在使用 Bower 作为包管理器的项目中出现。Bower 是一个用于前端开发的包管理器，虽然现在（2023年）已经不再活跃，被 npm 和 yarn 取代。
+</Callout>
+
+我们想要在浏览器开发者工具中调试代码时，如果出现任何错误，它将显示应用程序.js（即生成的捆绑文件）作为错误被触发位置而不是原始源代码文件。这使得调试变得困难甚至有时不可能
+
+有一个文件可以生成称为源映射(source map)，顾名思义，它将我们的原始源代码与由webpack生成的捆绑源代码进行映射，在开发阶段对于我们来说非常有帮助
+
+为什么我们要从JavaScript文件中导入CSS呢？难道把CSS单独管理不更好吗？这样做好吗？事实上，在许多情况下，从JavaScript文件中导入CSS非常有用。例如，如果你正在导入一个第三方库，比如日历或日期选择器，并且该库带有自己的样式（CSS文件），那么将JavaScript和该库的CSS同时加载到同一位置是很合理的。因为这样可以使代码与位置无关，从而更容易进行代码维护。
