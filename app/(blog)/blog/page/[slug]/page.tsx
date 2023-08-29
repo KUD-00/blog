@@ -1,34 +1,49 @@
-'use client'
-
-import Image from "next/image"
-import Link from "next/link"
-import { allPosts } from "contentlayer/generated"
-import { compareDesc } from "date-fns"
-import * as React from "react"
+import Image from "next/image";
+import Link from "next/link";
+import { allPosts } from "contentlayer/generated";
+import { compareDesc } from "date-fns";
 import { formatDate } from "@/lib/utils"
-import Locale from "@/locales"
 
-const PostList = () => {
-  const posts = allPosts
-    .filter((post) => post.published)
-    .sort((a, b) => {
-      return compareDesc(new Date(a.date), new Date(b.date))
-    })
+interface PostListPageProps {
+  params: {
+    slug: string
+  }
+}
 
-  const [page, setPage] = React.useState<number>(0)
-  const blogCount = 10
-  const computedPage = Math.ceil(posts.length / blogCount)
-  const postSlice = posts.slice(page * blogCount, page * blogCount + blogCount)
+const posts = allPosts.sort((a, b) => {
+  return compareDesc(new Date(a.date), new Date(b.date))
+})
 
-  return (
+const blogCount = 10
+
+const computedPage = Math.ceil(posts.length / blogCount)
+
+export async function generateStaticParams() {
+  const pages = Array.from({length: computedPage}, (_, i) => i)
+  return pages.map(page => ({
+    page: page.toString(),
+  }))
+}
+
+export default function PostListPage({ params } : PostListPageProps) {
+  const postSlice = posts.slice(Number(params.slug) * blogCount, Number(params.slug) * blogCount + blogCount)
+  const previousPageId = Number(params.slug) != 0 ? Number(params.slug) - 1 : 0
+  const nextPageId = Number(params.slug) != computedPage ? Number(params.slug) + 1 : computedPage
+
+  const handleNavigation = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+    return (
+    // 获取 page 参数并渲染
     <div className="container max-w-4xl py-6 lg:py-10">
       <div className="flex flex-col items-start gap-4 md:flex-row md:justify-between md:gap-8">
         <div className="flex-1 space-y-4">
           <h1 className="inline-block font-heading text-4xl tracking-tight lg:text-5xl">
-            {Locale.Blog.Title}
+            Blog
           </h1>
           <p className="text-xl text-muted-foreground">
-            {Locale.Blog.TitleDescription}
+            No description
           </p>
         </div>
       </div>
@@ -68,41 +83,15 @@ const PostList = () => {
       ) : (
         <p>No posts published.</p>
       )}
-      <div className="mt-10 grid justify-center">
-        <div className="join">
-          {Array.from({ length: computedPage }, (_, index) => {
-            const handleClick = () => {
-              setPage(index);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
-
-            if (page === index) {
-              return (
-                <input
-                  onClick={handleClick}
-                  className="btn-square join-item btn"
-                  type="radio"
-                  name="options"
-                  aria-label={index.toString()}
-                  checked
-                />
-              );
-            } else {
-              return (
-                <input
-                  onClick={handleClick}
-                  className="btn-square join-item btn"
-                  type="radio"
-                  name="options"
-                  aria-label={index.toString()}
-                />
-              );
-            }
-          })}
+       <div className="join mt-10 flex justify-center">
+       <Link href={`${previousPageId}`}>
+            <button className="btn-outline join-item btn">«</button>
+       </Link>
+       <button className="btn-outline join-item btn">{`Page ${params.slug}`}</button>
+       <Link href={`${nextPageId}`}>
+            <button className="btn-outline join-item btn">»</button>
+       </Link>
         </div>
       </div>
-    </div>
-  )
+    )
 }
-
-export default PostList

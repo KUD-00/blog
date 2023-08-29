@@ -5,7 +5,7 @@ export const marketingConfig: MarketingConfig = {
   mainNav: [
     {
       title: Locale.Navigation.Blog,
-      href: "/blog",
+      href: "/blog/page/0",
     },
     {
       title: Locale.Navigation.Hint,
