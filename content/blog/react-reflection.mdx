@@ -17,3 +17,79 @@ authors:
 
 - typescript 写不明白
   - 类型真的好魔幻
+
+---
+
+2023-08-30:
+遇到了卡死的问题，暂时没有解决/search
+
+几个可能的原因:
+1. useRef 和 useState 在渲染时会引起组件重新渲染,如果搜索逻辑写在渲染函数内,会不断触发重新渲染,造成卡顿。可以试着把搜索逻辑抽取出来,放在 useEffect 或者 useCallback 里。
+2. 搜索逻辑 Complexity 太高。如果每输入一个字符就过滤全部 posts,复杂度是 O(n),可以优化成用 debounce 或者 throttle 来减少搜索次数。
+3. posts 数据量太大。直接导入所有 posts 数据,渲染时需要大量计算,可以按需加载数据,只加载搜索需要的部分。
+4. 没有加上生产环境的优化。next.js 开发环境的代码没有经过压缩和优化,比较慢。上线的时候加上压缩和 cache 可以显著提高性能。
+5. 其他 UI 渲染问题。如果 return 的 JSX 结构复杂,可能也会影响渲染速度。可以用 React.memo 或shouldComponentUpdate 来优化。
+
+总之需要根据具体情况来定位问题,然后从计算量、算法、数据流、组件渲染等多个方面进行优化。
+
+从你提供的代码看,搜索逻辑主要包括以下部分:
+
+1. handleSearch 函数
+1. handleKeyDown 函数
+1. handleBlur 函数
+
+这些函数都定义在了组件的内部,然后传递给了 onClick、onKeyDown、onBlur 事件。
+
+这意味着每次组件重新渲染时,这些函数会被重新创建,这样可能导致一些性能问题。
+
+可以考虑以下优化:
+
+1. 将 handleSearch、handleKeyDown、handleBlur 抽取成 useCallback 钩子,这样这些函数只会在依赖变更时重新创建:
+
+```
+const handleSearch = useCallback(() => {
+  // 搜索逻辑
+}, [searchedPosts]) 
+
+const handleKeyDown = useCallback((event) => {
+   // 键盘逻辑
+}, [])
+
+const handleBlur = useCallback((event) => {
+  // blur 逻辑
+}, [])
+```
+
+2. 使用 useMemo 缓存搜索结果:
+
+```
+const searchedPosts = useMemo(() => {
+  // 过滤搜索结果
+  return posts.filter(...) 
+}, [searchQuery])
+```
+
+3. 使用 useEffect 进行搜索,不要在渲染函数中过滤:
+
+```
+useEffect(() => {
+  if (searchQuery) {
+    // 过滤搜索结果
+  } 
+}, [searchQuery])
+```
+
+综上,主要是要将搜索逻辑移出渲染函数,避免每次重渲染都重复执行,这样可以优化组件的性能。
+
+您提出了一个非常好的问题!
+
+函数被重新创建本身不会引起执行。但是,由于以下原因,这可能还是会对性能产生影响:
+
+1. 每次渲染都会创建新的函数实例,如果组件重渲染频繁,会产生不必要的内存分配和垃圾回收。
+2. 这些函数作为 props 传递给子组件,那么子组件在接收到新的函数时都会被强制重新渲染。
+3. React 在shouldComponentUpdate和React.memo做 props 浅比较时,会认为函数实例变了,从而跳过优化并重新渲染。
+4. useCallback 本身也不是完全零成本的,它内部还是会做一些依赖检测和缓存逻辑,过度使用也可能导致性能问题。
+
+所以核心还是要遵循 - 渲染函数中避免复杂计算和副作用。将逻辑抽取至合适的钩子中,同时合理使用 memo、useCallback等优化技巧。
+
+总之,让渲染函数专注于描述 UI,其他逻辑放在 hooks 里,这样可以获得更好的性能和逻辑分离。
