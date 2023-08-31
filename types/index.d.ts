@@ -42,7 +42,8 @@ export type DocsConfig = {
   sidebarNav: SidebarNavItem[]
 }
 
-export type MarketingConfig = {
+export type BlogConfig = {
+  allBlogsHref: string
   mainNav: MainNavItem[]
 }
 

@@ -16,6 +16,7 @@ import { absoluteUrl, cn, formatDate } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
 import Comment from "@/components/comment"
+import { blogConfig } from "@/config/blog";
 
 
 interface PostPageProps {
@@ -97,7 +98,7 @@ export default async function PostPage({ params }: PostPageProps) {
     <>
       <article className="container relative max-w-3xl py-6 lg:py-10">
         <Link
-          href="/blog"
+          href={blogConfig.allBlogsHref}
           className={cn(
             buttonVariants({ variant: "ghost" }),
             "absolute left-[-200px] top-14 hidden xl:inline-flex"
@@ -159,7 +160,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <Mdx code={post.body.code} />
         <hr className="mt-12" />
         <div className="flex justify-center py-6 lg:py-10">
-          <Link href="/blog" className={cn(buttonVariants({ variant: "ghost" }))}>
+          <Link href={blogConfig.allBlogsHref} className={cn(buttonVariants({ variant: "ghost" }))}>
             <Icons.chevronLeft className="mr-2 h-4 w-4" />
             See all posts
           </Link>

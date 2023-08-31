@@ -12,6 +12,8 @@ import { allHints } from "contentlayer/generated"
 import { compareDesc } from "date-fns"
 import { formatDate } from "@/lib/utils"
 import Locale from "@/locales";
+import { BlogConfig } from "@/types";
+import { blogConfig } from "@/config/blog";
 
 export default async function IndexPage() {
   const posts = allPosts
@@ -70,7 +72,7 @@ export default async function IndexPage() {
               <p>No post published.</p>
             )}
             <Link
-              href="/blog"
+              href={blogConfig.allBlogsHref}
               className={cn(
                 buttonVariants({ variant: "ghost" }),
                 "top-14 mt-10 inline-flex"

@@ -1,7 +1,8 @@
-import { MarketingConfig } from "types"
+import { BlogConfig } from "types"
 import Locale from "@/locales"
 
-export const marketingConfig: MarketingConfig = {
+export const blogConfig: BlogConfig = {
+  allBlogsHref: "/blog/page/0",
   mainNav: [
     {
       title: Locale.Navigation.Blog,
