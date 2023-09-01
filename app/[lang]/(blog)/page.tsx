@@ -14,8 +14,10 @@ import { formatDate } from "@/lib/utils"
 import Locale from "@/locales";
 import { BlogConfig } from "@/types";
 import { blogConfig } from "@/config/blog";
+import { getDictionary } from '@/app/[lang]/i18n'
 
-export default async function IndexPage() {
+export default async function IndexPage({ params: { lang } }) {
+  const dict = await getDictionary(lang)
   const posts = allPosts
         .sort((a, b) => {
           return compareDesc(new Date(a.date), new Date(b.date))
@@ -34,7 +36,7 @@ export default async function IndexPage() {
         <div className="container max-w-[64rem] flex-row gap-4 text-center md:flex">
           <div className="flex-initial flex-col md:w-2/3">
             <h2 className="mb-10 inline-block font-heading text-3xl leading-tight lg:text-4xl">
-              {Locale.Blog.Title}
+              {dict.blog}
             </h2>
             {posts?.length ? (
               <div className="grid gap-10 sm:grid-cols-1">
@@ -84,7 +86,7 @@ export default async function IndexPage() {
           </div>
           <div className="mt-16 flex-initial flex-col items-center md:ml-16 md:mt-0 md:w-1/3">
             <h2 className="mb-10 inline-block font-heading text-3xl leading-tight lg:text-4xl">
-              New Hints
+              Hints
             </h2>
             {hints?.length ? (
               <div className="grid gap-10 sm:grid-cols-1">

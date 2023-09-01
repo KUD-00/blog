@@ -8,10 +8,13 @@ import { SiteFooter } from "@/components/site-footer"
 
 interface MarketingLayoutProps {
   children: React.ReactNode
+  params: {
+    lang: string
+  }
 }
 
 export default async function MarketingLayout({
-  children,
+  children, params
 }: MarketingLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col">
@@ -20,8 +23,12 @@ export default async function MarketingLayout({
           <MainNav items={blogConfig.mainNav} />
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1" lang={params.lang}>{children}</main>
       <SiteFooter />
     </div>
   )
+}
+
+export async function generateStaticParams() {
+  return [{ lang: 'en' }, { lang: 'ja' }, { lang: 'zh'}]
 }
