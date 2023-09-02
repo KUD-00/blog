@@ -18,6 +18,8 @@ import Comment from "@/components/comment"
 import { blogConfig } from "@/config/blog";
 import { getDictionary } from '@/app/[lang]/i18n'
 import { langCodes} from "@/config/site";
+import { Suspense } from "react";
+import Loading from "@/components/loading";
 
 interface PostPageProps {
   params: {
@@ -168,7 +170,10 @@ export default async function PostPage({ params }: PostPageProps) {
             {dict.seeAllPosts}
           </Link>
         </div>
-        <Comment postId={post.slug}></Comment>
+        <Suspense fallback={<Loading />}>
+          <Comment postId={post.slug}></Comment>
+        </Suspense>
+        <Loading />
       </article>
       <Script
         id="remove-Katex"

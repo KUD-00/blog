@@ -17,19 +17,20 @@ export function LocaleToggle() {
   const pathname = usePathname()
   const router = useRouter()
 
-  const pathnameIsMissingLocale = locales.every(
-    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
+  const pathnameIsHome = locales.some(
+    (locale) => pathname == `/${locale}`
   )
 
   const changeLocale = (locale) => {
-    if (pathnameIsMissingLocale) {
-      router.push(`/${locale}${pathname}`)
+    if (pathnameIsHome){
+      router.push(`/${locale}`)
     } else {
       const match = pathname.match(/^\/\w+(\/.+)/);
       if (match) {
         router.push(`/${locale}${match[1]}`)
       }
     }
+    //TODO: an error handle page
   }
 
   return (
@@ -50,7 +51,7 @@ export function LocaleToggle() {
           <Icons.moon className="mr-2 h-4 w-4" />
           <span>English</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => changeLocale("jp")}>
+        <DropdownMenuItem onClick={() => changeLocale("ja")}>
           <Icons.moon className="mr-2 h-4 w-4" />
           <span>日本語</span>
         </DropdownMenuItem>

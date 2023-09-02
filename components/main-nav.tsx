@@ -13,9 +13,10 @@ import { MobileNav } from "@/components/mobile-nav"
 interface MainNavProps {
   items?: MainNavItem[]
   children?: React.ReactNode
+  langCode: string
 }
 
-export function MainNav({ items, children }: MainNavProps) {
+export function MainNav({ items, children, langCode }: MainNavProps) {
   const segment = useSelectedLayoutSegment()
   const [showMobileMenu, setShowMobileMenu] = React.useState<boolean>(false)
 
