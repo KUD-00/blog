@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { useTheme } from "next-themes"
-
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -14,6 +13,7 @@ import { Icons } from "@/components/icons"
 
 export function ModeToggle() {
   const { setTheme } = useTheme()
+  // const dict = await getDictionary(params.lang)
 
   return (
     <DropdownMenu>

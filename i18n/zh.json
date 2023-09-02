@@ -1,3 +1,13 @@
 {
-    "blog": "博客"
+    "blog": "博客",
+    "hint": "随想",
+    "about": "关于我",
+    "project": "实验田",
+    "blogDescription": "随想",
+    "hintDescription": "随记",
+    "seeAllPosts": "全部文章",
+    "publishedOn": "记载于",
+    "lightMode": "亮色模式",
+    "darkMode": "暗色模式",
+    "system": "随系统变化"
 }

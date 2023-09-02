@@ -13,3 +13,5 @@ export const siteConfig: SiteConfig = {
 }
 
 export const locales: string[] = ['en-US', 'ja-JP', 'ja', 'en', 'zh-CN', 'zh']
+
+export const langCodes: string[] = ['ja', 'en', 'zh']

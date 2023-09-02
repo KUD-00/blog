@@ -16,11 +16,13 @@ import { buttonVariants } from "@/components/ui/button"
 import { Icons } from "@/components/icons"
 import Comment from "@/components/comment"
 import { blogConfig } from "@/config/blog";
-
+import { getDictionary } from '@/app/[lang]/i18n'
+import { langCodes} from "@/config/site";
 
 interface PostPageProps {
   params: {
     slug: string[]
+    lang: string
   }
 }
 
@@ -77,13 +79,15 @@ export async function generateMetadata({
 export async function generateStaticParams(): Promise<
   PostPageProps["params"][]
 > {
-  return allPosts.map((post) => ({
+  return langCodes.flatMap(lang => allPosts.map((post) => ({
     slug: post.slugAsParams.split("/"),
-  }))
+    lang: lang
+  })))
 }
 
 export default async function PostPage({ params }: PostPageProps) {
   const post = await getPostFromParams(params)
+  const dict = await getDictionary(params.lang)
 
   if (!post) {
     notFound()
@@ -104,7 +108,7 @@ export default async function PostPage({ params }: PostPageProps) {
           )}
         >
           <Icons.chevronLeft className="mr-2 h-4 w-4" />
-          See all posts
+          {dict.seeAllPosts}
         </Link>
         <div>
           {post.date && (
@@ -112,7 +116,7 @@ export default async function PostPage({ params }: PostPageProps) {
               dateTime={post.date}
               className="block text-sm text-muted-foreground"
             >
-              Published on {formatDate(post.date)}
+              {`${dict.publishedOn}${formatDate(post.date)}`}
             </time>
           )}
           <h1 className="mt-2 inline-block font-heading text-4xl leading-tight lg:text-5xl">
@@ -161,7 +165,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="flex justify-center py-6 lg:py-10">
           <Link href={blogConfig.allBlogsHref} className={cn(buttonVariants({ variant: "ghost" }))}>
             <Icons.chevronLeft className="mr-2 h-4 w-4" />
-            See all posts
+            {dict.seeAllPosts}
           </Link>
         </div>
         <Comment postId={post.slug}></Comment>

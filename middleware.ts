@@ -19,7 +19,10 @@ export function middleware(request) {
   const pathname = request.nextUrl.pathname
   const referer = request.headers.get('Next-url')
 
-  if (referer) {
+  console.log(`pathname: ${pathname}`)
+  console.log(`referer: ${referer}`)
+
+/*   if (referer) {
     const refererIsMissingLocale = locales.every(
       (locale) => !referer.startsWith(`/${locale}/`) && referer !== `/${locale}`
     )
@@ -32,7 +35,7 @@ export function middleware(request) {
         )
       }
     }
-  }
+  } */
 
   const pathnameIsMissingLocale = locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`

@@ -1,3 +1,13 @@
 {
-    "blog": "ブログ"
+    "blog": "ブログ",
+    "hint": "ヒント",
+    "about": "私ついて",
+    "project": "他",
+    "blogDescription": "ナンセンス",
+    "hintDescription": "無意味",
+    "seeAllPosts": "すべての文章",
+    "publishedOn": "掲載日",
+    "lightMode": "ライトモード",
+    "darkMode": "ダークモード",
+    "system": "システム"
 }
