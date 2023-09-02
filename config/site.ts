@@ -11,3 +11,5 @@ export const siteConfig: SiteConfig = {
     github: "https://github.com/KUD-00/blog",
   },
 }
+
+export const locales: string[] = ['en-US', 'ja-JP', 'ja', 'en', 'zh-CN', 'zh']

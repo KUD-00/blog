@@ -9,7 +9,6 @@ import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
 import { MobileNav } from "@/components/mobile-nav"
-import Locale from "@/locales"
 
 interface MainNavProps {
   items?: MainNavItem[]
@@ -25,9 +24,8 @@ export function MainNav({ items, children }: MainNavProps) {
       {items?.length ? (
         <nav className="hidden gap-12 md:flex">
           {items?.map((item, index) => (
-            <>
+            <React.Fragment key={index}>
               <Link
-                key={index}
                 href={item.disabled ? "#" : item.href}
                 className={cn(
                   "flex items-center text-lg font-medium transition-colors hover:text-foreground/80 sm:text-sm",
@@ -39,21 +37,18 @@ export function MainNav({ items, children }: MainNavProps) {
               >
                 {item.title}
               </Link>
-              <>
                 {index == 1 &&
                  <Link
-                   key={"logo"}
                    href="/"
                    className="hidden items-center space-x-2 md:flex"
                  >
                    <Icons.logo />
                    <span className="hidden font-bold sm:inline-block">
-                     {Locale.Site.Name}
+                     {"Kud's blog"}
                    </span>
                  </Link>
                 }
-              </>
-            </>
+            </React.Fragment>
           ))}
         </nav>
       ) : null}

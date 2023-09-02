@@ -79,13 +79,11 @@ export default function Comment(props: CommentPageProps) {
       <div className="mt-24 flex w-full flex-col">
         {comments?.map((comment) => {
           return (
-            <>
-              <div className="grid w-full grid-cols-1 justify-items-center">
+              <div key={comment.id} className="grid w-full grid-cols-1 justify-items-center">
                 <span className="probe">{comment.created_at.toString()}</span>
                 <div className="card rounded-box grid h-20 w-1/2 place-items-center bg-base-300">{comment.content}</div>
                 <hr className='my-4 w-full bg-base-300 md:my-8' />
               </div>
-            </>
           )
         })}
       </div>

@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Icons } from "@/components/icons"
-import Locale from "@/locales"
 
 export function ModeToggle() {
   const { setTheme } = useTheme()
@@ -28,15 +27,15 @@ export function ModeToggle() {
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setTheme("light")}>
           <Icons.sun className="mr-2 h-4 w-4" />
-          <span>{Locale.Settings.LightMode}</span>
+          <span>{"LightMode"}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark")}>
           <Icons.moon className="mr-2 h-4 w-4" />
-          <span>{Locale.Settings.DarkMode}</span>
+          <span>{"DarkMode"}</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
           <Icons.laptop className="mr-2 h-4 w-4" />
-          <span>{Locale.Settings.System}</span>
+          <span>{"System"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

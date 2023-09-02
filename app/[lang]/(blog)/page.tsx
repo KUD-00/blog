@@ -11,7 +11,6 @@ import { Icons } from "@/components/icons"
 import { allHints } from "contentlayer/generated"
 import { compareDesc } from "date-fns"
 import { formatDate } from "@/lib/utils"
-import Locale from "@/locales";
 import { BlogConfig } from "@/types";
 import { blogConfig } from "@/config/blog";
 import { getDictionary } from '@/app/[lang]/i18n'

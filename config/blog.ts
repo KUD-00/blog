@@ -1,23 +1,22 @@
 import { BlogConfig } from "types"
-import Locale from "@/locales"
 
 export const blogConfig: BlogConfig = {
   allBlogsHref: "/blog/page/0",
   mainNav: [
     {
-      title: Locale.Navigation.Blog,
+      title: "Blog",
       href: "/blog/page/0",
     },
     {
-      title: Locale.Navigation.Hint,
+      title: "Hint",
       href: "/hint",
     },
     {
-      title: Locale.Navigation.About,
+      title: "About",
       href: "/blog/about",
     },
     {
-      title: Locale.Navigation.Project,
+      title: "Project",
       href: "/project",
     },
   ],

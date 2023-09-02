@@ -1,8 +1,7 @@
 import { match } from '@formatjs/intl-localematcher'
 import Negotiator from 'negotiator'
 import { NextResponse } from 'next/server'
-
-let locales = ['en-US', 'ja-JP', 'ja', 'en', 'zh-CN', 'zh']
+import { locales } from './config/site'
 
 // Get the preferred locale, similar to above or using a library
 function getLocale(request) {
@@ -18,6 +17,23 @@ function getLocale(request) {
 export function middleware(request) {
   // Check if there is any supported locale in the pathname
   const pathname = request.nextUrl.pathname
+  const referer = request.headers.get('Next-url')
+
+  if (referer) {
+    const refererIsMissingLocale = locales.every(
+      (locale) => !referer.startsWith(`/${locale}/`) && referer !== `/${locale}`
+    )
+
+    if (!refererIsMissingLocale) {
+      const match = referer.match(/^\/(\w+)/);
+      if (match) {
+        return NextResponse.redirect(
+          new URL(`/${match[1]}/${pathname}`, request.url)
+        )
+      }
+    }
+  }
+
   const pathnameIsMissingLocale = locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
   )
@@ -37,7 +53,7 @@ export function middleware(request) {
 export const config = {
   matcher: [
     // Skip all internal paths (_next)
-    '/((?!_next|public|images).*)',
+    '/((?!_next|public|images|api|site.webmanifest).*)',
     // Optional: only run on root (/) URL
     // '/'
   ],
