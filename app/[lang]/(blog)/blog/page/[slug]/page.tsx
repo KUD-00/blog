@@ -3,10 +3,12 @@ import Link from "next/link";
 import { allPosts } from "contentlayer/generated";
 import { compareDesc } from "date-fns";
 import { formatDate } from "@/lib/utils"
+import { getDictionary } from "@/app/[lang]/i18n";
 
 interface PostListPageProps {
   params: {
     slug: string
+    lang: string
   }
 }
 
@@ -25,10 +27,11 @@ export async function generateStaticParams() {
   }))
 }
 
-export default function PostListPage({ params } : PostListPageProps) {
+export default async function PostListPage({ params } : PostListPageProps) {
   const postSlice = posts.slice(Number(params.slug) * blogCount, Number(params.slug) * blogCount + blogCount)
   const previousPageId = Number(params.slug) != 0 ? Number(params.slug) - 1 : 0
   const nextPageId = Number(params.slug) != computedPage ? Number(params.slug) + 1 : computedPage
+  const dict = await getDictionary(params.lang)
 
   const handleNavigation = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -40,10 +43,10 @@ export default function PostListPage({ params } : PostListPageProps) {
       <div className="flex flex-col items-start gap-4 md:flex-row md:justify-between md:gap-8">
         <div className="flex-1 space-y-4">
           <h1 className="inline-block font-heading text-4xl tracking-tight lg:text-5xl">
-            Blog
+            {dict.blog}
           </h1>
           <p className="text-xl text-muted-foreground">
-            No description
+            {dict.blogDescription}
           </p>
         </div>
       </div>

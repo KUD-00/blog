@@ -98,3 +98,7 @@ export default function RootLayout({ children, params }: RootLayoutProps) {
     </html>
   )
 }
+
+export async function generateStaticParams() {
+  return [{ lang: 'en' }, { lang: 'ja' }, { lang: 'zh'}]
+}

@@ -33,7 +33,6 @@ export default function Comment(props: CommentPageProps) {
       content: commentRef.current?.getMarkdown(),
       blog: props.postId,
     }
-    console.log(payload)
     const response = await fetch('/api/comments', {
       method: 'POST',
       headers: {
