@@ -35,16 +35,13 @@ export const metadata = {
   },
   description: siteConfig.description,
   keywords: [
-    "Next.js",
-    "React",
-    "Tailwind CSS",
-    "Server Components",
-    "Radix UI",
+    "Developer",
+    "Blog",
   ],
   authors: [
     {
-      name: "shadcn",
-      url: "https://shadcn.com",
+      name: "kud",
+      url: "https://blog.rughzenhaide.com",
     },
   ],
   creator: "shadcn",
@@ -65,7 +62,7 @@ export const metadata = {
     title: siteConfig.name,
     description: siteConfig.description,
     images: [`${siteConfig.url}/og.jpg`],
-    creator: "@shadcn",
+    creator: "@KUD_LAIN",
   },
   icons: {
     icon: "/favicon.ico",

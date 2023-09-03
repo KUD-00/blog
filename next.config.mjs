@@ -12,9 +12,6 @@ const nextConfig = {
     appDir: true,
     serverComponentsExternalPackages: ["@prisma/client"],
   },
-  server: {
-    port: 3010
-  },
 }
 
 export default withContentlayer(nextConfig)
