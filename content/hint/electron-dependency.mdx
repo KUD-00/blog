@@ -1,0 +1,14 @@
+---
+title: electron应用通过增加对新的web api的使用来减少nodejs依赖？
+date: "2023-09-04"
+---
+
+Electron 是一个能让你使用纯 JavaScript 构建桌面应用的框架。它结合了 Chromium（Google 开发的开源浏览器项目）和 Node.js，让你能够在一个应用中同时访问 Web 技术和本地系统资源。
+
+Electron 应用是否可以通过增加对 Google 或 Mozilla 开发的 Web API 的使用，而减少对 Node.js 的依赖。答案在一定程度上取决于你的应用需要访问的特定功能和资源。
+
+Web API 是在浏览器环境中运行的，因此它们主要用于处理网络请求，操作 DOM，处理用户输入等任务。一些新的 Web API，如 Fetch API 和 Service Workers，也提供了更先进的网络和离线功能。然而，Web API 的使用受到浏览器沙箱的限制，它们不能直接访问操作系统的底层功能和资源。
+
+相比之下，Node.js 提供了对底层系统资源的访问，例如文件系统，网络（TCP/UDP/HTTP/HTTPS）以及子进程等。这使得 Electron 应用可以执行一些 Web API 无法实现的任务，例如直接读写本地文件，监听网络端口等。
+
+所以，如果 Electron 应用需要访问这些底层系统资源，那么你可能无法完全摆脱对 Node.js 的依赖。然而，如果你的应用主要是处理网络请求和用户输入，那么你可能可以通过更多地使用 Web API 来减少对 Node.js 的依赖。

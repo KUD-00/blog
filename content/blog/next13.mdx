@@ -1,5 +1,5 @@
 ---
-title: Next 13
+title: Next.js 13
 date: "2023-07-06"
 description: 12 to 13 is a giant leap
 image: /images/blog/sailor-sea.jpg
@@ -20,3 +20,58 @@ authors:
 客户端组件使您能够为应用程序添加客户端交互功能。在Next.js中，它们在服务器上进行预渲染，并在客户端上hydrated
 
 不需要在每个文件中都定义"use client"。只需将客户端模块边界一次性地定义为所有导入到其中的模块即可被视为客户端组件。
+
+---
+
+```tsx
+<Layout>
+  <Template>
+    <ErrorBoundary fallback={<Error />}>
+      <Suspense fallback={<Loading />}>
+        <ErrorBoundary fallback={<NotFound />}>
+          <Page />
+        </ErrorBoundary>
+      </Suspense>
+    </ErrorBoundary>
+  </Template>
+</Layout>
+```
+
+while folders define routes, only the contents returned by page.js or route.js are publicly addressable.
+
+A layout is UI that is shared between multiple pages. On navigation, layouts preserve state, remain interactive, and do not re-render. Layouts can also be nested.
+
+- The top-most layout is called the Root Layout. This required layout is shared across all pages in an application. Root layouts must contain html and body tags.
+- Any route segment can optionally define its own Layout. These layouts will be shared across all pages in that segment.
+- Layouts in a route are nested by default. Each parent layout wraps child layouts below it using the React children prop.
+- You can use Route Groups to opt specific route segments in and out of shared layouts.
+- Passing data between a parent layout and its children is not possible. However, you can fetch the same data in a route more than once, and React will automatically dedupe the requests without affecting performance.
+- Layouts do not have access to the current route segment(s). To access route segments, you can use useSelectedLayoutSegment or useSelectedLayoutSegments in a Client Component.
+
+---
+
+在 Next.js 中,`import 'server-only'` 的作用是表示该文件只在服务端渲染时导入,在客户端不导入。
+
+删除掉这行 import 是否会影响性能主要取决于以下几点:
+1. 删除后,该文件是否会被客户端导入和执行。如果文件中只包含服务端逻辑,然后被客户端导入,会增加打包后的 JS 大小,并且执行一些无用代码。
+2. 删除后,服务端构建过程是否会变慢。使用 `import 'server-only'` 可以避免服务端构建过程导入一些只需要在客户端的大文件。
+3. 删除后,是否会导致一些只需要在服务端运行的逻辑泄露到客户端。例如数据获取,如果由于删除了 `import 'server-only'` 导致客户端执行,可能会有安全隐患或增加无效流量。
+4. 删除后,组件获取数据的逻辑是否会提前执行。使用 `import 'server-only'` 可以避免组件首屏渲染时服务端逻辑被执行。
+5. 删除后,是否会增加一些初始化逻辑的执行次数。使用 `import 'server-only'` 可以确保初始化逻辑只在服务端执行一次。
+
+---
+
+The resource http://localhost:3010/_next/static/css/app/layout.css?v=1693642877899 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+
+这个问题是关于页面的 CSS 资源预加载但没有被使用。
+
+页面在加载时会预加载某些资源,以提高页面加载性能。这里报错的是 layout.css 这个 CSS 文件被预加载了,但是在页面加载几秒后没有被使用。
+
+常见原因有:
+1. layout.css 文件被预加载了,但是后来代码逻辑改变,不再需要这个文件了,但预加载配置没有去掉。
+2. layout.css 本意是需要预加载的,但是预加载的 `as` 属性设置错了,应该设置为 `as="style"`,而设置成了其他不正确的属性。
+3. layout.css 文件本身有错误,被浏览器拦截了,所以没有被应用到页面上。
+4. 页面使用了代码分割、按需加载等技术,导致页面初始化时并未加载需要这个 CSS 文件的组件。
+
+---
+

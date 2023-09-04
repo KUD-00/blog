@@ -95,3 +95,53 @@ export { sayHello };
 
 ---
 
+如果要判断数组中只要有一个元素满足条件就返回 true,可以使用 Array.prototype.some() 方法:
+
+```js
+const array = [1, 2, 3];
+
+const hasEvenNumber = array.some(num => num % 2 === 0); 
+// hasEvenNumber = true
+```
+
+Array.prototype.some() 会遍历数组中的所有元素,如果有任一元素满足测试条件就会返回 true。
+
+与 some() 相对的是 Array.prototype.every(),它要求所有元素都满足条件才返回 true:
+
+```js
+const allEven = array.every(num => num % 2 === 0);
+// allEven = false
+```
+
+所以对于只要有一个满足条件的场景,应该使用 some() 方法。
+
+另外,如果需要找到第一个满足条件的元素,可以使用 find() 方法:
+
+```js
+const found = array.find(num => num % 2 === 0);
+// found = 2 
+```
+
+综上,常见的判断数组元素的方法有:
+
+- some() - 只要有一个元素满足条件就返回 true
+- every() - 所有元素都满足条件才返回 true  
+- find() - 返回第一个满足条件的元素 
+
+---
+
+`flatMap` 和 `map` 都是数组的方法，它们的主要区别在于处理方法返回的结果。
+- `map` 方法会使用你提供的函数（我们称之为映射函数）对数组的每个元素进行处理，然后返回一个新的数组，这个数组包含的是映射函数处理每个元素后的结果。如果映射函数返回的是数组，那么 `map` 方法返回的新数组的元素也会是数组。
+- `flatMap` 方法类似于 `map`，但是它有一个额外的步骤：扁平化结果。也就是说，如果映射函数返回的是数组，`flatMap` 会将这些数组合并为一个数组，然后返回。这就是为什么它被称为 "flatMap"：它先 "映射"（map），然后 "扁平化"（flatten）。
+
+```javascript
+const arr = [1, 2, 3];
+
+const resultWithMap = arr.map(x => [x, x * 2]);
+console.log(resultWithMap); // [[1, 2], [2, 4], [3, 6]]
+
+const resultWithFlatMap = arr.flatMap(x => [x, x * 2]);
+console.log(resultWithFlatMap); // [1, 2, 2, 4, 3, 6]
+```
+
+---
