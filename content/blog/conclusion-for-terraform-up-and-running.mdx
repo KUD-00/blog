@@ -1,0 +1,353 @@
+---
+title: "懒人读的terraform up and running 第一章"
+date: "2023-09-04"
+description: "DevOps"
+image: 
+tags:
+  - thinking
+  - uncompleted
+authors:
+  - KUD
+---
+
+概括性的介绍了现在的devops要干什么。引入基础设施即代码（IaC）的理念，即通过编写和执行代码来定义、部署、更新和销毁基础设施
+
+五种IaC：
+- 脚本: Bash/Python/...
+- Configuration management tools: Chef、Puppet和Ansible
+- Server templating tools: Docker(Container), Packer, Vagrant(VM)
+- Orchestration tools: Kubernetes、Marathon/Mesos、Amazon Elastic Container Service（Amazon ECS）、Docker Swarm和Nomad
+- Provisioning tools
+
+## Configuration management tools
+
+拿Ansible举例（web-server.yml）:
+```yaml
+- name: Update the apt-get cache
+  apt:
+    update_cache: yes
+
+- name: Install PHP
+  apt:
+    name: php
+
+- name: Install Apache
+  apt:
+    name: apache2
+
+- name: Copy the code from the repository
+  git: repo=https://github.com/brikis98/php-app.git dest=/var/www/html/app
+
+- name: Start Apache
+  service: name=apache2 state=started enabled=yes
+```
+
+可以看到，这个Ansible role脚本是在对一个服务器基础设施进行操作，现在我们要对远端的5台机器进行同样的操作：
+
+hosts
+```conf
+[webservers]
+11.11.11.11
+11.11.11.12
+11.11.11.13
+11.11.11.14
+11.11.11.15
+```
+
+Ansible playbook(playbook.yaml):
+```yaml
+- hosts: webservers
+  roles:
+  - webserver
+```
+
+```bash
+ansible-playbook playbook.yml
+```
+
+现在远端的五台机器就都被ansible操作了
+
+<Callout>
+Idempotence 幂等性
+
+编写只能运行一次的临时脚本并不困难；但要编写即使反复运行也能正确工作的临时脚本要困难得多。每次在脚本中创建文件夹时，需要记住检查该文件夹是否已经存在；每次向文件添加配置行时，需要检查该行是否已经存在；每次想要运行一个应用程序时，需要检查该应用程序是否已经在运行。
+
+无论运行多少次都正常工作的代码被称为幂等代码。要使Bash脚本具有幂等性需要添加许多行代码，包括大量if语句。但大多数Ansible函数默认情况下都是幂等的。
+</Callout>
+
+## Server Templating Tools
+
+Server templating tools与在每个服务器上运行相同代码来启动一堆服务器并对其进行配置不同，它的理念是创建一个捕捉操作系统、软件、文件和其他相关细节完全自包含“快照”的服务器镜像。然后使用其他IaC工具将该镜像安装到所有服务器上
+
+Packer template => Packer => Server image => Ansible => servers，也就是用Packer创建镜像，用Ansible给所有远端设施安装镜像
+
+一个packer template(web-server.json):
+```json
+{
+  "builders": [{
+    "ami_name": "packer-example-",
+    "instance_type": "t2.micro",
+    "region": "us-east-2",
+    "type": "amazon-ebs",
+    "source_ami": "ami-0fb653ca2d3203ac1",
+    "ssh_username": "ubuntu"
+  }],
+  "provisioners": [{
+    "type": "shell",
+    "inline": [
+      "sudo apt-get update",
+      "sudo apt-get install -y php apache2",
+      "sudo git clone https://github.com/brikis98/php-app.git /var/www/html/app"
+    ],
+    "environment_vars": [
+      "DEBIAN_FRONTEND=noninteractive"
+    ],
+    "pause_before": "60s"
+  }]
+}
+```
+
+不同的Server Templating Tools具有稍微不同的用途
+- Packer通常用于创建直接在生产服务器上运行的镜像，例如在生产AWS帐户中运行的AMI
+- Vagrant通常用于创建在开发计算机上运行的镜像，例如在Mac或Windows笔记本电脑上运行的VirtualBox镜像
+- Docker通常用于创建单个应用程序的镜像。与Docker引擎一起使用
+
+一个常见模式是使用Packer创建安装了Docker引擎的AMI，在您AWS账户中部署该AMI到一组服务器集群，并且然后跨该集群部署单独的Docker容器来运行应用程序。主要好处是通过Packer预装Docker可以标准化环境;而Docker容器化可以方便部署和管理分布式应用;集群化可以提供高可用和伸缩性。
+
+Server Templating Tools是迁移到不可变基础架构（immutable infrastructure） 的关键组成部分。这个想法受到函数式编程启发
+
+## Orchestration Tools
+
+Server Templating Tools非常适用于创建虚拟机和容器，但如何实际管理它们呢:
+1. 部署虚拟机和容器，并有效利用硬件资源
+2. 通过滚动部署、蓝绿部署(blue-green development)和金丝雀(canary deployment)发布等策略，在现有的虚拟机和容器群中进行更新
+3. 监控虚拟机和容器的健康状态，并自动替换不健康的实例（自动修复）
+4. 根据负载情况，自动调整虚拟机和容器数量（自动扩缩容）
+5. 在虚拟机和容器之间分发流量（负载均衡）
+6. 使得您的虚拟机和容器能够在网络上找到并相互通信（服务发现）
+
+处理这些任务是 Kubernetes、Marathon/Mesos、Amazon Elastic Container Service (Amazon ECS)、Docker Swarm 和 Nomad 等编排工具的领域。例如，Kubernetes 允许你以代码的形式定义如何管理你的 Docker 容器。你首先部署一个 Kubernetes 集群，这是一组由 Kubernetes 管理并用于运行你的 Docker 容器的服务器。大多数主要的云提供商都原生支持部署托管的 Kubernetes 集群，如 Amazon Elastic Kubernetes Service (EKS)、Google Kubernetes Engine (GKE) 和 Azure Kubernetes Service (AKS)。
+
+Kubernetes用的yaml(example.yaml)：
+```yaml
+apiVersion: apps/v1
+
+# 使用 Deployment 部署你的 Docker 容器的多个副本，并声明性地对其进行更新
+kind: Deployment
+
+# 关于此 Deployment 的元数据，包括其名称
+metadata:
+  name: example-app
+
+# 配置此 Deployment 的规范
+spec:
+  # 这告诉 Deployment 如何找到你的容器
+  selector:
+    matchLabels:
+      app: example-app
+
+  # 这告诉 Deployment 在你的集群中运行三个 Docker 容器的副本
+  replicas: 3
+
+  # 指定如何更新 Deployment。在这里，我们配置了一个滚动更新。
+  strategy:
+    rollingUpdate:
+      maxSurge: 3
+      maxUnavailable: 0
+    type: RollingUpdate
+
+  # 这是要部署的容器的模板
+  template:
+
+    # 这些容器的元数据，包括标签
+    metadata:
+      labels:
+        app: example-app
+
+    # 你的容器的规范
+    spec:
+      containers:
+
+        # 运行在 80 端口监听的 Apache
+        - name: example-app
+          image: httpd:2.4.39
+          ports:
+            - containerPort: 80
+```
+<Callout>
+在 Kubernetes 中，Pod 是最小的可部署单元。一个 Pod 可以包含一个或多个紧密相互关联的容器，这些容器在同一个网络和文件系统空间中运行，并共享一些运行配置。
+
+在 Kubernetes 架构中，Pods 是跨集群分布的基础部署单位。Pod 中的每个容器都共享同一个 IP 地址，可以通过 `localhost` 直接进行通信。此外，Pod 中的容器可以共享存储卷，实现数据的共享和持久化。
+
+每个 Pod 都有一个特定的生命周期。当一个 Pod 被调度到一个节点上时，它将继续在那个节点上运行，直到进程被停止，或者 Pod 由于某种原因被删除（例如，由于节点故障或资源不足）。当一个节点死亡时，集群中的其他节点不会接管该节点上的 Pod。相反，Pod 会被看作是已经死亡，如果副本的数量低于预期，那么将会创建新的 Pod 以替代。
+
+虽然 Pod 可以包含多个容器，但一般的最佳实践是每个 Pod 只包含一个容器。在某些特定的情况下，例如在需要辅助容器来协助主容器时（例如日志记录或网络代理），可能会在一个 Pod 中使用多个容器。
+</Callout>
+
+这个yaml定义了一个 Deployment，这是一个 Kubernetes 控制器，它可以管理多个 Pods 的副本以确保系统的可用性。
+
+Pod 的模板是在 spec.template 部分定义的。这个模板定义了每个由此 Deployment 创建的 Pod 的结构，包含一个运行 Apache 的 Docker 容器。
+
+yaml配置了三个副本。Kubernetes会自动确定在你的集群中部署每个 Pod 的位置，使用调度算法选择优化的服务器，考虑到高可用性（例如，尝试在单独的服务器上运行每个 Pod，以便单个服务器崩溃不会导致你的应用程序崩溃）
+
+```bash
+kubectl apply -f example-app.yml
+```
+
+<Callout>
+在 canary deployment 中，新版本的应用程序或服务会首先被部署到一小部分用户或服务器上（称为 "canary group"），然后观察其表现如何。如果没有出现问题，可以继续将新版本扩展到更多用户或服务器上。如果发现了任何问题，可以快速回滚到之前的稳定版本。
+
+同时维护两个相同的生产环境（蓝色和绿色），其中一个环境处于活动状态（蓝色），而另一个环境则处于非活动状态（绿色）。通过这种方式，可以实现无缝地进行软件更新和回滚操作。举例来说，在 blue-green deployment 中，当需要发布新版本时，先将新版本部署到非活动环境（绿色），然后切换流量至该环境以测试其稳定性。如果出现问题，可以立即切换回原始的活动环境（蓝色）以保持系统正常运行。这样就能够最大程度地减少对用户的影响，并确保高可用性。
+</Callout>
+
+## Provisioning Tools
+
+虽然Configuration management tools(Ansible)、Server Templating Tools(Packer)和Orchestration Tools(Kubernetes)定义了每台服务器上运行的代码，而Provisioning Tools如 Terraform、CloudFormation、OpenStack Heat 和 Pulumi 则负责创建服务器本身。你可以使用Provisioning Tools来创建不仅仅是服务器，还包括数据库、缓存、负载均衡器、队列、监控、子网配置、防火墙设置、路由规则、安全套接层（SSL）证书，以及你的基础设施的几乎所有其他方面
+
+使用 Terraform 部署一个 web 服务器：
+```hcl
+resource "aws_instance" "app" {
+  instance_type     = "t2.micro"
+  availability_zone = "us-east-2a"
+  ami               = "ami-0fb653ca2d3203ac1"
+
+  user_data = <<-EOF
+              #!/bin/bash
+              sudo service apache2 start
+              EOF
+}
+```
+- ami: 此参数指定要在服务器上部署的 AMI 的 ID。你可以将此参数设置为从前一节的 web-server.json Packer 模板构建的 AMI 的 ID，该模板具有 PHP、Apache 和应用程序源代码。
+- user_data: 这是一个在 web 服务器启动时执行的 Bash 脚本。前面的代码使用此脚本来启动 Apache。
+
+Terraform 使用 Go 编程语言编写编译成一个二进制文件 Terraform。
+
+使用二进制文件从你的笔记本电脑构建服务器或其他任何计算机部署基础设施。在底层，terraform 二进制文件代表你向一个或多个提供商（ AWS、Azure、Google Cloud、DigitalOcean、OpenStack 等）发出 API 调用。Terraform 可以利用这些提供商已经为他们的 API 服务器运行的基础设施，以及你与这些提供商使用的身份验证机制（例如你的 AWS 的 API 密钥）。
+
+Terraform 配置的例子：
+```terraform
+resource "aws_instance" "example" {
+  ami           = "ami-0fb653ca2d3203ac1"
+  instance_type = "t2.micro"
+}
+
+resource "google_dns_record_set" "a" {
+  name         = "demo.google-example.com"
+  managed_zone = "example-zone"
+  type         = "A"
+  ttl          = 300
+  rrdatas      = [aws_instance.example.public_ip]
+}
+```
+这里，Terraform 向 AWS 发出 API 调用以部署服务器，然后向 Google Cloud 发出 API 调用以创建指向 AWS 服务器 IP 地址的域名系统（DNS）条目
+
+## 这些流行的技术之间的比较
+
+(重点！)
+
+如果使用Server Templating Tools，大部分配置管理需求已经得到满足。一旦从 Dockerfile 或 Packer 模板创建了镜像，剩下的就是为运行这些镜像配置基础设施。而在配置方面，Provisioning Tools将是你的最佳选择。一起使用 Terraform 和 Docker 是目前特别流行的组合
+
+如果没有使用Server Templating Tools，好的替代方案是一起使用Configuration Managment Tools 和Provisioning Tools。流行的组合是使用 Terraform 创建服务器，使用 Ansible 配置每一个
+
+### 可变基础设施与不可变基础设施
+Chef，Puppet 和 Ansible 这样的Configuration Management Tools通常默认为可变基础设施
+
+指示 Chef 安装 OpenSSL 的新版本，它会在现有的服务器上运行软件更新，变更会就地发生。随着应用越来越多的更新，每个服务器会积累一份独特的变更历史。每个服务器会稍微有所不同于其他所有服务器，导致难以诊断和复制的微妙配置错误（这是手动管理服务器时发生配置漂移问题的同一种情况，尽管在使用配置管理工具时问题要小得多）。即使有自动测试，这些错误也很难捕捉；在测试服务器上的配置管理变更可能工作得很好，但同样的变更在生产服务器上可能表现不同，因为生产服务器已经积累了几个月的变更，这些变更在测试环境中没有反应出来。
+
+使用如 Terraform 这样的Provisioning Tools来部署由 Docker 或 Packer 创建的机器镜像，大多的“变更”实际上是部署一个全新的服务器。例如要部署 OpenSSL 的新版本，使用 Packer 创建一个包含 OpenSSL 新版本的新镜像，将该镜像部署在一组新的服务器上，然后终止旧的服务器。因为每次部署都在新的服务器上使用不可变的镜像，减少了配置漂移错误的可能性，使得更容易知道每个服务器上正在运行什么软件，可以随时轻松部署任何以前的软件版本（任何以前的镜像）。也使你的自动化测试更有效，因为在测试环境中通过了你的测试的不可变镜像，在生产环境中的行为可能会完全相同。
+
+不可变方法也有它自己的缺点。例如对于一项微不足道的变更，从服务器模板重建一个镜像并重新部署所有的服务器可能需要很长时间。此外，不可变性只持续到你实际运行镜像为止。一旦服务器启动并运行，它将开始在硬盘上做出变更，并会经历一定程度的配置漂移（尽管如果你频繁部署，这个问题就会得到缓解）
+
+### 程序化语言与声明式语言
+Chef 和 Ansible 鼓励使用程序化风格，编写代码逐步指定如何实现某些期望的最终状态
+
+Terraform, CloudFormation, Puppet, OpenStack Heat, 和 Pulumi 鼓励使用更声明式的风格
+
+想要部署 10 台服务器（在 AWS 术语中是 EC2 实例）以运行带有 ID 为ami-0fb653ca2d3203ac1的 AMI（Ubuntu 20.04) ，假设流量增加，想将服务器数量增加到 15 台。对于 Ansible，之前编写的程序化代码将不再有用；如果只是将服务器数量更新为 15 并重新运行该代码，它将部署 15 台新服务器，总计有 25 台！相反，需要知道已经部署了什么，并编写一个全新的程序式脚本来添加五台新服务器
+```yaml
+- ec2:
+    count: 5
+    image: ami-0fb653ca2d3203ac1
+    instance_type: t2.micro
+```
+
+对于声明式代码，所做的只是声明您想要的最终状态，而 Terraform 会弄清楚如何达到那个最终状态，所以 Terraform 也会知道它过去创建的任何状态。要部署五台更多的服务器，需要做的就是回到同一个 Terraform 配置，将数量从 10 更新为 15
+```hcl
+resource "aws_instance" "example" {
+  count         = 15
+  ami           = "ami-0fb653ca2d3203ac1"
+  instance_type = "t2.micro"
+}
+```
+
+使用 Terraform 的 plan 命令预览它将做出什么变化:
+
+```bash
+$ terraform plan
+
+# aws_instance.example[11] will be created
++ resource "aws_instance" "example" {
+    + ami            = "ami-0fb653ca2d3203ac1"
+    + instance_type  = "t2.micro"
+    + (...)
+  }
+
+# aws_instance.example[12] will be created
++ resource "aws_instance" "example" {
+    + ami            = "ami-0fb653ca2d3203ac1"
+    + instance_type  = "t2.micro"
+    + (...)
+  }
+
+# aws_instance.example[13] will be created
++ resource "aws_instance" "example" {
+    + ami            = "ami-0fb653ca2d3203ac1"
+    + instance_type  = "t2.micro"
+    + (...)
+  }
+Plan: 5 to add, 0 to change, 0 to destroy.
+```
+
+当你想要部署应用的另一个版本，例如AMI ID ami-02bcbb802e03574ba，这时就会出现很多麻烦，需要编写另一个模板，追踪你之前部署的10个服务器（或者现在是15个？）并仔细地将每一个更新到新版本。使用Terraform的声明式方法，你只需要返回到完全相同的配置文件，简单地将ami参数更改为ami-02bcbb802e03574ba
+
+这些例子是简化的。Ansible确实允许你在部署新的EC2实例前使用标签查找现有的EC2实例（例如，使用instance_tags和count_tag参数），但是，对于你使用Ansible管理的每一个资源，都必须手动找出这种逻辑，这可能会非常复杂：例如，你可能必须手动配置你的代码以便不仅通过标签，还通过镜像版本、可用区和其他参数查找现有的实例。
+
+### 主服务器与无主服务器
+默认情况下，Chef 和 Puppet 需要你运行一个主服务器，用于存储你的基础设施状态并分发更新。每次你想在基础设施中更新某些内容时，你会使用一个客户端（例如，命令行工具）向主服务器发出新命令，主服务器要么将更新推送到所有其他服务器，要么这些服务器会定期从主服务器那里拉取最新的更新。
+
+主服务器提供了几个优点。首先，它是一个你可以查看和管理你的基础设施状态的单一、中心化的地方。许多配置管理工具甚至为主服务器提供了一个网页界面（例如，Chef 控制台，Puppet 企业控制台），使你更容易看到正在发生什么。其次，一些主服务器可以在后台持续运行，并执行你的配置。这样，如果有人在服务器上手动做了一些改动，主服务器可以撤销那些改动，以防止配置漂移。
+
+然而，必须运行一个主服务器有一些严重的缺点：
+- 额外的基础设施
+- 维护: 你需要维护、升级、备份、监控和扩展主服务器。
+- 安全: 你需要提供一种方式让客户端与主服务器通信，以及让主服务器与所有其他服务器通信，这通常意味着需要开放额外的端口和配置额外的认证系统，这都会增加你的攻击面。
+
+虽然 Chef 和 Puppet 都支持不同程度的无主模式，在这种模式下，你只需要在每个服务器上运行它们的代理软件，通常是按照一个周期性的时间表（例如，每五分钟运行一次的 cron 作业），并使用它从版本控制系统中拉取最新的更新（而不是从主服务器中拉取）。这大大减少了移动部分的数量，但是，如我在下一节中所讨论的，这仍然留下了许多未回答的问题，特别是关于如何首次在服务器上配置和安装代理软件的问题。
+
+Ansible、CloudFormation、Heat、Terraform 和 Pulumi 默认都是无主的。或者，更准确地说，其中的一些依赖于主服务器，但它已经是你正在使用的基础设施的一部分，而不是你需要管理的额外部分。例如，Terraform 使用云提供商的 API 与云提供商通信，所以在某种意义上，API 服务器就是主服务器，除了它们不需要任何额外的基础设施或任何额外的认证机制（即，只使用你的 API 密钥）。Ansible 通过 SSH 直接连接到每个服务器，所以同样，你不需要运行任何额外的基础设施或管理额外的认证机制（即，只使用你的 SSH 密钥）。
+
+### 代理与无代理
+Chef 和 Puppet 要求你在每个需要配置的服务器上安装代理软件（例如，Chef 客户端，Puppet 代理）。代理通常在每台服务器的后台运行，并负责安装最新的配置管理更新。
+
+这有一些缺点：
+- 引导: 你如何首次在服务器上配置和安装代理软件呢？一些配置管理工具推迟了这个问题，假设有一些外部过程会为它们处理这个问题（例如，你首先使用 Terraform 部署一批已经安装了代理的 AMI 服务器）；其他的配置管理工具有一个特殊的引导过程，你在其中运行一次性命令，使用云提供商的 API 为服务器配置，并通过 SSH 在这些服务器上安装代理软件。
+- 维护: 你需要定期更新代理软件，小心保持它与主服务器（如果有的话）的同步。你还需要监控代理软件，并在它崩溃时重启它。
+- 安全: 如果代理软件从主服务器（或者如果你没有使用主服务器，那么就是其他服务器）拉取配置，你需要在每台服务器上打开出站端口。如果主服务器推送配置到代理，你需要在每台服务器上打开入站端口。无论哪种情况，你都必须找出如何让代理与其通信的服务器进行身份验证。所有这些都会增加你的攻击面。
+
+再次强调，Chef 和 Puppet 确实支持不同程度的无代理模式，但这些感觉像是事后加上去的，并不支持配置管理工具的全部功能集。这就是为什么在实际中，Chef 和 Puppet 的默认配置或惯用配置几乎总是包含一个代理，通常还包括一个主服务器，如图 1-7 所示。所有这些额外的移动部分都为你的基础设施引入了大量的新故障模式。每次你在凌晨3点收到一个错误报告时，你都需要确定这是你的应用程序代码的错误，还是你的 IaC 代码的错误，或者是配置管理客户端的错误，或者是主服务器的错误，或者是客户端与主服务器通信的方式的错误，或者是其他服务器与主服务器通信的方式的错误，或者是……
+
+Ansible、CloudFormation、Heat、Terraform 和 Pulumi 不要求你安装任何额外的代理。或者，更准确地说，其中的一些需要代理，但这些通常已经作为你正在使用的基础设施的一部分已经安装好了。例如，AWS、Azure、Google Cloud 和所有其他云提供商都负责在每台物理服务器上安装、管理和认证代理软件。作为 Terraform 的用户，你不需要担心任何这些：你只需要发出命令，云提供商的代理就会在你的所有服务器上为你执行这些命令，如图 1-8 所示。对于 Ansible，你的服务器需要运行 SSH 守护进程，这在大多数服务器上都很常见。
+
+## Use of Multiple Tools Together
+
+### Provisioning plus configuration management
+Terraform and Ansible. You use Terraform to deploy all the underlying infrastructure, including the network topology (i.e., virtual private clouds [VPCs], subnets, route tables), data stores (e.g., MySQL, Redis), load balancers, and servers. You then use Ansible to deploy your apps on top of those servers
+这是一个开始时很容易采用的方法，因为没有额外的基础设施需要运行（Terraform 和 Ansible 都只是客户端应用程序），并且有很多方法可以让 Ansible 和 Terraform 一起工作（例如，Terraform 为你的服务器添加特殊的标签，Ansible 使用这些标签来查找服务器并配置它们）。主要的缺点是，使用 Ansible 通常意味着你需要编写大量的过程性代码，并且服务器是可变的，因此随着你的代码库、基础设施和团队的增长，维护可能会变得更加困难。
+
+### Provisioning plus server templating
+Terraform 和 Packer。你使用 Packer 将你的应用程序打包为 VM 镜像。然后你使用 Terraform 部署这些 VM 镜像的服务器和你的其他基础设施，包括网络拓扑（即，VPCs，子网，路由表）、数据存储（例如，MySQL，Redis）和负载均衡器，如图中所示。这也是一个开始时很容易采用的方法，因为没有额外的基础设施需要运行（Terraform 和 Packer 都只是客户端应用程序），并且你将在本书后面有很多机会使用 Terraform 部署 VM 镜像。此外，这是一种不可变基础设施的方法，将使维护更加简单。然而，有两个主要的缺点。首先，VM 可能需要很长时间来构建和部署，这将降低你的迭代速度。其次，如你将在后面的章节中看到，你可以使用 Terraform 实现的部署策略是有限的（例如，你不能在 Terraform 中原生实现蓝绿部署），所以你要么最后编写很多复杂的部署脚本，要么转向下一步描述的编排工具。
+
+### Provisioning plus server templating plus orchestration
+示例：Terraform、Packer、Docker 和 Kubernetes。你使用 Packer 创建一个已经安装了 Docker 和 Kubernetes 代理的 VM 镜像。然后你使用 Terraform 部署一个服务器集群，每个服务器都运行这个 VM 镜像，以及你的其他基础设施，包括网络拓扑（即，VPCs，子网，路由表）、数据存储（例如，MySQL，Redis）和负载均衡器。最后，当服务器集群启动时，它形成了一个 Kubernetes 集群，你使用它来运行和管理你的 Docker 化的应用程序，如图 1-11 所示。
+
+这种方法的优点是 Docker 镜像构建相当快，你可以在你的本地计算机上运行和测试它们，并且你可以利用 Kubernetes 的所有内置功能，包括各种部署策略、自动修复、自动缩放等等。缺点是增加了复杂性，无论是在需要运行的额外基础设施方面（Kubernetes 集群很难且昂贵的部署和运行，尽管大多数主要的云提供商现在提供托管的 Kubernetes 服务，这可以卸载一些这样的工作），还是在需要学习、管理和调试的几个额外抽象层（Kubernetes，Docker，Packer）方面。

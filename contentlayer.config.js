@@ -90,6 +90,13 @@ export const Post = defineDocumentType(() => ({
       type: "string",
       required: true,
     },
+    update_time: {
+      type: "date",
+    },
+    tags: {
+      type: "list",
+      of: { type: "string" },
+    },
     authors: {
       // Reference types are not embedded.
       // Until this is fixed, we can use a simple list.
