@@ -1,0 +1,101 @@
+---
+title: "懒人读的terraform up and running 第二章"
+date: "2023-09-04"
+description: "2 DevOps"
+image: 
+tags:
+  - thinking
+  - uncompleted
+authors:
+  - KUD
+---
+
+Terraform 中创建资源的通用语法
+
+PROVIDER 是提供商的名称、TYPE 是要在该提供商中创建的资源类型、NAME 是在 Terraform 代码中用来引用这个资源的标识符，CONFIG 是针对该资源的一个或多个参数
+```hcl
+resource "<PROVIDER>_<TYPE>" "<NAME>" {
+  [CONFIG ...]
+}
+
+使用新的Terraform代码时，需要随时运行terraform init，多次运行init是安全的(该命令是幂等的)
+
+terraform plan就像diff一样
+
+.terraform是临时文件夹；*.tfstate文件存储状态
+
+监听1024以下的任何端口需要root用户权限。这是一个安全风险，因为任何设法入侵您服务器的攻击者也会获得root权限。最佳实践是使用具有受限权限的非root用户运行web服务器。这意味着必须侦听更高编号的端口，但也可以配置负载均衡器侦听80端口，并将流量路由到服务器上的高编号端口。
+
+```hcl
+resource "aws_instance" "example" {
+  ami                    = "ami-0fb653ca2d3203ac1"
+  instance_type          = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.instance.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              echo "Hello, World" > index.html
+              nohup busybox httpd -f -p 8080 &
+              EOF
+
+  user_data_replace_on_change = true
+
+  tags = {
+    Name = "terraform-example"
+  }
+}
+
+resource "aws_security_group" "instance" {
+  name = "terraform-example-instance"
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+
+`<<-EOF` 和 `EOF` 是Terraform的heredoc语法，允许创建多行字符串而不必到处插入\n
+
+`user_data_replace_on_change`为true: 更改user_data参数并运行apply时，Terraform将终止原始实例并启动全新的实例。Terraform的默认行为是就地更新原始实例，但由于User Data仅在第一次启动时运行，因此需要强制创建新实例以确保您的新User Data脚本实际上得到执行
+
+默认情况下AWS不允许从EC2实例进入或离开任何流量。要允许EC2实例在端口8080上接收流量需要创建安全组(security group)，并指定该组允许来自 CIDR 块 0.0.0.0/0 的 TCP 请求在 8080 端口进入
+
+CIDR 块是指定 IP 地址范围的一种简洁方式。例如，CIDR 块 10.0.0.0/24 表示所有位于 10.0.0.0 和 10.0.0.255 之间的 IP 地址。CIDR 块 0.0.0.0/0 是一个包括所有可能 IP 地址的 IP 地址范围，因此这个安全组允许来自任何 IP 的请求在 8080 端口进入
+
+通过将安全组的 ID 传入到 `aws_instance` 资源的 `vpc_security_group_ids` 参数，告诉 EC2 实例使用它
+
+要访问安全组资源的 ID 需要使用资源属性引用，语法如下：
+
+```hcl
+<PROVIDER>_<TYPE>.<NAME>.<ATTRIBUTE>
+
+aws_security_group.instance.id
+```
+
+ATTRIBUTE 是该资源的参数之一或由资源导出的属性之一（可以在每个资源的文档中找到可用属性列表）
+
+`terraform graph` The output is in a graph description language called DOT, which you can turn into an image
+
+输出中的 -/+ 意味着“替换”
+
+为了所有例子都很简单，它们不仅部署到你的默认 VPC，而且还部署到该 VPC 的默认子网。一个 VPC 被划分为一个或多个子网，每个子网都有自己的 IP 地址。默认 VPC 中的子网都是公共子网，这意味着它们获得的 IP 地址可以从公共互联网访问。这就是为什么你能够从你的家庭电脑测试你的 EC2 实例的原因。
+
+在公共子网中运行服务器对于快速实验来说是可以的，但在实际使用中，这是一个安全风险。全世界的黑客都在不断地随机扫描 IP 地址以寻找任何弱点。如果你的服务器公开暴露，只需要无意间留下一个未受保护的端口或运行已知漏洞的过时代码，就有可能被人入侵。
+
+因此，对于生产系统，你应该将所有的服务器，当然也包括所有的数据存储，部署在私有子网中，这些子网的 IP 地址只能从 VPC 内部访问，而不能从公共互联网访问。你在公共子网中运行的唯一服务器应该是少量的反向代理和负载均衡器，你应尽可能地锁定它们
+
+hcl声明变量的语法：
+
+```hcl
+variable "NAME" {
+  [CONFIG ...]
+}
+
+variable "server_port" {
+  description = "The port the server will use for HTTP requests"
+  type        = number
+}
+```

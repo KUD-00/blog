@@ -409,7 +409,7 @@ variable "server_port" {
 
 变量声明的主体可以包含以下可选参数：
 - description: 始终使用此参数来记录变量的使用方式是个好主意。你的团队成员不仅能在阅读代码时看到这个描述，而且在运行计划或应用命令时也能看到（你将很快看到一个例子）。
-- default: 有多种方式可以为变量提供值，包括在命令行中传递（使用 -var 选项），通过文件（使用 -var-file 选项），或通过环境变量（Terraform 寻找名称为 TF_VAR_<variable_name> 的环境变量）。如果没有传入值，变量将回退到此默认值。如果没有默认值，Terraform 将交互式地提示用户提供一个。
+- default: 有多种方式可以为变量提供值，包括在命令行中传递（使用 -var 选项），通过文件（使用 -var-file 选项），或通过环境变量（Terraform 寻找名称为 `TF_VAR_<variable_name>` 的环境变量）。如果没有传入值，变量将回退到此默认值。如果没有默认值，Terraform 将交互式地提示用户提供一个。
 - type: 这允许你对用户传入的变量强制类型约束。Terraform 支持多种类型约束，包括 string, number, bool, list, map, set, object, tuple, 和 any。定义类型约束以捕获简单错误始终是个好主意。如果你不指定类型，Terraform 假定类型为 any。
 - validation: 这允许你为输入变量定义自定义验证规则，超越基本的类型检查，例如对一个数字强制实施最小或最大值。你将在第 8 章看到验证的例子。
 - sensitive: 如果你在输入变量上将此参数设置为 true，Terraform 在你运行计划或应用时不会记录它。你应该在你通过变量传入 Terraform 代码的任何秘密上使用这个：例如，密码，API 密钥等
@@ -447,6 +447,7 @@ resource "aws_launch_configuration" "example" {
 
 resource "aws_autoscaling_group" "example" {
   launch_configuration = aws_launch_configuration.example.name
+  vpc_zone_identifier  = data.aws_subnets.default.ids
 
   min_size = 2
   max_size = 10
@@ -461,3 +462,528 @@ resource "aws_autoscaling_group" "example" {
 launch configurations are immutable, so if you change any parameter of your launch configuration, Terraform will try to replace it. Normally, when replacing a resource, Terraform would delete the old resource first and then creates its replacement, but because your ASG now has a reference to the old resource, Terraform won’t be able to delete it.
 
 To solve this problem, you can use a lifecycle setting. Every Terraform resource supports several lifecycle settings that configure how that resource is created, updated, and/or deleted. A particularly useful lifecycle setting is create_before_destroy. If you set create_before_destroy to true, Terraform will invert the order in which it replaces resources, creating the replacement resource first (including updating any references that were pointing at the old resource to point to the replacement) and then deleting the old resource.
+
+添加另一个参数到你的 ASG 以使其正常工作：subnet_ids。这个参数指定了 EC2 实例应该部署到哪些 VPC 子网中（请参阅“网络安全”以获取子网背景信息）。每个子网都位于隔离的 AWS AZ（也就是隔离的数据中心）中，因此，通过在多个子网中部署你的实例，你可以确保即使有些数据中心发生故障，你的服务也能持续运行。你可以硬编码子网列表，但这样做并不可维护或可移植，因此，更好的选择是使用数据源来获取你 AWS 账户中的子网列表
+
+数据源代表每次运行 Terraform 时从供应商（在这种情况下，是 AWS）获取的只读信息。向你的 Terraform 配置添加数据源并不会创建任何新的东西；它只是一种查询供应商的 API 以获取数据，并使这些数据可供你的 Terraform 代码使用的方式。每个 Terraform 提供商都公开了各种数据源。例如，AWS 提供商包括用于查找 VPC 数据、子网数据、AMI ID、IP 地址范围、当前用户的身份等的数据源
+
+```hcl
+data "<PROVIDER>_<TYPE>" "<NAME>" {
+  [CONFIG ...]
+}
+
+data "aws_vpc" "default" {
+  default = true
+}
+```
+
+使用数据源时，你传入的参数通常是搜索过滤器，它们指示你正在查找什么信息。对于 aws_vpc 数据源，你只需要 default = true 这个过滤器，它会指示 Terraform 查找你的 AWS 账户中的默认 VPC
+
+在你有多个服务器，每个服务器都有自己的 IP 地址，但你通常希望给你的最终用户只提供一个 IP 地址。解决这个问题的一种方法是部署一个负载均衡器，将流量在你的服务器之间进行分配，并将所有用户的 IP（实际上是负载均衡器的 DNS 名称）提供给所有用户
+
+AWS 提供了三种类型的负载均衡器：
+- 应用负载均衡器（ALB）: 最适合用于 HTTP 和 HTTPS 流量的负载均衡。在开放系统互联（OSI）模型的应用层（第 7 层）上运行。
+- 网络负载均衡器（NLB） 最适合用于 TCP、UDP 和 TLS 流量的负载均衡。可以比 ALB 更快地根据负载进行扩展（NLB 旨在扩展到每秒数千万个请求）。在 OSI 模型的传输层（第 4 层）上运行。
+
+ALB 包括几个部分，如图 2-11 所示：
+- 监听器: 在特定的端口（例如，80）和协议（例如，HTTP）上监听。
+- 监听器规则: 接收进入监听器的请求，并将匹配特定路径（例如，/foo 和 /bar）或主机名（例如，foo.example.com 和 bar.example.com）的请求发送到特定的目标组。
+- 目标组: 一个或多个从负载均衡器接收请求的服务器。目标组还对这些服务器进行健康检查，并只向健康的节点发送请求
+
+```hcl
+resource "aws_lb" "example" {
+  name               = "terraform-asg-example"
+  load_balancer_type = "application"
+  subnets            = data.aws_subnets.default.ids
+  security_groups    = [aws_security_group.alb.id]
+}
+
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.example.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  # By default, return a simple 404 page
+  default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "404: page not found"
+      status_code  = 404
+    }
+  }
+}
+```
+
+AWS 负载均衡器并不是由单个服务器组成，而是由可以在不同子网（因此，不同数据中心）运行的多个服务器组成。AWS 根据流量自动扩展负载均衡器服务器的数量，并在其中一个服务器发生故障时处理故障转移，所以你可以直接获得可扩展性和高可用性。
+
+请注意，默认情况下，包括 ALB 在内的所有 AWS 资源都不允许任何进入或出去的流量，因此你需要为 ALB 创建一个新的安全组。这个安全组应该允许在端口 80 上的进入请求，以便你可以通过 HTTP 访问负载均衡器，并允许所有端口的出去的请求，以便负载均衡器可以进行健康检查。你需要通过 security_groups 参数告诉 aws_lb 资源使用这个安全组
+
+```hcl
+resource "aws_security_group" "alb" {
+  name = "terraform-example-alb"
+
+  # Allow inbound HTTP requests
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all outbound requests
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+```
+
+```hcl
+resource "aws_lb_target_group" "asg" {
+  name     = "terraform-asg-example"
+  port     = var.server_port
+  protocol = "HTTP"
+  vpc_id   = data.aws_vpc.default.id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 15
+    timeout             = 3
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+}
+```
+使用 aws_lb_target_group 资源为你的 ASG 创建一个目标组。这个目标组将通过定期向每个实例发送一个 HTTP 请求来对你的实例进行健康检查，并只有当实例返回一个与配置的匹配器（例如，你可以配置一个匹配器来查找 200 OK 的响应）匹配的响应时，才会考虑实例是“健康的”。如果一个实例没有响应，可能是因为该实例已经停止运行或者过载，它将被标记为“不健康”，并且目标组会自动停止向它发送流量，以最小化对你的用户的影响。
+
+目标组如何知道向哪些 EC2 实例发送请求呢？你可以使用 aws_lb_target_group_attachment 资源将一个静态的 EC2 实例列表附加到目标组，但是对于 ASG，实例可能在任何时候启动或终止，所以静态列表是行不通的。相反，你可以利用 ASG 和 ALB 之间的一流集成。回到 aws_autoscaling_group 资源，并将其 target_group_arns 参数设置为指向你的新目标组。你还应该将 health_check_type 更新为 "ELB"。默认的 health_check_type 是 "EC2"，这是一个最小的健康检查，只有当 AWS 虚拟机管理器说 VM 完全无法使用或无法访问时，才会认为实例是不健康的。"ELB" 健康检查更为健全，因为它指示 ASG 使用目标组的健康检查来确定一个实例是否健康，并在目标组报告它们为不健康时自动替换实例。这样，实例不仅会在它们完全关闭的时候被替换，而且如果例如它们因为内存耗尽或关键进程崩溃而停止服务请求，也会被替换
+
+```hcl
+resource "aws_autoscaling_group" "example" {
+  launch_configuration = aws_launch_configuration.example.name
+  vpc_zone_identifier  = data.aws_subnets.default.ids
+
+  target_group_arns = [aws_lb_target_group.asg.arn]
+  health_check_type = "ELB"
+
+  min_size = 2
+  max_size = 10
+
+  tag {
+    key                 = "Name"
+    value               = "terraform-asg-example"
+    propagate_at_launch = true
+  }
+}
+```
+
+```hcl
+resource "aws_lb_listener_rule" "asg" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 100
+
+  condition {
+    path_pattern {
+      values = ["*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.asg.arn
+  }
+}
+```
+把所有这些部件通过创建监听器规则使用 aws_lb_listener_rule 资源绑定在一起了。前面的代码添加了一个监听器规则，将匹配任何路径的请求发送到包含你的 ASG 的目标组。
+
+在你部署负载均衡器之前还有最后一件事要做——用显示 ALB 的 DNS 名称的输出替换之前单个 EC2 实例的旧 public_ip 输出：
+
+```hcl
+output "alb_dns_name" {
+  value       = aws_lb.example.dns_name
+  description = "The domain name of the load balancer"
+}
+```
+
+此时，你可以看到你的集群如何响应启动新实例或关闭旧实例的情况。例如，转到 "Instances" 标签，通过选择其复选框，点击顶部的 "Actions" 按钮，然后将 "Instance State" 设置为 "Terminate" 来终止其中一个实例。继续测试 ALB URL，你应该会在每次请求中获得 200 OK，即使在终止实例的同时，也不会影响正常访问，因为 ALB 会自动检测到实例已关闭并停止向其路由。更有趣的是，实例关闭后不久，ASG 会检测到运行的实例少于两个，并自动启动一个新的实例来替换它（自我修复！）。你也可以通过在 Terraform 代码中添加 desired_capacity 参数并重新运行 apply 来查看 ASG 是如何调整自身大小的。
+
+由于 Terraform 跟踪了你创建的所有资源，所以清理工作非常简单。你需要做的就是运行 destroy 命令。不用说，你应该很少（如果有的话）在生产环境中运行 destroy 命令！destroy 命令没有“撤销”功能，所以 Terraform 会给你最后一次机会来审查你正在做什么，向你展示你即将删除的所有资源的列表，并提示你确认删除
+
+---
+
+第三章
+
+每次你运行 Terraform 时，它都会在 Terraform 状态文件中记录关于它创建的基础设施的信息。默认情况下，当你在 /foo/bar 文件夹中运行 Terraform 时，Terraform 会创建 /foo/bar/terraform.tfstate 文件。这个文件包含一个自定义的 JSON 格式，记录了从你的配置文件中的 Terraform 资源到现实世界中这些资源表示的映射
+
+状态文件是一个私有 API
+状态文件格式是一个仅供 Terraform 内部使用的私有 API。你永远不应手动编辑 Terraform 状态文件或编写直接读取它们的代码。
+
+如果出于某种原因你需要操作状态文件——这应该是一个相对罕见的情况——使用 terraform import 或 terraform state 命令
+
+在真实的产品中作为一个团队使用 Terraform，你会遇到几个问题：
+- 状态文件的共享存储: 为了能够使用 Terraform 更新你的基础设施，你的团队成员需要访问相同的 Terraform 状态文件。这意味着你需要将这些文件存储在一个共享的位置。
+- 锁定状态文件: 只要数据被共享，你就会遇到一个新问题：锁定。如果没有锁定，如果有两个团队成员同时运行 Terraform，他们可能会同时更新同一个状态文件，从而导致数据丢失、混淆或更糟的情况。Terraform 的一个重要特性是它可以自动锁定状态文件，因此在任何时候只有一个 Terraform 操作能够进行。
+- 隔离状态文件: 在对基础设施进行更改时，隔离不同的环境是最佳的实践。例如，当在测试或暂存环境中进行更改时，你需要确保无论如何都不会意外中断生产。但是，如果所有的基础设施都在同一份 Terraform 状态文件中定义，你如何隔离你的更改呢？
+
+虽然你绝对应该将你的 Terraform 代码存储在版本控制中，但是将 Terraform 状态存储在版本控制中是个坏主意，原因如下：
+- 手动错误: 在运行 Terraform 或在运行 Terraform 后将最新的更改推送到版本控制之前，很容易忘记从版本控制中拉取最新的更改。你的团队中的某个人用过时的状态文件运行 Terraform，结果意外地回滚或复制之前的部署，只是时间问题。
+- 锁定: 大多数版本控制系统都不提供任何形式的锁定，这会阻止两个团队成员在同一时间对同一状态文件运行 terraform apply。
+- 秘密: 所有在 Terraform 状态文件中的数据都是以纯文本形式存储的。这是个问题，因为某些 Terraform 资源需要存储敏感数据。例如，如果你使用 aws_db_instance 资源创建一个数据库，Terraform 将以纯文本形式在状态文件中存储数据库的用户名和密码，你不应该在版本控制中存储纯文本的秘密。
+
+与其使用版本控制，管理状态文件的共享存储的最好方式是使用 Terraform 的内建支持远程后端。Terraform 后端决定了 Terraform 如何加载和存储状态。默认的后端，你一直在使用的，是本地后端，它在你的本地磁盘上存储状态文件。远程后端允许你在远程，共享的存储中存储状态文件。支持的远程后端有很多，包括 Amazon S3，Azure Storage，Google Cloud Storage 和 HashiCorp 的 Terraform Cloud 和 Terraform Enterprise。
+- 手动错误: 在你配置了一个远程后端后，每次你运行 plan 或 apply 时，Terraform 将自动从该后端加载状态文件，并且在每次 apply 后，它将自动将状态文件存储在该后端，所以没有手动错误的机会。
+- 锁定: 大多数的远程后端本地支持锁定。为了运行 terraform apply，Terraform 将自动获得一个锁；如果有其他人已经在运行 apply，他们将已经有了锁，你将不得不等待。你可以用 `-lock-timeout=<TIME>` 参数运行 apply，以指导 Terraform 等待最长时长 TIME 以释放锁（例如，-lock-timeout=10m 将等待 10 分钟）。
+- 秘密: 大多数的远程后端本地支持在传输和休息时对状态文件进行加密。此外，这些后端通常会暴露出配置访问权限的方式（例如，使用 Amazon S3 桶的 IAM 策略），所以你可以控制谁可以访问你的状态文件和他们可能包含的秘密。如果 Terraform 本地支持在状态文件中加密秘密会更好，但是这些远程后端减少了大部分的安全问题，因为至少状态文件不会在任何地方的磁盘上以纯文本形式存储。
+
+如果你正在使用 AWS 的 Terraform，Amazon S3（简单存储服务），也就是 Amazon 的托管文件存储，通常是你作为远程后端的最佳选择
+
+```hcl
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "terraform-up-and-running-state"
+
+  # Prevent accidental deletion of this S3 bucket
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_s3_bucket_versioning" "enabled" {
+  bucket = aws_s3_bucket.terraform_state.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "public_access" {
+  bucket                  = aws_s3_bucket.terraform_state.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_dynamodb_table" "terraform_locks" {
+  name         = "terraform-up-and-running-locks"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
+```
+
+- bucket: S3 bucket的名称。注意，S3 bucket的名称必须在所有AWS客户中全球唯一。请确保记住这个名称，并注意你正在使用的AWS区域
+- prevent_destroy: 生命周期设置。当你在资源上设置prevent_destroy为true时，任何尝试删除该资源的操作（例如，通过运行terraform destroy）都会导致Terraform退出并报错。这是防止意外删除重要资源（如此S3 bucket，它将存储你所有的Terraform状态）的好方法。当然，如果你真的想删除它，你可以只是注释掉这个设置。
+
+使用aws_s3_bucket_versioning资源为S3 bucket启用版本控制，这样每次更新bucket中的文件实际上都会创建该文件的新版本。这使你可以查看文件的旧版本，并在任何时候恢复到那些旧版本，这是一个有用的回退机制，如果出现问题的话
+
+使用aws_s3_bucket_server_side_encryption_configuration资源默认启用服务器端加密，对所有写入此S3 bucket的数据进行加密。这确保你的状态文件以及它们可能包含的任何秘密在存储在S3时都是加密的
+
+使用aws_s3_bucket_public_access_block资源来阻止所有对S3 bucket的公共访问。S3 buckets默认是私有的，但由于它们经常用于提供静态内容，比如图片、字体、CSS、JS、HTML，因此公开buckets是可能的，甚至很容易。由于你的Terraform状态文件可能包含敏感数据和秘密，因此值得添加这一额外的保护层，确保你的团队中没有人能够意外地使这个S3 bucket变为公开
+
+创建一个DynamoDB表用于锁定。DynamoDB是Amazon的分布式键值存储。它支持强一致性读取和条件写入，这是你需要的所有分布式锁系统的成分。而且，它完全托管，所以你不需要运行任何基础设施
+
+使用DynamoDB与Terraform一起进行锁定，你必须创建一个DynamoDB表，该表有一个名为LockID（准确的拼写和大小写）的主键。你可以使用aws_dynamodb_table资源创建这样的表
+
+为了配置Terraform将状态存储在你的S3 bucket（带有加密和锁定），你需要在你的Terraform代码中添加一个后端配置。这是Terraform本身的配置，所以它位于一个terraform块内，并具有以下语法：
+
+```tcl
+terraform {
+  backend "<BACKEND_NAME>" {
+    [CONFIG...]
+  }
+}
+
+terraform {
+  backend "s3" {
+    # Replace this with your bucket name!
+    bucket         = "terraform-up-and-running-state"
+    key            = "global/s3/terraform.tfstate"
+    region         = "us-east-2"
+
+    # Replace this with your DynamoDB table name!
+    dynamodb_table = "terraform-up-and-running-locks"
+    encrypt        = true
+  }
+}
+
+output "s3_bucket_arn" {
+  value       = aws_s3_bucket.terraform_state.arn
+  description = "S3 bucket的ARN"
+}
+
+output "dynamodb_table_name" {
+  value       = aws_dynamodb_table.terraform_locks.name
+  description = "DynamoDB表的名称"
+}
+```
+
+要指示Terraform将你的状态文件存储在此S3 bucket中，你将再次使用terraform init命令。这个命令不仅可以下载供应商代码，还可以配置你的Terraform后端（稍后你还会看到另一种用途）。此外，init命令是幂等的，所以可以多次运行
+
+erraform的后端有一些限制和陷阱，你需要知道。首个限制是使用Terraform创建你想要存储Terraform状态的S3 bucket的先有鸡还是先有蛋的情况。为了让这个工作，你必须使用一个两步过程：
+
+写Terraform代码以创建S3 bucket和DynamoDB表，并使用本地后端部署该代码。
+返回Terraform代码，将远程后端配置添加到其中，以使用新创建的S3 bucket和DynamoDB表，并运行terraform init将你的本地状态复制到S3。
+如果你想要删除S3 bucket和DynamoDB表，你需要反向执行这个两步过程：
+
+转到Terraform代码，移除后端配置，并重新运行terraform init将Terraform状态复制回你的本地磁盘。
+运行terraform destroy删除S3 bucket和DynamoDB表。
+
+Terraform的后端块不允许你使用任何变量或引用。以下代码将无法工作：
+
+```hcl
+# This will NOT work. Variables aren't allowed in a backend configuration.
+terraform {
+  backend "s3" {
+    bucket         = var.bucket
+    region         = var.region
+    dynamodb_table = var.dynamodb_table
+    key            = "example/terraform.tfstate"
+    encrypt        = true
+  }
+}
+```
+这意味着你需要手动复制和粘贴S3 bucket名称，区域，DynamoDB表名称等，到你的每一个Terraform模块
+
+减少复制和粘贴的一种选择是使用部分配置，其中你省略了Terraform代码中的后端配置的某些参数，而是通过-backend-config命令行参数在调用terraform init时传入这些参数。例如，你可以将重复的后端参数，如bucket和region，提取到一个名为backend.hcl的单独文件中：
+
+```hcl
+# backend.hcl
+bucket         = "terraform-up-and-running-state"
+region         = "us-east-2"
+dynamodb_table = "terraform-up-and-running-locks"
+encrypt        = true
+```
+只有key参数仍在Terraform代码中，因为你仍需要为每个模块设置不同的key值：
+
+```hcl
+# Partial configuration. The other settings (e.g., bucket, region) will be
+# passed in from a file via -backend-config arguments to 'terraform init'
+terraform {
+  backend "s3" {
+    key = "example/terraform.tfstate"
+  }
+}
+```
+要将所有你的部分配置放在一起，使用-backend-config参数运行terraform init：
+
+```shell
+$ terraform init -backend-config=backend.hcl
+```
+
+Terraform将backend.hcl中的部分配置与你的Terraform代码中的部分配置合并，以产生你的模块使用的完整配置。你可以在你所有的模块中使用相同的backend.hcl文件，这大大减少了重复；然而，你仍然需要在每个模块中手动设置一个唯一的key值。
+
+减少复制和粘贴的另一种选择是使用Terragrunt，这是一个开源工具，试图填补Terraform的一些空白。Terragrunt可以帮你保持你的整个后端配置DRY（不重复自己）通过在一个文件中定义所有基本的后端设置（bucket名称，区域，DynamoDB表名称）并自动设置key参数为模块的相对文件夹路径。
+
+状态文件隔离
+有了远程后端和锁定，协作不再是问题。然而，还有一个问题需要解决：隔离。当你开始使用Terraform时，你可能会忍不住在一个Terraform文件或一个文件夹的Terraform文件集中定义所有你的基础设施。这种方法的问题在于你的所有Terraform状态现在也存储在一个单独的文件中，任何地方的错误都可能导致所有东西出问题。
+
+例如，在尝试在staging环境部署你的应用的新版本时，你可能会在生产环境中破坏应用。或者，更糟糕的是，你可能会破坏你的整个状态文件，不管是因为你没有使用锁定，还是由于一个罕见的Terraform bug，现在你所有环境中的所有基础设施都出现了问题。
+
+设立独立的环境的全部目的就是让它们之间能够相互隔离，所以如果你使用一套Terraform配置管理所有环境，你就破坏了这种隔离。
+
+需要在独立的配置集中定义每个环境（下图），这样一个环境中的问题就能完全与其他环境隔离。有两种方式可以隔离状态文件：
+- 通过工作空间隔离: 对于在同一配置上进行快速、独立的测试很有用
+- 通过文件布局隔离: 对于需要在环境之间强烈分离的生产用例很有用
+
+Terraform工作空间允许你在多个、独立的、命名的工作空间中存储你的Terraform状态。Terraform开始时有一个名为“default”的工作空间，如果你从未明确指定一个工作空间，default工作空间就是你一直使用的那个。要创建一个新的工作空间或切换工作空间，你可以使用terraform workspace命令
+
+在每个工作空间中，Terraform都会使用你在后端配置中指定的键，因此你应该会发现有一个example1/workspaces-example/terraform.tfstate和一个example2/workspaces-example/terraform.tfstate。换句话说，切换到不同的工作空间等同于更改你的状态文件的存储路径。
+
+你甚至可以通过读取 terraform.workspace 表达式来根据你所在的工作空间改变该模块的行为。例如，下面是如何在default工作空间中将实例类型设置为t2.medium，而在所有其他工作空间中设置为t2.micro（例如，为了在实验时节省资金）：
+
+```hcl
+resource "aws_instance" "example" {
+  ami           = "ami-0fb653ca2d3203ac1"
+  instance_type = terraform.workspace == "default" ? "t2.medium" : "t2.micro"
+}
+```
+
+所有工作空间的状态文件都存储在同一个后端（例如，同一个S3 bucket）。这意味着你对所有工作空间使用相同的身份验证和访问控制，这是工作空间不适合用于隔离环境的一个主要原因（例如，将staging从production中隔离）。
+
+除非你运行 terraform workspace 命令，否则在代码或终端中看不到工作空间。在浏览代码时，一个模块在一个工作空间中的部署看起来和在10个工作空间中的部署完全一样。这使得维护更加困难，因为你无法很好地了解你的基础设施。
+
+将以上两点结合起来，结果是工作空间可能非常容易出错。缺乏可见性使得你很容易忘记你处在哪个工作空间，而错误地在错误的工作空间中部署更改（例如，在“生产”工作空间而不是“预演”工作空间中误运行 terraform destroy），并且由于你必须为所有工作空间使用相同的认证机制，你没有其他的防御层来防止这种错误
+
+为了在环境之间获得适当的隔离，你最可能希望使用文件布局
+
+要实现环境之间的完全隔离，你需要执行以下步骤：
+
+将每个环境的 Terraform 配置文件放入一个单独的文件夹。例如，所有的 staging 环境配置可以在一个名为 stage 的文件夹中，所有的生产环境配置可以在一个名为 prod 的文件夹中。
+
+为每个环境配置不同的后端，使用不同的认证机制和访问控制：例如，每个环境都可以在一个单独的 AWS 账户中，使用单独的 S3 存储桶作为后端。
+
+采用这种方法，使用单独的文件夹使得你可以更清楚地知道你正在部署到哪些环境，使用单独的状态文件和单独的认证机制，使得在一个环境中的错误对另一个环境产生影响的可能性大大减小。
+
+实际上，你可能希望将隔离的概念超越环境，延伸到“组件”级别，其中一个组件是一组常常一起部署的资源。例如，在你为你的基础设施设置完基本的网络拓扑之后——在 AWS 术语中，你的 Virtual Private Cloud（VPC）以及所有相关的子网、路由规则、VPN 和网络 ACL——你可能只会在几个月内改变它一次。另一方面，你可能会每天多次部署新版本的 web 服务器。如果你在同一组 Terraform 配置中管理 VPC 组件和 web 服务器组件的基础设施，那么你就不必要地将你整个网络拓扑置于破坏的风险中（例如，来自代码中的一个简单的拼写错误或有人不小心运行了错误的命令）。
+
+因此，我推荐为每个环境（staging, production 等）和每个环境中的每个组件（VPC，服务，数据库）使用单独的 Terraform 文件夹（因此也是单独的状态文件）
+
+```text
+stage
+|_vpc
+|_services
+  |_frontend-app
+  |_backend-app
+    |_variables.tf
+    |_outputs.tf
+    |_main.tf
+|_data-storage
+  |_mysql
+  |_redis
+
+
+prod
+|_vpc
+|_services
+  |_frontend-app
+  |_backend-app
+    |_variables.tf
+    |_outputs.tf
+    |_main.tf
+|_data-storage
+  |_mysql
+  |_redis
+
+mgmt
+|_vpc
+|_services
+  |_bastion-host
+  |_jenkins
+
+global
+|_iam
+|_s3
+```
+
+在每个环境中，有单独的文件夹用于每个“组件”。每个项目的组件都不同，但这里是典型的：
+
+vpc
+该环境的网络拓扑。
+
+services
+在此环境中运行的应用程序或微服务，如 Ruby on Rails 前端或 Scala 后端。每个应用甚至可以在其自己的文件夹中，将其与所有其他应用隔离。
+
+data-storage
+在此环境中运行的数据存储，如 MySQL 或 Redis。每个数据存储甚至可以在其自己的文件夹中，将其与所有其他数据存储隔离。
+
+在每个组件中，有实际的 Terraform 配置文件，这些文件按照以下命名约定进行组织：
+
+variables.tf
+输入变量
+
+outputs.tf
+输出变量
+
+main.tf
+资源和数据源
+
+dependencies.tf
+通常将所有的数据源放入一个 dependencies.tf 文件中，以便更容易看到代码依赖于哪些外部事物。
+
+providers.tf
+你可能想要将你的提供者块放入一个 providers.tf 文件中，这样你可以一目了然地看到代码与哪些提供者进行交谈，并需要提供什么身份验证。
+
+main-xxx.tf
+如果 main.tf 文件变得很长，因为它包含大量的资源，你可以将它分解成较小的文件，将资源以某种逻辑方式组织在一起：例如，main-iam.tf 可以包含所有的 IAM 资源，main-s3.tf 可以包含所有的 S3 资源，等等。使用 main- 前缀使得在按字母顺序组织的文件夹中扫描文件列表时更容易，因为所有的资源将被组织在一起。值得注意的是，如果你发现自己正在管理大量的资源，并且在许多文件中分解它们感到困难，那可能是一个信号，说明你应该将你的代码分解成更小的模块
+
+你还应该更新 web 服务器集群以使用 S3 作为后端。你可以从 global/s3/main.tf 中复制和粘贴后端配置，但要确保将 key 改为与 web 服务器 Terraform 代码相同的文件夹路径：stage/services/webserver-cluster/terraform.tfstate。这为你在版本控制中的 Terraform 代码和 S3 中的 Terraform 状态文件之间的布局提供了 1:1 的映射，所以很明显两者是如何连接的。s3 模块已经使用这个约定设置了 key。
+
+多文件夹工作
+将组件分割到不同的文件夹可以防止你一次性误操作破坏整个基础设施，但同时也阻止了你一次性创建整个基础设施。如果某个环境的所有组件都在一个 Terraform 配置中定义，你可以通过单次调用 terraform apply 来启动整个环境。但如果所有组件都在不同的文件夹中，那么你需要在每个文件夹中分别运行 terraform apply。
+
+解决方案：如果你使用 Terragrunt，你可以使用 run-all 命令并行运行多个文件夹的命令。
+
+复制/粘贴
+这一节描述的文件布局有很多重复。例如，同样的前端应用和后端应用在 stage 和 prod 文件夹中都存在。
+
+解决方案：你实际上不需要复制和粘贴所有的代码！在第四章中，你将看到如何使用 Terraform 模块保持代码的 DRY（Don't Repeat Yourself，不重复自己）。
+
+资源依赖
+将代码拆分到多个文件夹使得使用资源依赖变得更困难。如果你的应用代码在与数据库代码相同的 Terraform 配置文件中定义，那么应用代码可以直接通过属性引用访问数据库的属性（例如，通过 aws_db_instance.foo.address 访问数据库地址）。但如果应用代码和数据库代码位于不同的文件夹，如我推荐的，你就无法再这样做了。
+
+解决方案：一种选择是在 Terragrunt 中使用依赖块，如你将在第十章中看到。另一种选择是使用 terraform_remote_state 数据源，如下一节所述。
+
+terraform_remote_state. You can use this data source to fetch the Terraform state file stored by another set of Terraform configurations.
+
+for each input variable foo defined in your Terraform configurations, you can provide Terraform the value of this variable using the environment variable TF_VAR_foo
+
+ Note that Amazon RDS can take roughly 10 minutes to provision even a small database, so be patient.
+
+ 理解terraform_remote_state数据源返回的数据和所有Terraform数据源一样是只读的,这一点很重要。您在web服务器集群的Terraform代码中所做的任何事情都无法修改该状态,所以您可以无风险地拉取数据库的状态数据。
+
+数据库的所有输出变量都存储在状态文件中,您可以使用如下形式的属性引用从terraform_remote_state数据源读取它们:
+
+`data.terraform_remote_state.<NAME>.outputs.<ATTRIBUTE>`
+
+随着User Data脚本变得越来越长,内联定义变得越来越混乱。通常,在另一种语言(Terraform)中嵌入一种编程语言(Bash)会使维护每个语言变得更加困难,所以让我们暂停一下,将Bash脚本外部化。为此,您可以使用templatefile内置函数。
+
+Terraform包含许多内置函数,您可以使用如下形式的表达式执行它们:
+
+function_name(...)
+
+验内置函数的好方法是运行terraform console命令获取一个交互式控制台,在那里您可以尝试Terraform语法,查询基础设施的状态,并立即看到结果. Terraform控制台是只读的,所以您不必担心意外改变基础设施或状态。
+
+还有许多其他内置函数可以用于操作字符串、数字、列表和映射。其中一个是templatefile函数:
+
+`templatefile(<PATH>, <VARS>)`
+
+该函数读取PATH中的文件,将其渲染为模板,并将结果作为字符串返回。当我说“将其渲染为模板”时,我的意思是PATH中的文件可以使用Terraform中的字符串插值语法`(${...})`,Terraform将渲染该文件的内容,从VARS中填充变量引用。
+
+请注意,与原始脚本相比,此Bash脚本有一些更改:
+```bash
+#!/bin/bash
+
+cat > index.html <<EOF
+<h1>Hello, World</h1>
+<p>DB address: ${db_address}</p>
+<p>DB port: ${db_port}</p>
+EOF
+
+nohup busybox httpd -f -p ${server_port} &
+```
+
+它使用Terraform的标准插值语法查找变量,只不过它只能访问通过templatefile的第二个参数传递的那些变量(如您稍后所见),因此您不需要任何前缀就可以访问它们:例如,您应该使用`${server_port}`而不是`${var.server_port}`。
+
+将代码放入Terraform模块中,并在代码的多个位置重用该模块。您不必在staging和production环境中复制粘贴相同的代码,而是可以让两个环境都从同一个模块重用代码
+
+模块是编写可重用、可维护和可测试的Terraform代码的关键
+
+文件夹中的任何Terraform配置文件集都是模块。
+
+如果直接在模块上运行apply,则称之为根模块。要看到模块的真正能力,您需要创建一个可重用模块,这是一个旨在在其他模块中使用的模块
+
+provider应该只在根模块中配置,而不是在可重用模块中配置
+
+```hcl
+module "<NAME>" {
+  source = "<SOURCE>"
+
+  [CONFIG ...]
+}
+```
+
+请注意,每当您向Terraform配置添加模块或修改模块的source参数时,在运行plan或apply之前都需要运行init命令
+
+注意webserver-cluster模块存在一个问题:所有名称都是硬编码的。也就是说,安全组、ALB和其他资源的名称全部硬编码,因此如果您在同一个AWS账户中多次使用此模块,将会遇到名称冲突错误。甚至读取数据库状态的详情也是硬编码的,因为您复制到modules/services/webserver-cluster中的main.tf文件使用了一个terraform_remote_state数据源来确定数据库地址和端口,而该terraform_remote_state是硬编码的,指向staging环境。
+
+要解决这些问题,您需要为webserver-cluster模块添加可配置的输入,以便它可以在不同的环境中表现不同。
+
