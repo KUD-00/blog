@@ -986,4 +986,3 @@ module "<NAME>" {
 注意webserver-cluster模块存在一个问题:所有名称都是硬编码的。也就是说,安全组、ALB和其他资源的名称全部硬编码,因此如果您在同一个AWS账户中多次使用此模块,将会遇到名称冲突错误。甚至读取数据库状态的详情也是硬编码的,因为您复制到modules/services/webserver-cluster中的main.tf文件使用了一个terraform_remote_state数据源来确定数据库地址和端口,而该terraform_remote_state是硬编码的,指向staging环境。
 
 要解决这些问题,您需要为webserver-cluster模块添加可配置的输入,以便它可以在不同的环境中表现不同。
-
