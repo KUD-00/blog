@@ -63,7 +63,7 @@ export default function Comment(props: CommentPageProps) {
     <>
       <div className="relative">
         <Marktion markdown={`write your comments here`} ref={commentRef} />
-        <button className="btn-outline btn absolute right-0 mt-4 w-1/4" onClick={() => { modelRef.current?.showModal(); onComment() }}>Submit</button>
+        <button className="btn btn-outline absolute right-0 mt-4 w-1/4" onClick={() => { modelRef.current?.showModal(); onComment() }}>Submit</button>
         <dialog id="my_modal_2" className="modal" ref={modelRef}>
           <form method="dialog" className="modal-box">
             <h3 className="text-lg font-bold">Success!</h3>

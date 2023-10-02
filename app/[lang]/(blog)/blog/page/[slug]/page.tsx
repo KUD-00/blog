@@ -88,11 +88,11 @@ export default async function PostListPage({ params } : PostListPageProps) {
       )}
        <div className="join mt-10 flex justify-center">
        <Link href={`${previousPageId}`}>
-            <button className="btn-outline join-item btn">«</button>
+            <button className="btn btn-outline join-item">«</button>
        </Link>
-       <button className="btn-outline join-item btn">{`Page ${params.slug}`}</button>
+       <button className="btn btn-outline join-item">{`Page ${params.slug}`}</button>
        <Link href={`${nextPageId}`}>
-            <button className="btn-outline join-item btn">»</button>
+            <button className="btn btn-outline join-item">»</button>
        </Link>
         </div>
       </div>

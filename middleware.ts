@@ -18,8 +18,6 @@ export function middleware(request) {
   // Check if there is any supported locale in the pathname
   const pathname = request.nextUrl.pathname
   const referer = request.headers.get('Next-url')
-  console.log(pathname)
-  console.log(referer)
 
   const pathnameIsMissingLocale = locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
