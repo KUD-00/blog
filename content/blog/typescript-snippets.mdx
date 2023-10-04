@@ -100,7 +100,7 @@ export { sayHello };
 ```js
 const array = [1, 2, 3];
 
-const hasEvenNumber = array.some(num => num % 2 === 0); 
+const hasEvenNumber = array.some(num => num % 2 === 0);
 // hasEvenNumber = true
 ```
 
@@ -119,14 +119,14 @@ const allEven = array.every(num => num % 2 === 0);
 
 ```js
 const found = array.find(num => num % 2 === 0);
-// found = 2 
+// found = 2
 ```
 
 综上,常见的判断数组元素的方法有:
 
 - some() - 只要有一个元素满足条件就返回 true
-- every() - 所有元素都满足条件才返回 true  
-- find() - 返回第一个满足条件的元素 
+- every() - 所有元素都满足条件才返回 true
+- find() - 返回第一个满足条件的元素
 
 ---
 
@@ -145,3 +145,23 @@ console.log(resultWithFlatMap); // [1, 2, 2, 4, 3, 6]
 ```
 
 ---
+
+& 符号用于表示一个交叉类型 (Intersection Types)。
+
+交叉类型是将多个类型合并为一个类型。这意味着你可以将多个类型合并，从而得到一个包含所有类型所需属性的类型。
+
+有两个类型 A 和 B
+
+```typesctipt
+type A = {
+    a: number;
+};
+
+type B = {
+    b: string;
+};
+
+type C = A & B;
+```
+
+C同时拥有类型 A 和 B 的所有属性

@@ -61,7 +61,7 @@ hint: invocation.
 fatal: Need to specify how to reconcile divergent branches.
 ```
 
-直接pull不行，得用rebase。merge好像是在合并分支的时候用的，我这里就一个branch好像应该不用merge。
+直接pull不行
 
 ```shellscript
   λ git pull --rebase
@@ -143,4 +143,16 @@ git pull实际上是git fetch和git merge的合体
 
 ```shellscript
 git reset --hard HEAD
+```
+
+---
+
+想临时获取以前某个版本的代码来运行测试或做实验
+
+```bash
+git checkout <commit-id>
+
+git branch
+
+git checkout master(or main or any other branch that is the original one)
 ```

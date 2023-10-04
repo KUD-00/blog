@@ -1,0 +1,14 @@
+---
+title: hyprland下xwayland应用的缩放问题
+date: "2023-10-04"
+---
+
+Xwayland没有自动检测和调整分辨率的能力
+
+办法是在hyprland.conf里面写
+
+xwayland {
+  force_zero_scaling = true
+}
+
+但是这也有问题，应该要配置一下x11设置才更好，懒得搞了，不如全用wayland

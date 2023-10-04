@@ -1,0 +1,17 @@
+---
+title: linux上amd gpu的占用率问题
+date: "2023-10-04"
+---
+
+GFX时钟和功耗的含义：
+- 1000 MHz (MCLK)：MCLK表示图形内存的时钟频率
+- 727 MHz (SCLK)：SCLK表示图形处理单元的时钟频率
+- 1950 MHz (PSTATE_SCLK)：PSTATE_SCLK是指在特定性能状态下的图形处理单元的时钟频率
+- 676 MHz (PSTATE_MCLK)：PSTATE_MCLK是指在特定性能状态下的图形内存的时钟频率
+- 743 mV (VDDGFX)：VDDGFX表示图形处理单元的电压
+
+PSTATE_SCLK 在AMDGPU称为“功率状态核心时钟”。PSTATE表示Power State的缩写,代表GPU的功耗状态。SCLK代表GPU的核心时钟
+
+AMD的GPU可以在不同的功率状态下运行,每个状态下GPU核心时钟频率都不同。PSTATE_SCLK就是用来表示在某个功率状态下,GPU的核心时钟频率是多少
+
+我发现确实gpu固定运行在几个频率上，和win上那种按需的完全不同
