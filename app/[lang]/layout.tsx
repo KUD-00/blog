@@ -80,7 +80,7 @@ export default function RootLayout({ children, params }: RootLayoutProps) {
       </Head>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "min-h-screen bg-background font-sans antialiased md:mx-10 md:my-6",
           fontSans.variable,
           fontHeading.variable
         )}
@@ -91,6 +91,8 @@ export default function RootLayout({ children, params }: RootLayoutProps) {
           <Toaster />
           <TailwindIndicator />
         </ThemeProvider>
+
+        <div className="fixed inset-0 md:border-[1.25rem] border-black pointer-events-none"></div>
       </body>
     </html>
   )

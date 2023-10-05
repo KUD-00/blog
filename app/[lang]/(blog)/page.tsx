@@ -30,7 +30,7 @@ export default async function IndexPage({ params: { lang } }) {
         .slice(0, 5)
 
   return (
-    <>
+    <div>
       <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10">
         <div className="container max-w-[64rem] flex-row gap-4 text-center md:flex">
           <div className="flex-initial flex-col md:w-2/3">
@@ -92,7 +92,7 @@ export default async function IndexPage({ params: { lang } }) {
                 {hints.map((hint, index) => (
                   <article
                     key={hint._id}
-                    className="group relative flex flex-col space-y-2 rounded-md outline outline-offset-8 outline-blue-500/20"
+                    className="group relative flex flex-col space-y-2 rounded-md"
                   >
                     <h2 className="text-2xl font-extrabold">{hint.title}</h2>
                     {hint.date && (
@@ -110,6 +110,6 @@ export default async function IndexPage({ params: { lang } }) {
           </div>
         </div>
       </section>
-    </>
+    </div>
   )
 }

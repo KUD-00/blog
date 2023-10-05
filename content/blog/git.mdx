@@ -156,3 +156,15 @@ git branch
 
 git checkout master(or main or any other branch that is the original one)
 ```
+
+---
+
+git pull --ff-only：
+这个命令尝试进行"快进"(fast-forward)合并。如果你的本地分支落后于远程分支，它会更新本地分支到远程分支的最新提交。但如果存在任何本地提交，使得快进合并不可能（也就是说，远程分支和你的本地分支有分叉），此命令会失败。
+
+git pull --rebase：
+此命令首先获取远程分支的新更改，然后尝试将你的本地分支上的更改重新应用（或 "rebase"）在远程分支的最新更改之上。这样可以确保提交历史线性，但可能需要解决合并冲突。
+
+---
+
+
