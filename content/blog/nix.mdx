@@ -48,8 +48,7 @@ in
   icat = pkgs.callPackage ./icat.nix { };
 }
 ```
-
-nixpkgs是一个包含大量Nix包定义的git存储库。 `import <nixpkgs>`会导入这个存储库并返回一个包含所有可用包的集合
+nixpkgs是一个包含大量Nix包定义的git存储库。 import &lt;nixpkgs&gt 会导入这个存储库并返回一个包含所有可用包的集合
 
 `pkgs.callPackage`是一个在这个集合中查找和调用指定包定义的方法
 
@@ -87,6 +86,3 @@ pkgs不仅仅包含nixpkgs中所有包的定义,还包含一些用于操作这�
 - 所有nixpkgs包的定义,以属性名访问,如pkgs.stdenv
 - 一些操作包的函数,比如callPackage,buildEnv等
 - 一些系统信息,如pkgs.system等
-
----
-
