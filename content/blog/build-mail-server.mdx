@@ -1,0 +1,18 @@
+---
+title: "建立邮件服务器的困难"
+date: "2023-10-08"
+description: "微软会把你标成SPAM"
+image: /images/blog/many-mikus.jpg
+authors:
+  - KUD
+---
+
+[Hacker News上的讨论](https://news.ycombinator.com/item?id=31180379)
+
+有一个人使用了OpenSMTPD（负责邮件的发送与接受，管理通信层面）, Dovecot（负责邮件的存储等高级的上层功能）, SMTP2GO（中继发出的邮件，让邮件更加可信）来搭建邮件服务器
+
+或许所有分布式社交媒体都会遇到这种问题？自己托管的mastodon实例并不与人数庞大的实例对等
+
+有人提到tiktok成功后大家的模仿其实是一种资源的浪费，是wall garden带来的弊端
+
+Amazon SES 也是可选的方案，如果不需要固定ip费用并不高
