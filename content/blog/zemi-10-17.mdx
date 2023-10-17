@@ -1,7 +1,7 @@
 ---
 title: "グループミーティング10-17"
 description: "progress is limited"
-image:
+image: /images/blog/crossing.jpg
 date: "2023-10-17"
 authors:
   - Kud
@@ -16,19 +16,29 @@ Segment Anythingの作動方式：
 
 今使ったのはbounding-box、精度は
 
+![](/images/blog/crossing.jpg)
+
 bounding-boxはちょっとずれたら問題もない、boxの中心は車上なら、中心の座標をつかって、単独の点にとしてsegment anythingを提供
 
 問題は
-- 精度が低い
+- 精度はまだまだ
 - 精度はドローン映像の質など色んな条件による（汎用性）
+
+![](/images/blog/highway.jpg)
+
+![](/images/blog/ritsumei.jpg)
 
 もう確定した精度が上がる方法
 - よりいいpretrained modelを使う
 - 画像を拡大などの画像処理
 
+![](/images/blog/highway-zoom-in.jpg)
+
 可能な解決策
 - ドローンに撮った、道の上の車のデータセットを使う（今は衛星(飛行機？)に撮った、半分以上は道の上じゃないデータセットを使っています）
 - 自分にいくつのラベルを作る
 
-
+来週は
+- segment anythingを実装
+- コードを整理
 
