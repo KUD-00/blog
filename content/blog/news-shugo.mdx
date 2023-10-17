@@ -9,4 +9,48 @@ authors:
 
 10/10 我要先尝试如何做身份验证
 
+10/11 prototype: basic craw
+
+git branch:
+- main(production)
+- develop
+
+
+Crawler for single page:
+- input: which site to craw( or an list of sites to craw )
+- doing: craw and ask gpt
+ output: craw result fill the db
+
+Workers that control crawler for a site:
+- provided a list of pages to Crawler for single page(can i run it simultaneously?)
+- Cron-like-job-control
+
+The output data format ( Article Table )
+- Title
+- Id
+- Link
+- Content
+- ai_summary
+- text_content
+- update_time
+- lang
+- submit_user
+- rating
+
+How to profit?:
+- Ads
+
+User Table
+- Id
+- Email
+- Name
+- Password ( can I store it in a readable way instead of encrypt? )
+- Reputation
+- isPrivilege
+
+Comment Table
+- Id
+- article_id
+- Rating
+- How to make this table clean?有没有一种方法整理row的，根据某一个column
 
