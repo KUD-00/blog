@@ -1,0 +1,39 @@
+---
+title: "java片段"
+description: "i hate java, and i 've never been to java island"
+image: /images/blog/
+date: "2023-10-25"
+authors:
+  - Kud
+---
+
+# 从array, list, arraylist看java的结构
+
+Array是 Java 中的基本数据结构，它有固定的大小，并能够保存相同类型的值
+
+List 是 Java 集合框架中的一个接口，它代表了一个元素的有序集合
+
+ArrayList 是 List 接口的一个实现，还有其他实现，例如 LinkedList
+
+Java 集合框架（Java Collections Framework, JCF）是 Java 编程语言中的一套类和接口的集合，它们提供了对数据集合的标准访问和操作。这个框架设计为高效、标准和通用，使得程序员可以更容易地处理和操作数据集合。以下是关于 Java 集合框架的一些主要点：
+
+核心接口:
+Java 集合框架的核心由几个主要的接口组成，包括 Collection, List, Set, Queue, Deque, 和 Map。这些接口定义了集合的基本操作和特性。
+
+实现类:
+集合框架提供了一系列实现这些接口的类，例如 ArrayList, LinkedList, HashSet, LinkedHashSet, HashMap, LinkedHashMap 等。这些类提供了不同的数据结构来存储和操作数据。
+
+算法:
+集合框架提供了一些用于操作集合的通用算法，例如排序、搜索和随机打乱等。这些算法通常在 Collections 工具类中提供。
+
+迭代器:
+Iterator 和 ListIterator 接口提供了遍历集合元素的标准方法。迭代器使得程序员能够以一致和通用的方式遍历集合的元素，无论底层集合的具体实现是什么。
+
+高度可定制:
+Java 集合框架是高度可定制的，可以通过创建自定义集合类或使用框架提供的装饰器和适配器来扩展和修改集合的行为。
+
+线程安全和性能:
+不同的集合实现有不同的线程安全和性能特性。例如，Vector 和 Hashtable 是线程安全的，而 ArrayList 和 HashMap 不是。同时，集合框架提供了 Collections.synchronizedList() 和 Collections.unmodifiableList() 等方法，用于创建同步或不可修改的集合。
+
+泛型支持:
+Java 集合框架支持泛型，这使得集合能够在编译时检查元素的类型，提高了类型安全和代码的可读性。

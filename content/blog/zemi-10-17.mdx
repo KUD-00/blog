@@ -42,3 +42,19 @@ bounding-boxはちょっとずれたら問題もない、boxの中心は車上�
 - segment anythingを実装
 - コードを整理
 
+---
+
+10.25
+
+![](/images/blog/part-crossing-bbox.png)
+
+![](/images/blog/part-crossing-with-segmentation.jpg)
+
+Two problems:
+- Segment the body and head
+- How to segment the whole image instead of a part of it in high accurancy
+
+Solution:
+- 转换成灰度图像会怎么样？总之还是得多试一试
+- 大型货车一定要取两个mask，如果这两个mask重叠？
+- 车头和车身肯定在车的两头，那么就可以取前后两个点，车头一定更小，所以小的mask就是车头
