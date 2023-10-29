@@ -1,0 +1,176 @@
+---
+title: "读real world http"
+date: "2023-10-30"
+description: "deeper, and deeper"
+image: /images/blog/miko-in-water.jpg
+authors:
+  - KUD
+---
+
+C++ 的根本思想其实非常简单，具体来说就是在 C 语言的基础上添加 Simula 的便于实现模拟器的结构（面向代理或面向对象），并改善 Simula 运行速度慢的缺点，由此形成一门实用的编程语言
+
+Microsoft 公司发布的 Web API 指导文档中也强调“Web API 必须能用 curl 这种简单的 HTTP 工具进行访问”
+
+"LL" 在计算机科学和编程中可以有其他含义，例如 "LL parsers"，这指的是一类自顶向下解析器，用于文法分析。
+
+Go 语言的语法设计得相对简单，这使得它可以使用一个简单的自顶向下的解析方法，而不需要复杂的解析器生成工具。Go 语言的编译器源代码中包含了手写的解析器，而不是依赖像 Yacc 这样的解析器生成工具。
+
+Go 语言确实有一个运行时（runtime），但这个运行时与某些其他语言的运行时系统（比如 Java 的 JVM）在功能和设计上有所不同。
+
+当人们说 "Go 语言不需要运行时" 时，他们往往是想表达 Go 程序编译后的二进制文件是独立的，不需要额外的解释器或虚拟机来运行。但实际上，Go 语言确实有一个内置的运行时，它负责如下功能：
+- 垃圾收集
+- 并发（goroutines 和 channels）
+- 栈管理
+
+这些功能由 Go 语言的运行时库提供，它们在每个 Go 二进制文件中都被静态链接，使得编译后的程序可以独立运行。
+
+与此相反，一些其他的编程语言需要一个独立的运行时环境：
+
+- Java：编写的程序被编译为字节码，然后由 Java 虚拟机（JVM）解释执行或 JIT 编译执行。JVM 就是 Java 的运行时环境。
+- Python：Python 是解释性语言，它的解释器就可以视为其运行时。
+- C#：编写的程序被编译为中间语言（IL），然后由 .NET Common Language Runtime (CLR) 执行。
+
+这些语言编写的程序通常需要有对应的运行时环境或虚拟机才能执行，而 Go 语言的程序不需要额外的运行时环境，因为它们编译为机器代码并包含了所有必要的运行时功能。
+
+小于 80 的端口被用作公认端口（well known port）
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "net/http"
+    "net/http/httputil"
+)
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    dump, err := httputil.DumpRequest(r, true)
+    if err != nil {
+        http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+        return
+    }
+    fmt.Println(string(dump))
+    fmt.Fprintf(w, "<html><body>hello</body></html>\n")
+}
+
+func main() {
+    var httpServer http.Server
+    http.HandleFunc("/", handler)
+    log.Println("start http listening :18888")
+    httpServer.Addr = ":18888"
+    log.Println(httpServer.ListenAndServe())
+}
+```
+
+当你调用http.HandleFunc("/", handler)，你其实是为路径"/"及其子路径注册了处理函数。所以，不仅仅是"/"路径，"/xxxx"、"/yyyy/zzzz"等等，任何以"/"开始的路径都会由handler处理。
+
+要让它仅响应"/"路径，而不响应任何其他路径，你需要在handler中显式地检查r.URL.Path：
+
+
+headers:
+- Referer: 供服务器参考的附加信息。客户端在向服务器发送请求时，会在该首部中设置表示请求来源的 URL，服务器由此得知请求来自哪里。为了提高安全性，该首部的规范发生了很大改变，具体内容将在下一章介绍。
+- Authorization: 在只允许特殊的客户端进行通信时，该首部会将认证信息传送给服务器。RFC 中定义了几个标准形式（Basic/Digest/Bearer），但 AWS 和 GitHub API 等也在寻求属于自己的 Web 服务表述。
+
+首部还可以按照其他方式分类。
+- 可根据对象分为通用首部（请求和响应都适用）、实体首部（针对发送和接收的内容使用）、请求首部和响应首部这 4 类
+- 可根据发送线路的处理分为端到端首部（传递给最终接收者）和逐跳首部（根据对通信线路的指示，如果线路发生变化，则删除该首部）这 2 类
+
+在通信线路相关部分被二进制化的 HTTP/2 中，某些逐跳首部是不建议使用的。
+
+另外，以前除 RFC 中定义的首部之外，以 X- 开头的首部也可以由各个应用程序自由使用。这类首部中有很多被保留下来，但现在的趋势是尽可能在 RFC 中定义首部，努力推广不带 X- 的名称。
+
+RFC 中允许多次发送相同的首部。对于多个相同的首部，接收端有时使用以逗号分隔的字符来处理，有时使用数组把它们当作各个元素返回。服务器程序中使用的 Go 语言标准 net/http 包就是使用下面这样的数组进行处理的。
+
+"X-Test": []string{
+    "Hello",
+    "Ni",
+}
+
+没实现的headers:
+- Cost: 阅读页面所必需的成本。详细内容一直未定，该首部最终未成为规范。
+- Charge-To: 设想输入支付费用时的账户名。
+- From: 发件人的邮箱地址。虽然 HTTP/1.0 的规范中添加了这个首部，但由于存在安全方面的问题，所以该首部未被使用。
+- Title: 文档的标题。现在使用 HTML 文档的 <title> 标签成为主流。
+- Message-id: 据说是由电子邮件和后面介绍的新闻组导入的。世界上的消息不可以出现重复（在互联网存在期间）。
+- Version: 文档的版本。
+- Derived-From:在修改文档时，该首部用于传递之前的版本号。
+
+Windows 主要以文件的扩展名来区分文件类型，Mac 则通过名为资源分支（resource fork）的元信息来区分文件类型
+
+> 早期的Mac OS版本有一种独特的文件系统结构，其中文件不仅仅是一个连续的字节流。相反，每个文件实际上可以包含两个“分支”或“流”：一个是“数据分支”（data fork），它包含文件的主要内容，另一个是“资源分支”（resource fork），它包含文件的元数据和其他资源。这种文件系统结构是在早期Mac OS版本中引入的，当时的目标是使文件系统更友好、更可视化，并容易支持富图形用户界面的需求。例如，通过使用资源分支，一个应用程序可以轻松地访问其自己的自定义图标和其他用户界面资源，而无需进行复杂的解析或查找操作。
+
+MIME 类型是针对电子邮件创建的用来区分文件类型的字符串
+
+现在的 Web 服务器在发送 HTML 时，会在服务器返回的响应首部中按照下面的方式设置 MIME 类型。
+
+Content-Type: text/html; charset=utf-8
+
+> MIME类型通常由两部分组成：主类型（type）和子类型（subtype），它们之间用一个斜杠（/）分隔。例如，文本文件的MIME类型可能是text/plain，其中text是主类型，plain是子类型。
+
+常见的MIME类型示例：
+- text/plain: 纯文本文件。
+- text/html: HTML文档。
+- image/jpeg: JPEG图像。
+- audio/mp3: MP3音频文件。
+- application/pdf: PDF文件。
+- application/json: JSON数据格式。
+- multipart/form-data: 用于HTTP表单上传。
+
+通常文件的扩展名可以帮助确定文件的类型（例如，.jpg 通常表示 JPEG 图像）。但在Web上，仅仅依赖扩展名是不够的，因为有时你可能遇到没有扩展名或具有误导性扩展名的URL。因此，HTTP 有一个专门的机制 —— MIME 类型，通过 Content-Type 首部来告诉接收方数据的实际类型。
+
+像访问计数器这样的 CGI 脚本通常有 .cgi 扩展名。当浏览器请求这样的URL（例如 /cgi-bin/counter.cgi），它实际上是请求一个程序，而不是一个静态文件。从扩展名 .cgi，浏览器不能确定返回的数据是什么类型的。MIME 类型的解决方案：尽管 URL 的扩展名是 .cgi，但 CGI 脚本在响应中会添加一个 Content-Type 首部来明确指定它正在返回的数据类型。例如，如果脚本生成了一个 GIF 图像，它会在 HTTP 响应中包含 Content-Type: image/gif。这样，浏览器知道它应该如何显示这个响应：作为图像，而不是文本或其他类型的数据。
+
+Internet Explorer 通过 Internet 选项来查看内容（而非 MIME 类型），推测文件类型，这种操作称为内容嗅探（content sniffing）。即使服务器设置错误，图像也能够正确显示，所以乍一看我们会认为这种操作对用户来说是有益的。然而，对于本该只显示为文本的 text/plain，由于编写了 HTML 和 JavaScript，所以浏览器会执行该内容，这样就可能会造成意想不到的安全漏洞。对此，当前的主流方法是，通过从服务器发送下面的首部来指示浏览器不进行推测。
+
+X-Content-Type-Options: nosniff
+
+简单来说，HTTP 通信就是电子邮件高速往返的情形。
+
+虽然 HTTP 也允许使用换行符对首部进行换行，但该操作在一些浏览器上并不能奏效，还可能被恶用于响应拆分攻击，因此 RFC 7230 中不推荐这种做法
+
+HTTP 在新闻组的基础上导入了方法和状态码这两种功能。
+
+虽然PUT和DELETE在 HTTP/1.0 之后的版本中仍然存在，但在 HTTP/1.0 中并不是必不可少的，而是根据具体实现来确定是否使用的可选功能。实际上，浏览器在标准功能中使用这些方法向服务器发送请求是之后的事情了，也就是在 JavaScript 支持 XMLHttpRequest 之后。HTML 的表单中仅支持 GET 和 POST。
+
+HTTP/1.0 最早的 RFC 规定重定向次数最多为 5 次，但在 RFC 2616 的 HTTP/1.1 中没有了该限制，取而代之的是客户端必须检查重定向的无限循环。GO 语言默认可进行 10 次重定向。另外，使用 308 Moved Permanently 进行重定向是在版本 1.8 中实现的。
+
+重定向也存在一些缺点。如果重定向目标为其他服务器，当进行重定向时，就需要进行 2 次通信，即连接 TCP 会话、发送和接收 HTTP。当重定向次数增多时，显示所需的时间也会相应变长。Google 给出的方针是，重定向次数最好在 5 次以下，尽可能在 3 次以下。
+
+URL 规范: `方案://用户: 密码@ 主机名: 端口/路径? 查询# 片段`
+
+URL 的域名一开始只支持半角英文、数字和连字符，但 2003 年 RFC 3492 中确定了用来表示国际化域名（Internationalized Domain Name，IDN）的 Punycode 编码规范，由此，实现该编码规范的浏览器就可以使用国际化域名了。
+
+实际的 Web 结构并不支持 UTF-8 等字符编码，而是根据一定的编码规范将日语、中文等半角英文和数字之外的字符转换为半角英文或数字，然后发送请求。该编码规范就是 Punycode。Punycode 一定是以 xn-- 开头的字符。另外，全角英文和全角数字会预先统一为半角英文和半角数字。
+
+```bash
+curl -d "{\"hello\": \"world\"}" -H "Content-Type: application/json" http://localhost:18888
+
+curl -d @test.json -H "Content-Type: application/json" http://localhost:18888
+```
+
+HTTP/1.1 的最新版 RFC 7231 中提到 GET、HEAD、DELETE 以及 HTTP/1.1 中添加的 OPTIONS、CONNECT 等各个方法都可以持有 Payload 主体，但服务器可以根据实现拒绝接收。这就是 HTTP/1.1 中没有确定主体含义的方法。RFC 7231 中还强调了只有 HTTP/1.1 中添加的 TRACE 方法不可以包含 Payload 主体。
+
+这表示如果服务器端有意解析主体，则也可以使用。搜索引擎 Elasticsearch 不想受“URL 的长度不得超过 2083 个字符”的限制，在使用 GET 方法进行搜索时，也允许在主体中添加搜索条件。
+
+---
+
+```bash
+$ curl --http1.0 -d title="The Art of Community" -d author="Jono Bacon" http://localhost:18888
+
+#  title=The Art of Community&author=Jono Bacon
+```
+
+我们可以在 curl 命令中使用 -d 选项设置通过表单发送的数据。如果指定了 -d 选项，curl 命令就可以像浏览器一样设置首部 Content-Type:application/x-www-form-urlencoded。这时，主体就会变成下面这样的字符串，其中键和值用等号拼接，各项用 & 拼接。
+
+不过，该命令生成的主体与通过浏览器的 Web 表单发送的内容之间实际存在一些差别。在使用 -d 发送数据时，指定的字符串会直接拼接。因为即使存在分隔符 & 和 =，也是直接拼接，所以读取主体的一方无法正确还原数据集。
+
+```bash
+$ curl --http1.0 --data-urlencode title="Head First PHP & MySQL" --data-urlencode
+author="Lynn Beighley, Michael Morrison" http://localhost:18888
+
+title=Head%20First%20PHP%20%26%20MySQL&author=Lynn%20Beighley%2C%20Michael%20
+Morrison
+```
+
+无论哪一种转换方法，都可以通过相同的算法还原，因此不会出现什么问题。程序员平时也会把这些转换方法统称为 URL 转义。RFC 3986 中将 URL 的字符编码方法称为 URL 编码。

@@ -1,0 +1,21 @@
+---
+title: "c片段"
+date: "2023-10-29"
+description: "should i love c?"
+image: /images/blog/blue-huge-giant.jpg
+authors:
+  - KUD
+---
+
+```c
+#ifndef BUF_SIZE        /* Allow "cc -D" to override definition */
+#define BUF_SIZE 1024
+#endif
+
+```
+
+C语言中的预处理指令，用于条件编译:
+- #ifndef BUF_SIZE: 这一行检查是否已经定义了名为BUF_SIZE的宏（macro）。#ifndef的意思是“如果没有定义”。
+- #define BUF_SIZE 1024: 如果BUF_SIZE尚未定义，这一行会为其定义一个值，即1024。
+
+整体来说，这段代码的目的是确保BUF_SIZE有一个默认值1024，除非它已经被定义（例如通过编译器的命令行参数，如cc -DBUF_SIZE=2048来进行定义）。

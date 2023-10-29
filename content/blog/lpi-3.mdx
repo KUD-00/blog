@@ -1,0 +1,31 @@
+---
+title: "linux programming interface第三章exercise"
+date: "2023-10-28"
+description: "oha"
+image: /images/blog/only-blue.jpg
+authors:
+  - KUD
+---
+
+Linux的man pages每个条目都有一定的结构和部分:
+- NAME：简短地列出命令或函数的名称及其主要功能。
+- SYNOPSIS：
+  - 对于命令：简短地展示如何使用该命令及其选项。
+  - 对于库函数：展示函数的原型和需要包含的头文件。
+- DESCRIPTION：详细描述命令或函数的功能，可能会包括详细的参数/选项信息、行为和其他相关细节。
+- OPTIONS（仅适用于某些命令）：列出命令支持的所有选项，并对每个选项的功能和用法进行描述。
+- RETURN VALUE（通常用于库函数）：描述函数的返回值及其意义。
+- ERRORS（通常用于库函数）：列出可能的错误代码或错误情况，并简要描述它们的意义。
+- FILES：列出命令或函数可能会访问或使用的文件。
+- SEE ALSO：提供其他相关手册页的引用，这些手册页可能与当前条目有关或提供了更多的背景信息。
+- EXAMPLES：提供命令或函数的实际使用示例，帮助用户理解其实际应用。
+- AUTHORS、CONTRIBUTORS、COLOPHON：列出手册页的作者、贡献者和其他版权或来源信息。
+- BUGS：可能会描述已知的问题或限制。
+- VERSION：可能会提到该手册页或描述的命令/功能的版本信息。
+- OTHER SECTIONS：手册页可能会包含其他针对特定命令或函数的部分，如“ENVIRONMENT”（描述相关的环境变量）、“NOTES”（提供额外的注解或背景信息）等。
+
+> When using the Linux-specific reboot() system call to reboot the system, the second argument, magic2, must be specified as one of a set of magic numbers (e.g., LINUX_REBOOT_MAGIC2). What is the significance of these numbers? (Converting them to hexadecimal provides a clue.)
+
+“魔术数字”在reboot系统调用中作为参数是为了增加额外的安全性。具体来说，它们可以确保一个普通的进程不会不小心地触发一个系统重启。通过要求进程提供正确的“魔术数字”来调用reboot系统调用，Linux内核提供了一层保护，确保只有真正知道这些数字的进程（通常是管理员的工具）才能执行重启。
+
+可能也只是增加一点乐趣而已

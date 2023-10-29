@@ -1,0 +1,131 @@
+---
+title: "读linux programming interface chapter 4"
+date: "2023-10-29"
+description: "a dream"
+image: /images/blog/tabacoo-parking-lot.jpg
+authors:
+  - KUD
+---
+
+尽管变量stdin、stdout和stderr最初是指进程的标准输入、输出和错误，但它们可以使用freopen()库函数更改为引用任何文件。作为其操作的一部分，freopen()可能会更改重新打开的流的底层文件描述符。换句话说，对stdout执行freopen()后，不再安全地假设底层文件描述符仍然是1。
+
+- fd = open(pathname, flags, mode) 打开由pathname标识的文件，返回用于在后续调用中引用打开的文件的文件描述符。如果文件不存在，open()可能会创建它，具体取决于flags位掩码参数的设置。flags参数还指定文件是要打开为读、写还是两者兼而有之。mode参数指定如果此调用创建文件，则在文件上放置的权限。如果open()调用不用于创建文件，则此参数将被忽略并可以省略。
+- numread = read(fd, buffer, count) 从fd引用的打开文件中最多读取count字节，并将它们存储在buffer中。read()调用返回实际读取的字节数。如果不能再读取更多字节（即，遇到文件尾），read()返回0。
+- numwritten = write(fd, buffer, count) 将buffer中的最多count字节写入fd引用的打开文件。write()调用返回实际写入的字节数，可能少于count。
+- status = close(fd) 在所有I/O完成后被调用，以释放文件描述符fd及其相关的内核资源。
+
+```c
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "tlpi_hdr.h"
+
+#ifndef BUF_SIZE        /* Allow "cc -D" to override definition */
+#define BUF_SIZE 1024
+#endif
+
+int
+main(int argc, char *argv[])
+{
+    int inputFd, outputFd, openFlags;
+    mode_t filePerms;
+    ssize_t numRead;
+    char buf[BUF_SIZE];
+
+    if (argc != 3 || strcmp(argv[1], "--help") == 0)
+        usageErr("%s old-file new-file\n", argv[0]);
+
+    /* Open input and output files */
+
+    inputFd = open(argv[1], O_RDONLY);
+    if (inputFd == -1)
+        errExit("opening file %s", argv[1]);
+
+    openFlags = O_CREAT | O_WRONLY | O_TRUNC;
+    filePerms = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
+                S_IROTH | S_IWOTH;      /* rw-rw-rw- */
+    outputFd = open(argv[2], openFlags, filePerms);
+    if (outputFd == -1)
+        errExit("opening file %s", argv[2]);
+
+    /* Transfer data until we encounter end of input or an error */
+
+    while ((numRead = read(inputFd, buf, BUF_SIZE)) > 0)
+        if (write(outputFd, buf, numRead) != numRead)
+            fatal("write() returned error or partial write occurred");
+    if (numRead == -1)
+        errExit("read");
+
+    if (close(inputFd) == -1)
+        errExit("close input");
+    if (close(outputFd) == -1)
+        errExit("close output");
+
+    exit(EXIT_SUCCESS);
+}
+```
+
+假设我们有两个标志：
+- FLAG_A 定义为 0b0001 （在二进制中，这是1）
+- FLAG_B 定义为 0b0010 （在二进制中，这是2）
+
+使用按位或(bitwise OR)操作来组合这两个标志：
+
+```c
+int combinedFlags = FLAG_A | FLAG_B;
+```
+
+combinedFlags 的二进制表示为 0b0011，十进制为3。
+
+UNIX I/O模型的一个显著特点是I/O的通用性概念。这意味着使用相同的四个系统调用——open()、read()、write()和close()——来对所有类型的文件，包括像终端这样的设备，进行I/O操作
+
+通过确保每个文件系统和设备驱动程序都实现相同的I/O系统调用集，实现了I/O的通用性。由于特定于文件系统或设备的细节是在内核内部处理的，我们在编写应用程序时通常可以忽略设备特定的因素。当需要访问文件系统或设备的特定功能时，程序可以使用catchall ioctl()系统调用（第4.8节），它提供了一个接口，用于处理不在通用I/O模型之外的功能。
+
+open()系统调用要么打开一个现有的文件，要么创建并打开一个新文件。
+```c
+#include <sys/stat.h>
+#include <fcntl.h>
+
+int open(const char pathname, int flags, ... / mode_t mode */);
+```
+
+flags参数是一个位掩码，它使用`O_RDONLY, O_WRONLY, O_RDWR`常量指定文件的访问模式
+
+早期的UNIX实现使用数字0、1和2。大多数现代UNIX实现定义这些常量为这些值。因此，我们可以看到O_RDWR不等于O_RDONLY | O_WRONLY；后者的组合是一个逻辑错误。
+
+当open()用于创建新文件时，mode位掩码参数指定要放置在文件上的权限。（用于类型化模式的mode_t数据类型在SUSv3中指定为整数类型。）如果open()调用不指定O_CREAT，mode可以省略。
+
+```c
+/* Open existing file for reading */
+
+fd = open("startup", O_RDONLY);
+if (fd == -1)
+    errExit("open");
+
+/* Open new or existing file for reading and writing, truncating to zero
+   bytes; file permissions read+write for owner, nothing for all others */
+
+fd = open("myfile", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+if (fd == -1)
+    errExit("open");
+
+/* Open new or existing file for writing; writes should always
+   append to end of file */
+
+fd = open("w.log", O_WRONLY | O_CREAT | O_APPEND,
+                   S_IRUSR | S_IWUSR);
+if (fd == -1)
+    errExit("open");
+```
+
+SUSv3规定，如果open()成功，它保证使用进程中最低编号的未使用的文件描述符。我们可以利用这一特性确保文件使用特定的文件描述符打开。例如，下面的序列确保文件使用标准输入（文件描述符0）打开。
+
+```c
+if (close(STDIN_FILENO) == -1)      /* 关闭文件描述符0 */
+    errExit("close");
+
+fd = open(pathname, O_RDONLY);
+if (fd == -1)
+    errExit("open");
+```
+
+
