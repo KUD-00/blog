@@ -128,4 +128,124 @@ if (fd == -1)
     errExit("open");
 ```
 
+---
+
+如果程序超出文件的末尾进行查找，然后执行I/O操作会怎么样呢？调用 read() 会返回0，表示文件结束。有点出乎意料的是，可以在文件结束之后的任意位置写入字节。
+
+文件的末尾和新写入的字节之间的空间被称为文件洞。从编程的角度看，洞中的字节是存在的，从洞中读取会返回一个包含0（空字节）的字节缓冲区。
+
+然而，文件洞并不占用任何磁盘空间。文件系统不会为洞分配任何磁盘块，直到在某个时候将数据写入其中。文件洞的主要优点是，稀疏填充的文件比实际需要在磁盘块中分配的空字节所需的磁盘空间少。核心转储文件（第22.1节）是包含大量洞的文件的常见例子。
+
+文件洞不消耗磁盘空间的说法需要稍微修正一下。在大多数文件系统中，文件空间是以块的单位分配的（第14.3节）。块的大小取决于文件系统，但通常是1024、2048或4096字节这样的数值。如果洞的边缘在块内，而不是在块边界上，那么一个完整的块被分配来存储块的其他部分的数据，与洞对应的部分填充为空字节。
+
+大多数原生UNIX文件系统支持文件洞的概念，但许多非原生文件系统（例如，Microsoft的VFAT）则不支持。在不支持洞的文件系统上，会显式地将空字节写入文件。
+
+洞的存在意味着文件的名义大小可能大于它实际使用的磁盘存储量（在某些情况下，可能大得多）。在文件洞的中间写入字节会减少可用的磁盘空间，因为内核分配块来填充洞，尽管文件的大小没有改变。这种情况是不常见的，但仍然需要注意。
+
+SUSv3指定了一个函数，posix_fallocate(fd, offset, len)，确保为描述符fd引用的磁盘文件指定的offset和len的字节范围在磁盘上分配了空间。这样可以确保后续对文件的write()操作不会因磁盘空间耗尽而失败（否则，如果文件中的洞被填充，或者其他应用程序在文件的全部范围被写入之前消耗了磁盘空间，可能会发生这种情况）。历史上，glibc实现的这个函数通过在指定范围的每个块中写入一个0字节来达到预期的结果。自2.6.23版本以来，Linux提供了一个fallocate()系统调用，提供了一个更高效的方式来确保分配了必要的空间，glibc的posix_fallocate()实现在可用时使用了这个系统调用。
+
+---
+
+```c
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include "tlpi_hdr.h"
+
+int
+main(int argc, char *argv[])
+{
+    size_t len;
+    off_t offset;
+    int fd, ap, j;
+    unsigned char *buf;
+    ssize_t numRead, numWritten;
+
+    if (argc < 3 || strcmp(argv[1], "--help") == 0)
+        usageErr("%s file {r<length>|R<length>|w<string>|s<offset>}...\n",
+                 argv[0]);
+
+    fd = open(argv[1], O_RDWR | O_CREAT,
+                S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
+                S_IROTH | S_IWOTH);                     /* rw-rw-rw- */
+    if (fd == -1)
+        errExit("open");
+
+    for (ap = 2; ap < argc; ap++) {
+        switch (argv[ap][0]) {
+        case 'r':   /* Display bytes at current offset, as text */
+        case 'R':   /* Display bytes at current offset, in hex */
+            len = getLong(&argv[ap][1], GN_ANY_BASE, argv[ap]);
+            buf = malloc(len);
+            if (buf == NULL)
+                errExit("malloc");
+
+            numRead = read(fd, buf, len);
+            if (numRead == -1)
+                errExit("read");
+
+            if (numRead == 0) {
+                printf("%s: end-of-file\n", argv[ap]);
+            } else {
+                printf("%s: ", argv[ap]);
+                for (j = 0; j < numRead; j++) {
+                    if (argv[ap][0] == 'r')
+                        printf("%c", isprint(buf[j]) ? buf[j] : '?');
+                    else
+                        printf("%02x ", buf[j]);
+                }
+                printf("\n");
+            }
+
+            free(buf);
+            break;
+
+        case 'w':   /* Write string at current offset */
+            numWritten = write(fd, &argv[ap][1], strlen(&argv[ap][1]));
+            if (numWritten == -1)
+                errExit("write");
+            printf("%s: wrote %ld bytes\n", argv[ap], (long) numWritten);
+            break;
+
+        case 's':   /* Change file offset */
+            offset = getLong(&argv[ap][1], GN_ANY_BASE, argv[ap]);
+            if (lseek(fd, offset, SEEK_SET) == -1)
+                errExit("lseek");
+            printf("%s: seek succeeded\n", argv[ap]);
+            break;
+
+        default:
+            cmdLineErr("Argument must start with [rRws]: %s\n", argv[ap]);
+        }
+    }
+
+    exit(EXIT_SUCCESS);
+}
+```
+ioctl()系统调用是一个通用的机制，用于执行在本章前面描述的通用I/O模型之外的文件和设备操作。
+
+```c
+#include <sys/ioctl.h>
+
+int ioctl(int fd, int request, ... /* argp */);
+```
+
+成功时根据request返回值，错误时返回-1。
+
+fd参数是为了执行由request指定的控制操作而打开的设备或文件的文件描述符。设备特定的头文件定义了可以在request参数中传递的常数。
+
+如标准C省略号(...)表示法所示，我们标记为argp的ioctl()的第三个参数可以是任何类型。request参数的值使ioctl()能够确定在argp中预期的值类型。通常，argp是指向整数或结构的指针；在某些情况下，它未被使用。
+
+SUSv3为ioctl()做的唯一规定是控制STREAMS设备的操作。（STREAMS设施是一个System V特性，主线Linux内核不支持，尽管已经开发了一些附加实现。）本书中描述的其他ioctl()操作都没有在SUSv3中规定。然而，ioctl()调用自UNIX系统的早期版本以来一直是UNIX系统的一部分，因此我们描述的许多ioctl()操作在许多其他UNIX实现中都被提供。在描述每个ioctl()操作时，我们都会注意到可移植性问题。
+
+---
+
+为了在常规文件上执行I/O，我们首先必须使用open()获取文件描述符。然后使用read()和write()执行I/O。在执行所有I/O操作后，我们应该使用close()释放文件描述符及其关联的资源。这些系统调用可以用来在所有类型的文件上执行I/O。
+
+所有文件类型和设备驱动程序实现相同的I/O接口的事实允许I/O的普遍性，这意味着一个程序通常可以与任何类型的文件一起使用，而不需要针对文件类型的特定代码。
+
+对于每个打开的文件，内核都维护一个文件偏移，它决定下一次读取或写入将发生的位置。文件偏移由读取和写入隐式更新。使用lseek()，我们可以明确地将文件偏移重新定位到文件中的任何位置或超出文件的末尾。在文件的前一个末尾之后的位置写入数据会在文件中创建一个洞。从文件洞中读取返回包含零的字节。
+
+ioctl()系统调用是一个用于不符合标准文件I/O模型的设备和文件操作的万能工具。
+
 

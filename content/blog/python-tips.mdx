@@ -1,7 +1,7 @@
 ---
 title: python 片段
 date: "2023-10-04"
-description: 前端塞尔达
+description: "i love and hate python"
 image: /images/blog/shooter-black-girl.jpg
 authors:
   - KUD
@@ -21,3 +21,27 @@ print(even_number)  # Output: 2
 ```
 
 注意，`filter`函数并不会立即对整个列表进行过滤，而是返回一个`filter`对象。这个对象是一个迭代器，只有在需要获取元素时，才会对列表进行过滤。这意味着，如果列表非常大，或者提供给`filter`函数的函数非常复杂，这个方法仍然可以高效地工作。
+
+---
+
+
+doc_result = list(filter(lambda x: x.get_score() > 0, doc))
+
+doc_result = doc.filter(lambda x: x.get_score() > 0)
+
+这么写不行，好奇怪啊python,我不太理解，js写多了感觉这好恶心
+
+for document in doc_result.sort(key=lambda s: s.get_score(), reverse=True):
+
+这也报一个TypeError: 'NoneType' object is not iterable的错误
+
+---
+
+```python
+from collections import deque
+
+d = deque([1, 2, 3, 4, 5])
+
+# 获取最后一个元素
+last_element = d[-1]
+```
