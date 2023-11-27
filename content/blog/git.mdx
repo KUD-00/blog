@@ -187,10 +187,10 @@ rebase通过改变提交的顺序和/或哈希值来整理和线性化项目历�
 - 如果你想删除最近的几个提交，可以使用 git reset。例如，如果你想删除最后一个提交，可以使用 git reset --hard HEAD~1。这将把 HEAD 指向前一个提交，且不保留当前提交的更改。请注意，使用 --hard 选项会丢失所有未提交的更改。
 
 使用 git revert:
-- 如果你想撤销特定的提交，同时保留对该提交之后的历史记录，可以使用 git revert <commit_hash>。这将创建一个新的提交，该提交撤销指定提交的更改。
+- 如果你想撤销特定的提交，同时保留对该提交之后的历史记录，可以使用 `git revert <commit_hash>`。这将创建一个新的提交，该提交撤销指定提交的更改。
 
 交互式 rebase (git rebase -i):
-- 如果你想删除或修改旧的提交，可以使用 git rebase -i <commit_hash>^，这里 <commit_hash> 是你想修改的提交的哈希值。在弹出的交互式界面中，你可以选择删除、修改或重新排序提交。
+- 如果你想删除或修改旧的提交，可以使用 `git rebase -i <commit_hash>^`，这里 `<commit_hash>` 是你想修改的提交的哈希值。在弹出的交互式界面中，你可以选择删除、修改或重新排序提交。
 
 要放弃从 2dd65392b0a790d53c14c3a361c8036f95c04c1b 以后的所有提交（即这个提交之前的所有内容），同时保留你在工作目录中当前所做的修改，你可以使用 git reset 命令，配合 --soft 或 --mixed 选项。这样做会重置你的 HEAD 到指定的提交，但不会影响你当前的工作目录和暂存区。具体步骤如下：
 
@@ -212,7 +212,7 @@ rebase通过改变提交的顺序和/或哈希值来整理和线性化项目历�
 使用 git reset 命令将 HEAD 重置到一个旧的提交会在你的本地仓库中“删除”这之后的提交，但这些提交实际上并没有被完全删除。它们在 Git 的历史记录中仍然存在，但不再是当前分支的一部分。这意味着在特定情况下，这些提交仍然可以被恢复。
 
 如果你需要，你可以通过以下方式找回这些“删除”的提交：
-- 通过 git reflog: git reflog 显示了你的本地仓库的 HEAD 记录。即使 commit 不再在任何分支上，它仍然可以在这里找到。你可以通过检查 git reflog 的输出来找到“删除”提交的哈希值，并使用 git checkout <commit_hash> 或 git branch <new_branch_name> <commit_hash> 来检出或创建一个新分支。
+- 通过 git reflog: git reflog 显示了你的本地仓库的 HEAD 记录。即使 commit 不再在任何分支上，它仍然可以在这里找到。你可以通过检查 git reflog 的输出来找到“删除”提交的哈希值，并使用 `git checkout <commit_hash>` 或 `git branch <new_branch_name> <commit_hash>` 来检出或创建一个新分支。
 
 ---
 
