@@ -1,0 +1,51 @@
+---
+title: "读gnu make book"
+date: "2023-11-20"
+description: "ox"
+image: /images/blog/kimono-jinja.jpg
+authors:
+  - KUD
+---
+
+```makefile
+$(info $(FOO) $(origin FOO))
+```
+
+如果变量 FOO 在环境中定义并自动导入到 GNU make，$(origin FOO) 将具有值 environment。当你运行 makefile 时，它应该给出输出 foo environment。
+
+override 指令胜过命令行，命令行胜过环境覆盖（-e 选项），环境覆盖胜过在 makefile 中定义的变量，这又胜过原始环境
+
+命令行优先于 makefile，makefile 优先于环境。
+
+
+在 makefile 中设置可以在启动构建时通过命令行设置的选项是常见的。例如，您可能希望更改正在执行的构建类型或在 makefile 外部指定目标架构。
+
+最常见的用例之一是 debug 选项，用于指定构建是否应该创建可调试或发布代码。处理这个问题的一种简单方法是使用名为 BUILD_DEBUG 的 makefile 变量，该变量在 makefile 中设置为 yes 并在构建发布版本时在命令行上覆盖。例如，makefile 可能在开始附近有一行 BUILD_DEBUG := yes。然后在 makefile 的其他地方使用 BUILD_DEBUG 变量来决定如何设置编译器调试选项。因为在 makefile 中 BUILD_DEBUG 被设置为 yes，所以默认情况下将进行调试构建。然后，在发布时，可以从命令行覆盖此默认设置：
+
+```shell
+$ make BUILD_DEBUG=no
+```
+
+```makefile
+ifndef BUILD_DEBUG
+BUILD_DEBUG := yes
+endif
+```
+
+现在，如果 BUILD_DEBUG 尚未设置（这就是 ifndef 的含义：未定义），它将被设置为 yes；否则，它保持不变。由于输入 ifndef SOME_VARIABLE 和 endif 有些笨拙，GNU make 提供了这种模式的简写形式，即 ?= 运算符：
+
+```makefile
+BUILD_DEBUG ?= yes
+.PHONY: all
+all: ; @echo BUILD_DEBUG is $(BUILD_DEBUG)
+```
+
+?= 运算符告诉 GNU make，除非 BUILD_DEBUG 已经定义，否则将其设置为 yes；如果已经定义，则保持不变。重新运行测试会产生
+
+```makefile
+FOO=bar
+
+all: ; @echo FOO is $$FOO
+```
+
+双美元符号：转义的 $

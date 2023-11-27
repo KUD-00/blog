@@ -45,3 +45,23 @@ d = deque([1, 2, 3, 4, 5])
 # 获取最后一个元素
 last_element = d[-1]
 ```
+---
+
+```python
+my_list = [1, 2, 3, 4, 5]
+
+# three ways to delete 3
+my_list.remove(3)
+my_list.pop(2)
+del my_list[2]
+```
+
+真的混乱，我挺讨厌python的
+
+---
+
+walrus operator:
+```python
+while (sum := numbers[left] + numbers[right]) != target:
+    # 'sum' can be used here since it's already assigned
+```

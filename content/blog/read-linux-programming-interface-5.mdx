@@ -1,0 +1,116 @@
+---
+title: "读linux programming interface chapter 5"
+date: "2023-11-20"
+description: "continue"
+image: /images/blog/pool-girl-sky.jpg
+authors:
+  - KUD
+---
+
+各种系统调用操作是以原子方式执行的。这意味着内核保证操作中的所有步骤在不被其他进程或线程中断的情况下完成。
+
+原子性对于某些操作的成功完成至关重要。特别是，它可以帮助我们避免竞态条件（有时被称为竞争风险）。竞态条件是指两个进程（或线程）在共享资源上操作时产生的结果以意外的方式依赖于这些进程获得CPU访问权限的相对顺序
+
+指定O_EXCL与O_CREAT一起使用会导致open()在文件已存在时返回错误。这为进程确保其为文件的创建者提供了一种方式。检查文件先前是否存在以及创建文件是以原子方式执行的
+
+O_EXCL 是在使用文件系统的 open() 函数时可以指定的一个标志。它的主要作用是确保文件在被打开或创建时的唯一性。当与 O_CREAT 标志一起使用时，O_EXCL 的行为如下：
+- 如果指定的文件已经存在，open() 函数会因为 O_EXCL 标志而失败，并返回一个错误。这可以防止覆盖一个已经存在的文件。
+- 如果指定的文件不存在，open() 函数会根据 O_CREAT 标志创建文件。
+
+这种组合（O_EXCL 与 O_CREAT）通常用于需要确保文件是新创建的场景，例如在创建临时文件或在多线程/多进程环境中确保文件名唯一性时。通过这种方式，可以避免因多个进程或线程试图同时创建同一文件而导致的数据竞争问题。
+
+```c
+fd = open(argv[1], O_WRONLY);   /* Open 1: check if file exists */
+if (fd != -1) {                     /* Open succeeded */
+    printf("[PID %ld] File \"%s\" already exists\n",
+            (long) getpid(), argv[1]);
+    close(fd);
+} else {
+    if (errno != ENOENT) {          /* Failed for unexpected reason */
+        errExit("open");
+    } else {
+        /* WINDOW FOR FAILURE */
+        fd = open(argv[1], O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+        if (fd == -1)
+            errExit("open");
+
+        printf("[PID %ld] Created file \"%s\" exclusively\n",
+                (long) getpid(), argv[1]);          /* MAY NOT BE TRUE! */
+    }
+}
+```
+
+假设当我们的进程第一次调用open()时，文件不存在，但到第二次open()的时候，某个其他进程已经创建了该文件。这可能发生在内核调度器决定进程的时间片已用尽并将控制权交给另一个进程时，或者在多处理器系统上两个进程同时运行时。在这种情况下，进程A会错误地认为它创建了文件，因为无论文件是否存在，第二个open()都会成功。
+
+通过使用单个 open() 调用并指定 O_CREAT 和 O_EXCL 标志，可以防止这种情况，因为它保证了检查和创建步骤作为单个原子（即不可中断）操作进行。
+
+对原子性的需求的第二个例子是当我们有多个进程向同一个文件（例如，一个全局日志文件）追加数据时。为此，我们可能会考虑在每个写入者中使用如下代码：
+
+```c
+if (lseek(fd, 0, SEEK_END) == -1)
+    errExit("lseek");
+if (write(fd, buf, len) != len)
+    fatal("Partial/failed write");
+```
+
+然而，这段代码存在与前一个例子相同的缺陷。如果第一个执行代码的进程在 lseek() 和 write() 调用之间被第二个执行相同操作的进程中断，那么两个进程都会在写入之前将它们的文件偏移设置到相同的位置，并且当第一个进程重新调度时，它将覆盖第二个进程已经写入的数据。同样，这是一个竞态条件，因为结果取决于两个进程的调度顺序。
+
+避免这个问题需要寻找文件末尾下一个字节的操作和写入操作原子地发生。这就是以 O_APPEND 标志打开文件所保证的。
+
+---
+
+fcntl() 系统调用用于在一个已打开的文件描述符上执行一系列控制操作。
+
+```c
+#include <fcntl.h>
+
+int fcntl(int fd, int cmd, ...);
+```
+
+fcntl() 的一个用途是检索或修改已打开文件的访问模式和打开文件状态标志。（这些是在调用 open() 时由 flags 参数设置的值。）要检索这些设置，我们将 cmd 指定为 F_GETFL：
+
+```c
+int flags, accessMode;
+
+flags = fcntl(fd, F_GETFL);          /* 第三个参数不是必需的 */
+if (flags == -1)
+    errExit("fcntl");
+```
+
+在上述代码之后，我们可以测试文件是否已打开以进行同步写入：
+
+```c
+if (flags & O_SYNC)
+    printf("writes are synchronized\n");
+```
+
+SUSv3 要求只有在 open() 或稍后的 fcntl() F_SETFL 调用中指定的状态标志才应设置在打开的文件上。然而，Linux 在这方面有所偏离：如果应用程序使用第 5.10 节中描述的一种技术编译，用于打开大文件，那么通过 F_GETFL 检索的标志中总是会设置 O_LARGEFILE。
+
+检查文件的访问模式略微复杂，因为 O_RDONLY (0)、O_WRONLY (1) 和 O_RDWR (2) 常量不对应于打开文件状态标志中的单个位。因此，要进行此检查，我们需要用常量 O_ACCMODE 屏蔽标志值，然后测试与其中一个常量的等同性：
+
+```c
+accessMode = flags & O_ACCMODE;
+if (accessMode == O_WRONLY || accessMode == O_RDWR)
+    printf("file is writable\n");
+```
+
+我们可以使用 fcntl() 的 F_SETFL 命令来修改一些打开的文件状态标志。可以修改的标志有 O_APPEND、O_NONBLOCK、O_NOATIME、O_ASYNC 和 O_DIRECT。尝试修改其他标志会被忽略。（一些其他的 UNIX 实现允许 fcntl() 修改其他标志，例如 O_SYNC。）
+
+在以下情况下，使用 fcntl() 修改打开的文件状态标志特别有用：
+- 调用程序没有打开该文件，因此无法控制在 open() 调用中使用的标志（例如，文件可能是在程序启动前打开的三个标准描述符之一）。
+- 文件描述符是从除 open() 以外的系统调用中获取的。这类系统调用的示例包括 pipe()，它创建一个管道并返回两个文件描述符，分别指向管道的两端，以及 socket()，它创建一个套接字并返回一个指向该套接字的文件描述符。
+
+要修改打开文件的状态标志，我们使用 fcntl() 获取现有标志的副本，然后修改我们希望更改的位，最后再次调用 fcntl() 来更新标志。因此，要启用 O_APPEND 标志，我们会编写以下内容：
+
+```c
+int flags;
+
+flags = fcntl(fd, F_GETFL);
+if (flags == -1)
+    errExit("fcntl");
+flags |= O_APPEND;
+if (fcntl(fd, F_SETFL, flags) == -1)
+    errExit("fcntl");
+```
+
+

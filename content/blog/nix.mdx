@@ -86,3 +86,47 @@ pkgs不仅仅包含nixpkgs中所有包的定义,还包含一些用于操作这�
 - 所有nixpkgs包的定义,以属性名访问,如pkgs.stdenv
 - 一些操作包的函数,比如callPackage,buildEnv等
 - 一些系统信息,如pkgs.system等
+
+---
+
+在 Nix 中，一个 derivation 是构建过程的描述，它指定了如何构建一个包（package）或应用程序。
+
+可以创建一个 overlay 来添加或重写包。Overlay 是一个函数，它接受一个包集合（pkgs）作为输入，并返回一个修改后的包集合
+
+---
+
+在 NixOS 或使用 Nix 的 home-manager 管理环境中，xdg.configFile 是一个配置选项，用于管理遵循 XDG 基础目录规范的配置文件。这里的 xdg 代表 "XDG Base Directory Specification"。
+
+XDG Base Directory Specification 是由 FreeDesktop.org 定义的标准，旨在规范 UNIX 类系统中用户配置文件、数据文件和缓存文件的存储位置。这个规范旨在替代传统的将所有配置文件放在用户家目录下的做法（例如，大量的点文件（dotfiles）和点目录（dot directories）），从而提供一种更有组织的方式来管理这些文件。
+
+根据 XDG 规范，配置文件通常存放在 $HOME/.config 目录下。因此，在 home-manager 中使用 xdg.configFile 时，你可以指定在 .config 目录下的特定路径和文件内容。例如：
+
+```nix
+xdg.configFile."hypr/hyprland.conf".text = ''
+  # hyprland 配置内容
+  ...
+'';
+```
+
+这个配置将会在用户的 .config/hypr/ 目录下创建一个名为 hyprland.conf 的文件，并填充指定的内容。
+
+---
+
+```nix
+(pkgs.python3.withPackages (ps: with ps; [
+    # ...
+]))
+```
+
+`withPackages`:
+- `withPackages` 是一个函数，属于 python3 对象。它的作用是创建一个包含指定 Python 包的环境。
+- 这个函数接受另一个函数作为参数，这个参数函数用于定义需要包含的 Python 包。
+
+`(ps: with ps; [ ... ])`:
+- 这是传递给 `withPackages` 的函数。它的参数 ps 代表 Python 包的集合。
+- `with ps`; 是一个 Nix 语言的构造，它允许在后续的表达式中直接使用 ps 中的属性，而不需要再次写 ps. 前缀。这样做的目的是为了简化代码。
+- [ ... ] 是一个列表，你可以在这个列表中指定你希望包含在你的 Python 环境中的所有包。例如，ps.lxml 和 ps.requests 是 ps 集合中的两个包。
+
+---
+
+
