@@ -129,4 +129,51 @@ xdg.configFile."hypr/hyprland.conf".text = ''
 
 ---
 
+mkOption 用于创建一个模块选项的定义，这个选项之后可以在 NixOS 的配置文件中设置。这个函数允许你指定一些关键的属性:
+- type: 这个属性定义了选项值的类型，比如 string, int, bool 等。
+- default: 定义了这个选项的默认值。
+- description: 提供了对这个选项的描述，通常用于生成文档和帮助信息。
+- example: 给出一个或多个这个选项的使用示例。
+
+通过使用 mkOption，你可以创建一个结构化的、有类型的配置选项，这使得 NixOS 的配置既灵活又具有自我文档化的特点。
+
+例如，如果你想在你的 NixOS 配置中添加一个新的选项来控制某个服务的日志级别，你可能会这样使用 mkOption：
+
+```nix
+services.yourService.logLevel = mkOption {
+  type = types.enum ["debug" "info" "warn" "error"];
+  default = "info";
+  description = "The log level for your service.";
+};
+```
+
+---
+
+如何查找谁依赖samba这个包？
+
+先找到当前系统是什么
+```nix
+export CURRENT_NIXOS_SYSTEM=$(readlink -f /nix/var/nix/profiles/system)
+
+echo $CURRENT_NIXOS_SYSTEM
+# /nix/store/bs80l2lbz1dpa8xi2s7z3nh2r9zfqwbd-nixos-system-Mikan-24.05.20231207.26a3184
+```
+
+找到samba这个包在哪里：
+```nix
+nix-store -q --requisites $CURRENT_NIXOS_SYSTEM | grep -i samba
+# /nix/store/1xria1n7sk0s2k6fb3jg54wj5f8ai3kx-samba-4.19.2
+```
+
+然后查
+```nix
+nix-store --query --referrers /nix/store/1xria1n7sk0s2k6fb3jg54wj5f8ai3kx-samba-4.19.2
+```
+
+---
+
+Nix 系统中存在两套命令行接口（CLI）模式，这通常指的是传统的 Nix 命令（如 nix-build）和新的基于 nix 命令的接口（如 nix build）。这种区别主要是由 Nix 的发展和迭代引起的。
+
+---
+
 
