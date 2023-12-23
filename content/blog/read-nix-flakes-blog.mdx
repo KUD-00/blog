@@ -1,0 +1,167 @@
+---
+title: "读Nix Flakes blog"
+description: "solve what?"
+image: /images/blog/pocket-card.jpg
+date: "2023-12-05"
+authors:
+  - Kud
+---
+
+链接：[还没看完](https://www.tweag.io/blog/2020-07-31-nixos-flakes/)
+
+# Part 1
+Nix file可以访问任意文件（如~/.config/nixpkgs/config.nix）、环境变量、Git仓库、Nix搜索路径中的文件（$NIX_PATH）、命令行参数（--arg）和系统类型（builtins.currentSystem）。换句话说，evaluation并不像它可能的那样密封(hermetic)。实际上，确保像NixOS系统配置这样的东西的可重现评估需要特别小心
+
+没有标准的方式来组合基于Nix的项目。
+- Nixpkgs中很少包含你需要的所有内容；考虑那些使用Nix作为构建工具的项目，或NixOS系统配置。
+- 组合Nix文件的典型方法是依赖于Nix搜索路径（例如`import <nixpkgs>`）或使用fetchGit或fetchTarball。前者的可重现性较差，而后者因需要手动更新Git哈希以更新依赖而导致糟糕的用户体验。
+
+没有简单的方式将基于Nix的项目交付给用户。Nix有一个“频道”机制（本质上是一个包含Nix文件的tarball），但创建频道并不容易，且它们不可组合。最后，基于Nix的项目缺乏标准化结构。有一些惯例（例如shell.nix或release.nix），但它们没有涵盖许多常见用例；例如，没有办法发现仓库提供的NixOS模块。
+
+过去，你可能会使用NIX_PATH环境变量让你的项目找到Nixpkgs。在flakes的世界中，这不再被允许：flakes必须显式声明它们的依赖，这些依赖必须被锁定到特定的修订版。
+
+> 关于$NIX_PATH
+> 配置文件定位：$NIX_PATH 通常用于指定 Nix 配置文件的位置，如 nixpkgs、nixos 或其他相关配置文件的路径。这些配置文件包含了有关软件包、模块或系统配置的信息。
+> 包查找：当使用 Nix 命令安装或操作软件包时，$NIX_PATH 用于确定 Nix 应该在哪里查找相关的包描述和依赖项。这对于确保软件包的一致性和正确的依赖关系解析至关重要。
+> 重写和自定义：高级用户可以通过修改 $NIX_PATH 来引入自定义的包源或覆盖现有的包。这对于那些希望实验新软件或调整包行为的用户来说非常有用。
+> Nix 表达式解析：在编写 Nix 表达式时，$NIX_PATH 可用于解析表达式中的路径引用，从而使得这些表达式更加灵活和可移植。
+
+> 不过我的整个配置都在flakes里面，确实这个东西没怎么用上，至少配置文件定位是用不上
+
+查看一个flake的依赖：
+```nix
+$ nix flake metadata github:edolstra/dwarffs
+```
+NixOS模块和Nixpkgs覆盖层（overlay）
+
+由于flake评估是密封的，并且锁文件锁定了所有依赖，所以上述nix build命令的评估结果保证与CI系统中的结果相同。
+
+flake位置使用类似URL的语法指定，如github:edolstra/dwarffs或git+https://github.com/NixOS/patchelf。但是，如果你每次都要在命令行上输入这些URL，那会相当冗长，所以还有一个flake注册表，将诸如nixpkgs之类的符号标识符映射到实际位置，如https://github.com/NixOS/nixpkgs
+
+```bash
+$ nix registry add nixpkgs github:NixOS/nixpkgs/5272327b81ed355bbed5659b8d303cf2979b6953
+```
+
+任何未被Git跟踪的文件在Nix评估期间都是不可见的，以确保密封的评估
+
+> 原来是你的问题啊！git tree is dirty
+
+`nix build` = `nix shell --command hello`
+
+交互式开发环境，其中所有依赖项（如GCC）和衍生物中的shell变量和函数都在作用域中:
+```bash
+$ nix develop
+$ eval "$buildPhase"
+$ ./hello
+Hello World
+```
+
+outputs属性是flake的核心：它是一个产生属性集的函数。函数参数是inputs中指定的flakes。
+
+self参数表示这个flake。它主要用于引用flake的源（如src = self;）或其他输出（例如self.defaultPackage.x86_64-linux）。
+
+后续构建此flake将使用锁文件中记录的nixpkgs版本。如果你向flake.nix添加新的输入，当你运行任何命令（如nix build）时，Nix会自动向flake.lock添加相应的锁。然而，它不会替换现有的锁。如果你想将锁定的输入更新到最新版本，你需要明确要求：
+
+```bash
+$ nix flake lock --update-input nixpkgs
+$ nix build
+```
+
+其他用户可以使用这个flake：
+
+```bash
+$ nix shell github:edolstra/hello -c hello
+```
+
+---
+
+# Part 2
+
+Nix使用一个简单的、解释型的、纯函数式语言来描述包依赖图和NixOS系统配置。因此，要获取这些东西的任何信息，Nix首先需要评估一个庞大的Nix程序。这涉及到解析可能成千上万的.nix文件，并运行一个图灵完备的语言。
+
+例如，命令nix-env -qa显示了Nixpkgs中可用的包。但这相当慢，需要大量内存：
+
+```bash
+$ command time nix-env -qa | wc -l
+```
+
+评估单个包或配置也可能很慢。例如，使用nix-shell进入Hydra的开发环境，即使所有依赖都存在于Nix存储中，我们也必须等待一会儿：
+
+```bash
+$ command time nix-shell --command 'exit 0'
+```
+
+偶尔使用可能还可以，但在脚本中等待一秒或更长时间可能会慢得令人无法接受。
+
+评估开销与实际构建或下载包或配置所需的时间完全无关。如果某物已经存在于Nix存储中，Nix不会再次构建或下载它。但它仍然需要重新评估Nix文件以确定哪些Nix存储路径是需要的
+
+能不能通过缓存评估结果来加速呢？毕竟，Nix语言是纯函数式的，所以看起来重新评估应该每次都产生相同的结果。天真地说，也许我们可以保持一个缓存，记录文件X的属性A评估为衍生物D（或我们想要缓存的任何元数据）。不幸的是，情况并非如此简单；毕竟，缓存失效是计算机科学中唯二的难题之一。
+
+过去Nix评估不是密封的，这是导致这个方法不起作用的原因。例如，一个.nix文件可以通过相对或绝对路径（例如~/.config/nixpkgs/config.nix用于Nixpkgs）或在Nix搜索路径（$NIX_PATH）中查找来导入其他Nix文件。因此，除非我们完美地跟踪在评估期间使用的所有文件，否则缓存的结果可能与当前输入不一致。
+
+Flakes 通过确保完全封闭的评估来解决这个问题。当你评估一个特定 flake（例如 dwarffs flake）的输出属性（例如 defaultPackage.x86_64-linux）时，Nix 禁止访问该 flake 或其依赖项之外的任何文件。它还禁止不纯净或依赖平台的功能，如访问环境变量或当前系统类型。
+
+这允许 nix 命令大胆地缓存评估结果，而不用担心缓存失效问题
+
+```bash
+$ command time nix shell nixpkgs#firefox -c firefox --version
+```
+
+缓存结果变得“陈旧”的唯一方式是这样的。Nix 评估会产生诸如 /nix/store/7mz8pkgpl24wyab8nny0zclvca7ki2m8-firefox-75.0.drv 这样的存储派生作为副作用。（.drv 文件本质上是包的依赖图的序列化。）这些存储派生可能会被垃圾回收。在这种情况下，评估缓存指向一个不再存在的路径。因此，Nix 会检查 .drv 文件是否仍然存在，如果不存在，会回退到正常评估
+
+未来的改进
+
+目前，评估缓存只是在本地创建和使用的。然而，Nix 可以自动下载预先计算的缓存，类似于它对存储路径内容的二进制缓存。也就是说，如果我们需要像 302043eedf….sqlite 这样的缓存，我们可以首先检查它是否在 cache.nixos.org 上可用，如果可用，就从那里获取它。这样，当我们运行像 nix shell nixpkgs#firefox 这样的命令时，我们甚至可以避免获取 flake 的实际源代码！
+
+另一个未来的改进是在评估器本身中填充和使用缓存。目前，缓存是在用户界面（即 nix 命令）中填充和缓存的。nix shell nixpkgs#firefox 命令会为 firefox 创建一个缓存条目，但不会为 firefox 的依赖项创建；因此，后续的 nix shell nixpkgs#thunderbird 命令不会看到速度提升，即使它共享了大部分依赖项。因此，如果评估器了解评估缓存会很好。例如，代表像 `nixpkgs.legacyPackages.x86_64-linux.<package name>` 这样的属性的 thunk 的评估可以检查和更新缓存。
+
+---
+
+# Part 3
+
+如果你无法确定你实际运行的配置，那么重现一个配置的能力就不是很有用。也就是说，从一个正在运行的系统中，你应该能够追溯到它的规格。因此存在可追溯性缺失：将派生的工件追溯回其来源的能力。这是良好配置管理的基本属性，因为没有它，我们不知道实际在生产中运行的是什么，所以重现或修复问题变得更加困难。
+
+NixOS 目前的可追溯性并不好。你可以询问一个 NixOS 系统它是从哪个版本的 Nixpkgs 构建的：
+
+```bash
+$ nixos-version --json | jq -r .nixpkgsRevision
+a84b797b28eb104db758b5cb2b61ba8face6744b
+```
+
+不幸的是，这无法让你恢复 configuration.nix 或任何其他被配置使用的外部 NixOS 模块。
+
+如果一个包或系统服务是 nixpkgs 仓库的一部分，在 NixOS 配置中启用它很容易：你只需在你的 configuration.nix 中添加一行，如 environment.systemPackages = [ pkgs.hello ]; 或 services.postgresql.enable = true;。但如果我们想使用不是 Nixpkgs 一部分的包或服务呢？那么我们被迫使用诸如 $NIX_PATH、builtins.fetchGit、使用相对路径的 imports 等机制。这些都不是标准化的（因为每个人使用不同的惯例）并且使用起来不便（例如，使用 $NIX_PATH 时，将外部仓库放在正确的目录中是用户的责任）。
+
+换句话说：NixOS 目前是围绕单仓库工作流构建的 —— 整个宇宙应该被添加到 nixpkgs 仓库中，因为任何不在里面的东西，都更难使用。
+
+nix.package = pkgs.nixUnstable;
+
+nixos-container
+
+system.build.toplevel 是一个内部 NixOS 选项，它计算出像 nixos-rebuild、nixos-install 和 nixos-container 这样的命令构建和激活的“系统”衍生物。链接 /run/current-system 指向此衍生物的输出。
+
+“常规”NixOS 系统和基于 flake 的 NixOS 系统之间的一个主要区别是，后者记录了构建它们的 Git 版本
+
+```bash
+nixos-container run flake-test -- nixos-version --json
+{"configurationRevision":"9190c396f4dcfc734e554768c53a81d1c231c6a7"
+,"nixosVersion":"20.03.20200622.13c15f2"
+,"nixpkgsRevision":"13c15f26d44cf7f54197891a6f0c78ce8149b037"}
+```
+
+在生产中，我们确实希望确保系统是从干净的 Git 树中部署的。一种方法是在命令行中禁止脏树：
+
+```bash
+nixos-container update flake-test --no-allow-dirty
+```
+
+在 flake.nix 中要求干净的 Git 树，例如通过向 system.configurationRevision 定义添加检查：
+
+```nix
+system.configurationRevision =
+  if self ? rev
+  then self.rev
+  else throw "Refusing to build from a dirty Git tree!";
+```
+
+
