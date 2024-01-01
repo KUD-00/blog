@@ -7,7 +7,7 @@ authors:
   - KUD
 ---
 
-Angular 是一个用于开发单页应用（SPA）的 Web 框架。它由 Google 在 2010 年发明。当时它非常革命性，因为你可以使用它构建前端应用程序。这意味着在 Angular 中编写的代码可以在运行时接管 HTML 的主体，并对其中的所有元素应用逻辑。所有代码都在浏览器级别运行
+Angular 是用于开发单页应用（SPA）的 Web 框架。由 Google 在 2010 年发明。Angular 中编写的代码可在运行时接管 HTML 主体，对其中所有元素应用逻辑。所有代码在浏览器级别运行
 
 ```html
 <body>
@@ -23,19 +23,15 @@ Angular 是一个用于开发单页应用（SPA）的 Web 框架。它由 Google
 </body>
 ```
 
-`<div ng-app="myApp" ng-controller="myCtrl">` 这行定义了一个 AngularJS 应用，并指定了这个应用的控制器为 "myCtrl"。
+`<div ng-app="myApp" ng-controller="myCtrl">` 这行定义了一个 AngularJS 应用，并指定了这个应用的控制器为 "myCtrl"
 
-ng-model="name" 这个指令将 input 元素的值和 "name" 变量进行了双向绑定，也就是说当 input 元素的值改变时，"name" 变量的值也会相应地改变；反过来，当 "name" 变量的值改变时，input 元素的值也会相应地改变。
+`ng-model="name"` 这个指令将 input 元素的值和 "name" 变量进行了双向绑定，也就是说当 input 元素的值改变时，"name" 变量的值也会相应地改变；反过来，当 "name" 变量的值改变时，input 元素的值也会相应地改变
 
-angular.module('myApp', []) 这行 JavaScript 代码创建了一个名为 "myApp" 的新 AngularJS 应用。
+`angular.module('myApp', [])` 这行 JavaScript 代码创建了一个名为 "myApp" 的新 AngularJS 应用
 
-`app.controller('myCtrl', function($scope) {...` 这行 JavaScript 代码定义了一个新的控制器 "myCtrl"。控制器是 AngularJS 中用于控制 AngularJS 应用的 JavaScript 对象。
+`app.controller('myCtrl', function($scope) {...` 这行 JavaScript 代码定义了一个新的控制器 "myCtrl"。控制器是 AngularJS 中用于控制 AngularJS 应用的 JavaScript 对象
 
-`$scope.name = "John"` 这行 JavaScript 代码设置了 "name" 变量的初始值为 "John"。`$scope` 是应用在 HTML（视图）和 JavaScript（控制器）之间的桥梁。
-
----
-
-使用 React 后，JavaScript 成为了 Web 开发的重点。
+`$scope.name = "John"` 这行 JavaScript 代码设置了 "name" 变量的初始值为 "John"。`$scope` 是应用在 HTML（视图）和 JavaScript（控制器）之间的桥梁
 
 ---
 
@@ -76,37 +72,31 @@ return html``;：这是一个模板，它使用了 JavaScript 的标签模板字
 
 ---
 
-如今，我们越来越多地使用单页应用程序（SPA），在网站上实时更新页面的部分内容，使其感觉像本机应用程序。我们追求快速响应时间。JavaScript 是实现这个目标的语言，从显示用户界面到运行应用逻辑和与 Web 服务器通信。
+如今越来越多地使用单页应用程序（SPA），在网站上实时更新页面的部分内容，使其感觉像本机应用程序，追求快速响应时间
 
-无状态纯函数型 组件给了我们更多优化性能的机会
+无状态纯函数型组件给了我们更多优化性能的机会
 
-当将 React 与其他库进行比较时，我们使用“单向传递”这个术语来指代这种行为。在 React 社区中，我们很少使用这个词，因为这是它诞生时设计的行为。
-
----
-
-React 事件处理程序与 DOM 事件处理程序略有不同。你可以从 onClick 驼峰命名法而不是 onclick 小写命名法来看出这一点。React 事件是一个合成事件，它是浏览器原生事件的跨浏览器封装。在本书中，我们期望它们以完全相同的方式运行。
-
-由于 JavaScript 闭包的存在，我们可以直接在事件处理程序内部访问任何组件变量。count 变量不需要作为函数输入参数传递给 onClick 才能被访问。
-
-“无状态”指的是函数组件不能携带或共享值给另一个更新。简单来说，每次更新时该函数重新运行并产生相同的输出。
+当将 React 与其他库进行比较时，使用“单向传递”这个术语来指代这种行为
 
 ---
 
-<Callout>
-第二章挺好看的
-</Callout>
+React 事件处理程序与 DOM 事件处理程序略有不同。React 事件是合成事件，是浏览器原生事件的跨浏览器封装
+
+由于 JavaScript 闭包，可直接在事件处理程序内部访问任何组件变量
+
+“无状态”指函数组件不能携带或共享值给另一个更新。每次更新时该函数重新运行并产生相同输出
 
 ---
 
-组件并不是最小的单位。还有一种更细粒度的结构叫做 fiber，它用于表示一个元素片段。一个 fiber 执行该元素的所有任务。这个元素可以是简单的 h1、div 等，也可以是具有不同功能的人工元素。例如，“fragment”元素可以将其他元素分组而自身不显示，或者“memo”元素可以记住上次更新时的所有元素
+组件不是最小单位。更细粒度的结构叫 fiber，用于表示元素片段。fiber 执行该元素的所有任务。这个元素可以是简单的 h1、div 等，也可以是有不同功能的人工元素。如 fragment 元素可将其他元素分组而自身不显示，或 memo 元素可记住上次更新时的所有元素
 
-函数组件就是 fiber 所代表的一种人工元素之一。函数组件允许我们定义它能够显示哪些子级元素，因此每当被调用时，它都能确定屏幕需要更新哪些 DOM 元素
+函数组件是 fiber 代表的一种人工元素。函数组件允许定义它能够显示哪些子级元素，每当被调用时，它都能确定屏幕需要更新哪些 DOM 元素
 
 React 使用 Hook 结构将 state 存储在 memoizedState 属性下
 
-我们在这里介绍的 Hook 是一个用于保存状态的结构（或类）。这并不是我们稍后要介绍的 React hook（函数）。不幸的是，React 在两个地方都使用了相同的词。为了区分它们，我们故意将结构称为 Hook（首字母大写），而将函数称为 hook（首字母小写）。
+Hook 是用于保存状态的结构（或类）。并不是 React hook（函数）。为了区分，将结构称为 Hook，而将函数称为 hook
 
-Hook 结构的主要功能是通过 state 属性来保存单个状态。与数组（或对象）中有多个状态不同，多个状态通过链表连接在一起，如图 3.2 所示。一个 Hook 通过其 next 属性指向另一个 Hook。当到达列表末尾时，最后一个 Hook 的 next 属性被设置为 null。这就是编程中典型链表的工作方式。第一个 Hook （如果有）存储在 fiber 的 memoizedState 下；这样一来，fiber 就可以找到所有跟随第一个 Hook 的 Hooks。
+Hook 结构主要功能是通过 state 属性来保存单个状态。与数组（或对象）中有多个状态不同，多个状态通过链表连接在一起，如图 3.2 所示。一个 Hook 通过其 next 属性指向另一个 Hook。当到达列表末尾时，最后一个 Hook 的 next 属性被设置为 null。这就是编程中典型链表的工作方式。第一个 Hook （如果有）存储在 fiber 的 memoizedState 下；这样一来，fiber 就可以找到所有跟随第一个 Hook 的 Hooks。
 
 为了让引擎知道屏幕是否有任何变化，需要更新 fiber。在更新函数中，这是初始化 Hook 的地方
 

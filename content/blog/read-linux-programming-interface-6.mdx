@@ -172,9 +172,9 @@ argc/argv机制的一个限制是，这些变量仅作为main()的参数可用�
 
 有几种非可移植的方法可以在程序的任何地方访问部分或全部这些信息：
 - 任何进程的命令行参数可以通过Linux特定的/proc/PID/cmdline文件读取，每个参数以null字节结束。（程序可以通过/proc/self/cmdline访问自己的命令行参数。）
-- GNU C库提供了两个全局变量，可在程序中的任何地方使用，以获取用于调用程序的名称（即第一个命令行参数）。这两个变量中的第一个，program_invocation_name，提供用于调用程序的完整路径名。第二个，program_invocation_short_name，提供了去掉任何目录前缀的该名称的版本（即路径名的basename部分）。可以通过定义宏_GNU_SOURCE从<errno.h>中获取这两个变量的声明
+- GNU C库提供了两个全局变量，可在程序中的任何地方使用，以获取用于调用程序的名称（即第一个命令行参数）。这两个变量中的第一个，program_invocation_name，提供用于调用程序的完整路径名。第二个，program_invocation_short_name，提供了去掉任何目录前缀的该名称的版本（即路径名的basename部分）。可以通过定义宏_GNU_SOURCE从`<errno.h>`中获取这两个变量的声明
 
-argv和environ数组，以及它们最初指向的字符串，驻留在一个连续的内存区域中，就在进程栈的上方。（我们在下一节中描述environ，它保存了程序的环境列表。）这个区域中可以存储的字节总数有一个上限。SUSv3规定使用ARG_MAX常量（在<limits.h>中定义）或调用sysconf(_SC_ARG_MAX)来确定此限制。（我们在第11.2节中描述sysconf()。）SUSv3要求ARG_MAX至少为_POSIX_ARG_MAX（4096）字节。大多数UNIX实现允许远高于此的限制。SUSv3没有指定一个实现是否将开销字节（用于终止null字节、对齐字节以及argv和environ指针数组）计入ARG_MAX限制。
+argv和environ数组，以及它们最初指向的字符串，驻留在一个连续的内存区域中，就在进程栈的上方。（我们在下一节中描述environ，它保存了程序的环境列表。）这个区域中可以存储的字节总数有一个上限。SUSv3规定使用ARG_MAX常量（在`<limits.h>`中定义）或调用sysconf(_SC_ARG_MAX)来确定此限制。（我们在第11.2节中描述sysconf()。）SUSv3要求ARG_MAX至少为_POSIX_ARG_MAX（4096）字节。大多数UNIX实现允许远高于此的限制。SUSv3没有指定一个实现是否将开销字节（用于终止null字节、对齐字节以及argv和environ指针数组）计入ARG_MAX限制。
 
 在Linux上，ARG_MAX历史上固定为32页（即Linux/x86-32上的131,072字节），并包括用于开销字节的空间。从2.6.23内核开始，用于argv和environ的总空间限制可以通过RLIMIT_STACK资源限制进行控制，允许argv和environ的限制更大。该限制计算为execve()调用时生效的软RLIMIT_STACK资源限制的四分之一
 
