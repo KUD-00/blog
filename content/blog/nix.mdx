@@ -7,9 +7,9 @@ authors:
   - KUD
 ---
 
-nix要做的就是Reproducible builds and deployments.感觉上就和虚拟环境的包管理有点像（python那种），但是实现方式上有一定区别，同时用起来比较简单
+nix要做Reproducible builds and deployments.感觉上和虚拟环境的包管理有点像（python那种），但实现方式上有区别，用起来简单
 
-2023-08-25看了一眼这个文章：[packaging-existing-software](https://nix.dev/tutorials/learning-journey/packaging-existing-software)
+2023-08-25：[packaging-existing-software](https://nix.dev/tutorials/learning-journey/packaging-existing-software)
 
 icat.nix:
 ```nix
@@ -48,50 +48,32 @@ in
   icat = pkgs.callPackage ./icat.nix { };
 }
 ```
-nixpkgs是一个包含大量Nix包定义的git存储库。 import &lt;nixpkgs&gt 会导入这个存储库并返回一个包含所有可用包的集合
+`import <nixpkgs>` 导入nixpkgs并返回包含所有可用包的集合
 
-`pkgs.callPackage`是一个在这个集合中查找和调用指定包定义的方法
+`pkgs.callPackage`是在这个集合中查找和调用指定包定义的方法
 
-hello.nix自己没有显式从nixpkgs中使用任何东西。之所以可以在nixpkgs环境中工作,是因为在调用这个打包函数时,会默认传入nixpkgs中定义的一些变量,比如stdenv, fetchzip等
+hello.nix没有显式从nixpkgs中使用任何东西。之所以可在nixpkgs环境中工作,是因为在调用这个打包函数时,会默认传入nixpkgs中定义的变量,如stdenv, fetchzip等
 
----
+Nix中函数调用需以`{ attr = value; }`的形式提供AttrSet，即使不需任何参数,也要提供空的`{ }`,表示调用这个函数时不传入任何参数
 
-之所以需要`{ }`,是因为Nix中的函数调用都需要以`{ attr = value; }`的形式提供参数。
+callPackage参数格式有点特殊:
+- Nix中,callPackage的完整签名是: `callPackage : PkgSet -> Path -> AttrSet -> Derivation`。它接受3个参数:
+  1. PkgSet - 存放所有包定义的集合,通常是`import <nixpkgs>` 返回的结果。callPackage内部会自动使用这个pkgs集合,不需传递
+  2. Path - 指向具体包定义文件的路径,如 `./hello.nix`
+  3. AttrSet - 传递给包定义函数的配置参数
+  4. Derivation - 这个->在Nix的函数签名中,指向最后一个参数是返回值类型
 
-即使不需要任何参数,也需要提供一个空的`{ }`,表示调用这个函数时不传入任何参数。
+尽管callPackage是函数调用,但其参数中既包含常规的参数(AttrSet),也包含非参数形式的参数(PkgSet和Path)
 
----
+因为callPackage是特殊的接口函数,它将找到包定义文件和调用包定义函数这两个动作组合在一起
 
-callPackage本身确实是一个函数,但其参数格式有点特殊。
-
-在Nix中,callPackage的完整签名是: `callPackage : PkgSet -> Path -> AttrSet -> Derivation`。它接受3个参数:
-1. PkgSet - 存放所有包定义的集合,通常是`import <nixpkgs>` 返回的结果。callPackage内部会自动使用这个pkgs集合,不需要我们传递。
-2. Path - 指向具体包定义文件的路径,如 `./hello.nix`。
-3. AttrSet - 传递给包定义函数的配置参数。
-4. Derivation - 这个->在Nix的函数签名中,指向最后一个参数是返回值类型。
-
-可以看到,尽管callPackage是一个函数调用,但其参数中既包含常规的参数(AttrSet),也包含非参数形式的参数(PkgSet和Path)。
-
-这是因为callPackage本身就是一个特殊的接口函数,它将找到包定义文件和调用包定义函数这两个动作组合在一起了。
-
-所以使用方式是: `pkgs.callPackage ./hello.nix { }`。而不是传统的`func(arg1, arg2)`形式。
-
-这实际上是Nix语言一个特殊的语法点,允许某些"函数"像语言构造一样使用,让包的导入更加方便。
+这实际上是Nix一个特殊的语法点,允许某些"函数"像语言构造一样使用,让包的导入更方便
 
 ---
 
-pkgs不仅仅包含nixpkgs中所有包的定义,还包含一些用于操作这些包的方法,比如callPackage。
+Nix 中 derivation 是构建过程的描述，指定如何构建包（package）
 
-具体来说,`import <nixpkgs>`返回的pkgs包含:
-- 所有nixpkgs包的定义,以属性名访问,如pkgs.stdenv
-- 一些操作包的函数,比如callPackage,buildEnv等
-- 一些系统信息,如pkgs.system等
-
----
-
-在 Nix 中，一个 derivation 是构建过程的描述，它指定了如何构建一个包（package）或应用程序。
-
-可以创建一个 overlay 来添加或重写包。Overlay 是一个函数，它接受一个包集合（pkgs）作为输入，并返回一个修改后的包集合
+可创建 overlay 来添加或重写包。Overlay 是函数，接受包集合（pkgs）作为输入，返回修改后的包集合
 
 ---
 
