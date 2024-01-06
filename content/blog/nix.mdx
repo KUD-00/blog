@@ -158,4 +158,18 @@ Nix 系统中存在两套命令行接口（CLI）模式，这通常指的是传�
 
 ---
 
+```nix
+let
+  hostname = "mikan";
+in
+{
+  modules-left = [
+    "custom/weather"
+    "battery"
+    "hyprland/workspaces"
+  ] ++ lib.optional (hostname == "mikan") ["acpi" "privacy"]
+}
+```
+`lib.optional`根据条件决定是否包含给定的元素
 
+---
