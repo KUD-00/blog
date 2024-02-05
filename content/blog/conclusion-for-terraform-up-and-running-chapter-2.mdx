@@ -18,13 +18,13 @@ resource "<PROVIDER>_<TYPE>" "<NAME>" {
   [CONFIG ...]
 }
 
-使用新的Terraform代码时，需要随时运行terraform init，多次运行init是安全的(该命令是幂等的)
+`terraform init`是幂等的
 
-terraform plan就像diff一样
+`terraform plan`就像diff一样
 
-.terraform是临时文件夹；*.tfstate文件存储状态
+`.terraform`是临时文件夹；`*.tfstate`文件存储状态
 
-监听1024以下的任何端口需要root用户权限。这是一个安全风险，因为任何设法入侵您服务器的攻击者也会获得root权限。最佳实践是使用具有受限权限的非root用户运行web服务器。这意味着必须侦听更高编号的端口，但也可以配置负载均衡器侦听80端口，并将流量路由到服务器上的高编号端口。
+监听1024以下任何端口需root用户权限。这是安全风险，因为任何入侵服务器的攻击者也会获得root权限。最佳实践是使用具有受限权限的非root用户运行web服务器。意味着必须侦听更高编号端口，但也可配置负载均衡器侦听80端口，将流量路由到服务器上的高编号端口
 
 ```hcl
 resource "aws_instance" "example" {

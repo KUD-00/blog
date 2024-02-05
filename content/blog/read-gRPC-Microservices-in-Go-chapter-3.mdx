@@ -1,0 +1,207 @@
+---
+title: "读gRPC Microservices in Go第三章"
+date: "2024-02-01"
+description: "micro 3"
+image: /images/blog/arknighs-a-lot.jpg
+authors:
+  - KUD
+---
+
+两个服务使用协议缓冲区（protocol buffers）来交换消息
+
+协议缓冲区允许你序列化结构化数据，以便通过网络传输。你还可以定义服务功能并生成特定语言的源代码。消息和服务功能的定义写在一个称为.proto文件的配置文件中，该文件还包含我们将在本书中使用的协议版本信息（proto3）
+
+
+定义一个CreateOrderRequest消息格式，每个CreateOrderRequest包含user_id、items和amount。在这种情况下，.proto文件的内容会像这样：
+
+```protobuf
+syntax = "proto3";                // 协议版本
+message CreateOrderRequest {
+  int64 user_id = 1;             // 此订单的所有者
+  repeated Item items = 2;       // 此订单的物品列表
+  float amount = 3;              // 应支付的此订单的总金额
+}
+```
+
+消息字段可以是以下之一：
+- 单一（Singular）—一个结构化消息最多可以有一个这样的字段。这个字段是默认的字段规则。
+- 重复（Repeated）—任何具有此规则的字段都可以包含多个值，包括零个。这些项目的顺序被保留。在前面的示例中，消息中可以有多个item值（例如，一个客户同时订购了多个产品）。
+
+由于Protobuf编译器生成多种语言的源代码，它依赖于这些规则来要求字段命名约定。字段名称应该是小写的；如果包含多个单词，应该用下划线分隔（例如，user_id）。
+
+每个字段在消息的二进制消息格式中都有一个唯一的标识符，以识别字段。由于字段编号是字段的唯一标识符，这些编号不应更改，以提供向后兼容性保证。如果你想删除一个字段，最好在删除它之前使用reserved关键字来保留它，以防止将来用相同的字段编号或名称定义它。你也可以使用to关键字通过单个或范围的字段编号来保留这些字段。例如，删除字段编号为3的customer_id字段，并添加具有相同字段名称或编号但类型不同的新字段，
+```protobuf
+message CreateOrderRequest {
+  reserved 1, 2, 3 to 7;      // 通过单个或范围数字如3至7预留
+  reserved "customer_id";     // 因为引入了user_id而保留customer_id。
+  int64 user_id = 7;
+  repeated Item items = 8;
+  float amount = 9;
+}
+```
+
+消息中的必需字段可以被视为经常使用的字段，因为你不能像可选字段那样跳过它们。将一些编号预留在1至15之间用于可能经常使用的字段是一个最佳实践，因为这些编号在该范围内编码时只需要1个字节。例如，如果你引入了一个名为correlation_id的字段，并且它几乎在所有类型的请求中都被使用，你可以为这个新字段分配一个预留的编号。同样，编码从16到2,047的数字需要2个字节。给经常使用的字段分配1至15之间的编号将提高性能质量。
+
+协议缓冲区编码的主要目标是将.proto文件内容转换成二进制格式，以便通过网络发送。协议缓冲区编译器使用一套规则将消息转换为二进制格式，以便在编组（序列化）、发送（通过网络）和解组（反序列化）这些数据时获得更好的性能。
+
+```go
+// order.proto
+message CreateOrderRequest {
+    int64 user_id = 1;
+}
+
+// main.go
+request := CreateOrderRequest{
+    UserId: 65
+}
+```
+
+请求对象通过协议缓冲区（http://mng.bz/D49n）被编组为[]byte，以便能够通过gRPC发送。编组结果包括一些字节，这些字节包含元数据的编码信息和数据本身
+
+![](/images/blog/protocol-buffer-encoding.png)
+- 元数据部分用1个字节表示，并且前三位用于表示线型：000，即类型0（Varint），因为我们的数据类型是int。
+- 数据部分的第一位称为最高有效位（MSB），当没有额外的字节时其值为0。如果有更多字节来编码剩余数据，其值变为1。
+- 元数据部分的剩余位包含字段值。
+- 数据部分包含MSB（即连续位）以表示是否有更多字节。
+- 剩余的七位用于数据本身。
+
+![](/images/blog/protocol-buffer-larger-value.png)
+
+gRPC存根是充当gRPC客户端接口的模块。使用这些存根，你可以做几件事，例如通过流或非流表示连接和交换数据。协议缓冲区编译器为指定语言生成源代码，该源代码包含所有存根。你可以将生成的源代码导入客户端和服务器端以实现业务逻辑，遵循接口中定义的契约
+
+```shell
+protoc -I ./proto \                         // 导入包将在此位置搜索
+   --go_out ./golang \                      // 消息的生成源代码位置
+   --go_opt paths=source_relative \         // 输出文件放置在与输入文件相同的相对目录中
+   --go-grpc_out ./golang \                 // 服务函数的生成源代码位置
+   --go-grpc_opt paths=source_relative \    // 输出文件放置在与输入文件相同的相对目录中
+   ./proto/order.proto                      // 输入文件的位置
+```
+
+```go
+// 在同一个项目中的另一个模块内
+import "GitHub/huseyinbabal/microservices/order"
+...
+client := order.NewOrderClient(...)
+client.Create(ctx, &CreateOrderRequest{
+    UserId: 123
+})
+```
+
+将.proto文件维护在一个单独的仓库中的主要原因是能够为任何消费者生成任何语言的存根。如果我们将这些操作保留在包含Go生产代码的微服务项目内，那么任何外部非Go消费者都可以依赖这个Go项目。在Go微服务项目中生成的Java源代码可能不是一个好主意，因为它们永远不会被用于服务间通信。然而，它们仍然会与你的生产Go源代码一起被打包和标记。
+
+```text
+├── golang                     // Go语言的生成代码位置
+│   ├── order
+│   │   ├── go.mod             // order服务的依赖文件
+│   │   ├── go.sum             // go.mod文件的校验和定义
+│   │   ├── order.pb.go        // 消息的生成Go代码
+│   │   └── order_grpc.pb.go   // 服务函数的生成Go代码
+│   ├── payment
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── payment.pb.go
+│   │   └── payment_grpc.pb.go
+│   └── shipping
+│       ├── go.mod
+│       ├── go.sum
+│       ├── shipping.pb.go
+│       └── shipping_grpc.pb.go
+├── order
+│   └── order.proto
+├── payment
+│   └── payment.proto
+└── shipping
+    └── shipping.proto
+```
+
+Go的依赖版本指的是作为标签、分支或提交哈希的Git对象。在依赖项目中，标题采用代码库的快照来指定特定的发布版本，以便你可以检查任何发布的发布说明并使用该标签。如果没有标签，功能开发尚未准备就绪，你可以将依赖指向分支或提交哈希。假设你完成了order、payment和shipping服务的实现，并希望用于服务间通信或与外部消费者使用。标记将使仓库对该版本可发现，一个特定指向子文件夹的指针。
+
+GitHub Actions自动化生成客户端stub
+
+```bash
+#!/bin/bash
+SERVICE_NAME=$1
+RELEASE_VERSION=$2
+
+sudo apt-get install -y protobuf-compiler golang-goprotobuf-dev    # 安装所需的编译工具
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+protoc --go_out=./golang --go_opt=paths=source_relative \          # Go源代码生成
+  --go-grpc_out=./golang --go-grpc_opt=paths=source_relative \
+ ./${SERVICE_NAME}/*.proto
+cd golang/${SERVICE_NAME}
+go mod init \                                                      # 初始化Go模块
+  github.com/huseyinbabal/microservices-proto/golang/${SERVICE_NAME} ||true
+go mod tidy                                                        # 刷新依赖
+cd ../../
+git config --global user.email "huseyinbabal88@gmail.com"
+git config --global user.name "Huseyin BABAL"
+git add . && git commit -am "proto update" || true
+git tag -fa golang/${SERVICE_NAME}/${RELEASE_VERSION} \
+  -m "golang/${SERVICE_NAME}/${RELEASE_VERSION}"
+git push origin refs/tags/golang/${SERVICE_NAME}/${RELEASE_VERSION}
+```
+
+```yaml
+name: "Protocol Buffer Go Stubs Generation"
+on:
+  push:
+    tags:
+      - v**                                                                # 触发工作流的标签（例如，v1.2.3）
+jobs:
+  protoc:
+    name: "Generate"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ["order", "payment", "shipping"]                          # 要生成的服务列表
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - uses: actions/checkout@v2
+      - name: Extract Release Version
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV   # 提取版本
+      - name: "Generate for Golang"
+        shell: bash
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/run.sh"                            # 使Bash脚本可执行
+          ./run.sh ${{ matrix.service }} ${{ env.RELEASE_VERSION }}        # 为每个服务生成Go源代码
+```
+
+![](/images/blog/Automatic-source-code-generation.png)
+
+```go
+Func (p *Payment) Create(ctx, req *pb.CreatePaymentRequest) (*pb.CreatePaymentResponse, error) {
+    vat := VAT
+    if req.Vat > 0 {
+        vat = req.Vat
+    }
+    return &CreatePaymentResponse{
+        TotalPrice: vat + req.Price
+    }, nil
+}
+```
+
+例如，CreatePaymentRequest有credit_card和promo_code字段，但你一次只能发送一个。oneof特性用于强制这种行为，而不是尝试在实际实现中添加额外逻辑：
+
+```protobuf
+message CreatePaymentRequest {
+    oneof payment_method  {
+        CreditCard credit_card = 1;
+        PromoCode promo_code = 2;
+    }
+}
+```
+
+过一段时间，从列表中删除promo_code选项，将消息类型标记为v2，并升级服务器端。如果客户端使用v1并在请求中发送promo_code，服务器端将丢失关于promo_code的信息，因为它是一个未知字段。从oneof中删除一个字段是向后不兼容的更改，向oneof添加一个新字段是向前不兼容的更改。如果你的消息字段中有不兼容的更改，你需要引入一个更新到你的语义版本（https://semver.org/），以便消费者知道有一个破坏性更改。消费者将需要检查新版本的发布说明页面，在客户端进行必要的更改，以避免兼容性问题。
+
+在更改字段时应该小心谨慎，尤其是在重用已使用的字段编号或名称时。更改应始终保持向后和向前兼容，以防止客户端和服务器端的中断。
+
+总结
+- 协议缓冲区编译器使用一种特殊的编码操作，将数据编组成[]byte，以便在gRPC协议上获得出色的性能。
+- 协议缓冲区编译器帮助我们生成特定语言的源代码，我们可以在同一个仓库或独立仓库中维护这些源代码。
+- GitHub Actions允许我们使用工作流定义来自动化源代码生成和标记。
+- 引入始终向后和向前兼容的更改至关重要，以防止服务中断或数据丢失。
