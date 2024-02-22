@@ -1,0 +1,8 @@
+---
+title: "nixos上运行appimage的问题"
+date: "2024-02-21"
+---
+
+NixOS上即使用`buildFHSUserEnv`创建FHS环境，AppImage运行时也可能遇到问题，尤其当它们需要挂载文件系统时
+- 尝试使用fakeroot，一个模拟root权限的工具，可在不提升实际权限的情况下执行root权限操作。不过并不总是有效，因为它并不提供挂载操作所需的内核级权限
+- `./YourApp.AppImage --appimage-extract`: 将AppImage文件解压后直接运行解压出来的应用程序，而不是通过AppImage挂载

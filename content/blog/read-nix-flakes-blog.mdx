@@ -10,15 +10,27 @@ authors:
 链接：[还没看完](https://www.tweag.io/blog/2020-07-31-nixos-flakes/)
 
 # Part 1
-Nix file可以访问任意文件（如~/.config/nixpkgs/config.nix）、环境变量、Git仓库、Nix搜索路径中的文件（$NIX_PATH）、命令行参数（--arg）和系统类型（builtins.currentSystem）。换句话说，evaluation并不像它可能的那样密封(hermetic)。实际上，确保像NixOS系统配置这样的东西的可重现评估需要特别小心
+Nix file可访问任意文件（如~/.config/nixpkgs/config.nix）、环境变量、Git仓库、Nix搜索路径中的文件（$NIX_PATH）、命令行参数（--arg）和系统类型（builtins.currentSystem）
+- evaluation并不像它可能的那样密封(hermetic)
+- 可重现评估需要特别小心
 
-没有标准的方式来组合基于Nix的项目。
-- Nixpkgs中很少包含你需要的所有内容；考虑那些使用Nix作为构建工具的项目，或NixOS系统配置。
-- 组合Nix文件的典型方法是依赖于Nix搜索路径（例如`import <nixpkgs>`）或使用fetchGit或fetchTarball。前者的可重现性较差，而后者因需要手动更新Git哈希以更新依赖而导致糟糕的用户体验。
+没有标准方式来组合基于Nix的项目
+- Nixpkgs中很少包含你需要的所有内容；考虑那些使用Nix作为构建工具的项目，或NixOS系统配置
+- 组合Nix文件的典型方法是依赖于Nix搜索路径（如`import <nixpkgs>`）或`fetchGit`或`fetchTarball`
+  - 前者可重现性差
+  - 后者需手动更新Git哈希以更新依赖导致糟糕体验
 
-没有简单的方式将基于Nix的项目交付给用户。Nix有一个“频道”机制（本质上是一个包含Nix文件的tarball），但创建频道并不容易，且它们不可组合。最后，基于Nix的项目缺乏标准化结构。有一些惯例（例如shell.nix或release.nix），但它们没有涵盖许多常见用例；例如，没有办法发现仓库提供的NixOS模块。
+> 为什么说它可重现性差？
 
-过去，你可能会使用NIX_PATH环境变量让你的项目找到Nixpkgs。在flakes的世界中，这不再被允许：flakes必须显式声明它们的依赖，这些依赖必须被锁定到特定的修订版。
+没有简单方式将基于Nix的项目交付给用户。Nix有“频道”机制（一个包含Nix文件的tarball），但创建频道并不容易且它们不可组合
+
+> 什么是把频道组合？
+
+基于Nix的项目缺乏标准化结构。有惯例（如shell.nix或release.nix），但没有涵盖许多常见用例；如没有办法发现仓库提供的NixOS模块
+
+> 这是什么意思？
+
+过去可能用`NIX_PATH`环境变量让你的项目找到Nixpkgs。在flakes中这不再被允许：flakes必须显式声明它们的依赖，这些依赖必须被锁定到特定修订版
 
 > 关于$NIX_PATH
 > 配置文件定位：$NIX_PATH 通常用于指定 Nix 配置文件的位置，如 nixpkgs、nixos 或其他相关配置文件的路径。这些配置文件包含了有关软件包、模块或系统配置的信息。

@@ -9,17 +9,19 @@ authors:
 
 ![](/images/blog/Hexagonal-architecture.png)
 
-六边形架构也被称为端口和适配器系统。使用端口和适配器创建了一个抽象层，隔离了应用程序的核心和外部依赖
+六边形架构也称端口和适配器系统。用端口和适配器创建了一个抽象层，隔离了app的核心和外部依赖
 
-虽然对于六边形架构文件夹没有书面规则，但以下文件夹在典型的Go项目中很常见：
-- 应用文件夹 —— 这个文件夹包含微服务业务逻辑，它是指代业务实体的领域模型和向其他模块公开核心功能的API的组合。
-- 端口文件夹 —— 这个文件夹包含核心应用程序与第三方之间集成的合同信息。这可以是关于访问核心应用功能的合同，或者关于指定数据库系统可用功能的合同（如果用于持久层）。
-- 适配器文件夹 —— 这个文件夹包含使用在端口中定义的合同的具体实现。例如，gRPC可以是一个适配器，具有处理请求并使用API端口访问核心功能的具体实现，比如你有一个应用程序具有一些功能，并将其暴露给客户。功能可以是CreateProduct、GetProduct等，你可以通过REST、gRPC和其他适配器将它们暴露给客户，这些适配器将使用这些功能的端口层定义的合同。我们将在本章后面的部分回顾这个话题，并查看更高级的例子。
+对于六边形架构，以下文件夹在Go项目中很常见：
+- application: 包含微服务业务逻辑，指代业务实体的领域模型和向其他模块公开核心功能的API组合
+- port: 包含核心应用程序与第三方之间集成的合同信息。可以是关于访问核心应用功能的合同，或关于指定数据库系统可用功能的合同（如果用于持久层）
+- adapter —— 包含使用在端口中定义的合同的具体实现。如gRPC可以是一个适配器，具有处理请求并使用API端口访问核心功能的具体实现
+  - 比如一个app具有一些功能，并将其暴露给客户。功能可以是`CreateProduct`、`GetProduct`等，可通过REST、gRPC和其他适配器将它们暴露给客户，这些适配器将使用这些功能的端口层定义的合同
 
-go mod init命令接受一个VCS URL来准备依赖结构。当你将这个模块作为另一个项目的依赖添加时，该项目将从你提供的模块初始化VCS解析可用标签
+`go mod init`接受一个VCS URL来准备依赖结构。当你将这个模块作为另一个项目的依赖添加时，该项目将从你提供的模块初始化VCS解析可用标签
 
-先实现应用核心，然后实现外层依赖于它们变得更加容易。例如，Web或CLI层依赖于应用层
+先实现应用核心，后实现外层更加容易。如Web或CLI层依赖于应用层
 
+![](/images/blog/go-microservice-project-folder-structure.png)
 order.go
 ```go
 package domain
@@ -80,3 +82,56 @@ func (a Application) PlaceOrder(order domain.Order) (domain.Order, error) {
 }
 ```
 
+internal/ports/api.go
+```go
+package ports
+
+import "github.com/huseyinbabal/microservices/order/internal/application/core/domain"
+
+type APIPort interface {
+    PlaceOrder(order domain.Order) (domain.Order, error)
+}
+```
+
+internal/ports/api.go
+```go
+package ports
+
+import "github.com/huseyinbabal/microservices/order/internal/application/core/domain"
+
+type DBPort interface {
+    Get(id string) (domain.Order, error)   // 通过其唯一ID获取Order
+    Save(*domain.Order) error              // 将Order领域保存到数据库
+}
+```
+
+GORM是Go世界中非常流行的ORM库
+
+internal/adapters/db/db.go
+```go
+package db
+
+import (
+    "fmt"
+    "github.com/huseyinbabal/microservices/order/internal/application/core/domain"
+    "gorm.io/driver/mysql"
+    "gorm.io/gorm"
+)
+
+type Order struct {
+    gorm.Model               // ❶ 添加结构体元数据，如ID
+    CustomerID int64
+    Status     string
+    OrderItems []OrderItem   // ❷ 引用OrderItem
+}
+
+type OrderItem struct {
+    gorm.Model
+    ProductCode string
+    UnitPrice   float32
+    Quantity    int32
+    OrderID     uint         // ❸ 回引Order模型
+}
+```
+
+嵌入GORM来标记一个结构体为领域实体，通过在结构体中添加.Model。这样可以为你的领域模型增加内置字段，如ID、CreatedAt、UpdatedAt和DeletedAt。

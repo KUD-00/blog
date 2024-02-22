@@ -13,11 +13,11 @@ authors:
 ```
 微码（microcode）在启动早期已更新到修订版本 0x113，更新日期是 2023/2/6
 
-microcode 是嵌入到 CPU 中的固件，用于控制处理器硬件操作基本逻辑。位于处理器的控制单元内部，作为指令集架构（ISA）和硬件间的中间层。主要作用是解释、执行处理器指令集中的复杂指令。
-
-微码更新是临时的，每次系统重启时都需要重新加载，不会永久写入到硬件中。微码更新一般是修正硬件错误或增强安全性，是普通的软件更新
-
-> Lain独有
+> microcode 是嵌入到 CPU 的固件，控制处理器硬件操作基本逻辑。位于处理器控制单元内部，作为指令集架构（ISA）和硬件间的中间层
+>
+> 每次系统重启都需重新加载微码更新，不会永久写入硬件中。一般是修正硬件错误或增强安全性，是普通的软件更新
+>
+> Lain独有，推测Mikan因为联想的BIOS/UEFI中已集成了微码更新，在操作系统接管之前启动时自动应用
 
 ---
 
@@ -26,29 +26,28 @@ microcode 是嵌入到 CPU 中的固件，用于控制处理器硬件操作基�
               (gcc (GCC) 12.3.0, GNU ld (GNU Binutils) 2.40)
               #1-NixOS SMP PREEMPT_DYNAMIC Wed Jun 21 14:01:03 UTC 2023
 ```
-SMP 表示“对称多处理”（Symmetric Multiprocessing）。意味内核支持多个CPU或多核CPU，允许这些处理器同时运行
+SMP: 对称多处理（Symmetric MultiProcessing）: 意味内核支持多个CPU或多核CPU
 
-内核抢占模型是决定系统在什么时候和如何暂停正在运行的任务，以运行另一个任务。这特性对OS的响应性和实时性能至关重要。Linux内核中常见的抢占模型：
-- 非抢占内核（No Preemption）:
-  - 一旦内核执行任务（如系统调用或内核服务），会一直运行到完成，不会被其他任务打断
-  - 优先保证内核稳定性和简单性，但导致较差的系统响应，特别在高负载下
-- 自愿抢占内核（Voluntary Preemption）:
-  - 内核代码包含许多“抢占点”，这些点上内核会检查是否有更高优先级的任务需运行
-  - 提供了抢占的可能性，但仍保持较高稳定性，因为抢占点是明确控制的
-- 抢占内核（Preemptive Kernel）:
-  - 内核可在几乎任何时候被更高优先级的任务打断。包括系统调用和大多数内核代码
-  - 显著提高系统响应性，特别对于实时任务和多任务处理，增加内核复杂性和潜在稳定性问题
-- 实时抢占（Real-Time Preemption）:
-  - 可选的最高级别抢占模型，旨在为需要高度实时响应的系统（如工业控制系统）提供支持
-  - 内核具有更多抢占点，且能够以更高的优先级响应实时任务
+`PREEMPT_DYNAMIC` 是 Linux 中相对新的抢占模型，允许内核在运行时动态地在不同抢占模型间切换，而非编译时固定选择一种模型。使OS能根据工作负载和系统条件灵活调整抢占行为
 
-选择适当抢占模型时，需在系统响应性和稳定性间权衡。通常桌面系统和通用服务器倾向于使用某种程度的抢占以提高响应性，对于高稳定性要求的环境（如关键任务服务器），可能选择非抢占或自愿抢占模型
+> 内核抢占模型决定系统在什么时候和如何暂停正在运行的任务，以运行其他任务。对OS的响应性和实时性能至关重要。常见抢占模型：
+> - 非抢占（No Preemption）:
+>   - 一旦内核执行任务（如系统调用或内核服务），会一直运行到完成，不被其他任务打断
+>   - 优先保证内核稳定性和简单性，在高负载下导致较差系统响应
+> - 自愿抢占（Voluntary Preemption）:
+>   - 内核代码包含许多“抢占点”，这些点上内核检查是否有更高优先级的任务需运行
+>   - 提供抢占的可能性，因为抢占点是明确控制的，保持较高稳定性
+> - 抢占（Preemptive Kernel）:
+>   - 内核可几乎任何时候被更高优先级任务打断。包括系统调用和大多数内核代码
+>   - 显著提高系统响应性，特别对于实时任务和多任务处理，增加内核复杂性和稳定性问题
+> - 实时抢占（Real-Time Preemption）:
+>   - 可选的最高级别抢占模型，为需要高度实时响应的系统（如工业控制系统）提供支持
+>   - 内核具有更多抢占点，能以更高优先级响应实时任务
+>
+> 选择抢占模型需在系统响应性和稳定性间权衡。桌面系统和通用服务器倾向使用某种程度的抢占以提高响应性，高稳定性要求环境（如关键任务服务器）可能选择非抢占或自愿抢占模型
+> - TODO: 不知道如何查看当前系统运行在什么抢占模型上
 
-PREEMPT_DYNAMIC 是 Linux 内核中相对新的抢占模型配置，允许内核在运行时动态地在不同抢占模型间切换，而不是编译时固定选择一种模型。使OS能够根据工作负载和系统条件灵活调整抢占行为，以平衡响应性和稳定性
-
-Wed Jun 21 14:01:03 UTC 2023: 是内核编译的日期时间
-
-- TODO: 暂时不知道如何查看当前系统运行在什么抢占模型上
+Wed Jun 21 14:01:03 UTC 2023: 内核编译的日期时间
 
 ---
 
@@ -60,20 +59,22 @@ Wed Jun 21 14:01:03 UTC 2023: 是内核编译的日期时间
                loglevel=4
 ```
 内核启动时的命令行参数
-- initrd(INITial Ram Disk): 指定初始 RAM 磁盘的位置
-- init: 是指定初始程序的位置
-- loglevel=4 是设置系统日志级别。
+- initrd(INITial Ram Disk): 指定初始 RAM 磁盘位置
+- init: init进程位置
+- loglevel=4 是设置系统日志级别
 
-初始RAM磁盘是Linux系统引导过程中使用的临时文件系统，包含启动系统所需的最基本的驱动程序和工具
-- 加载必要的驱动程序：Linux系统启动时，内核可能需加载驱动程序才能访问磁盘驱动器、文件系统或其他硬件。这些驱动程序可能不包含在内核中，需要initrd来提供
-- 准备根文件系统：initrd在内核完全加载根文件系统之前，为系统提供临时根文件系统。临时根文件系统包含了用于初始化系统的工具和脚本。一旦系统真正根文件系统被挂载，initrd通常会被卸载并从内存中移除
-- 应对复杂硬件配置：如RAID或LVM，可能需要额外软件来正确识别和配置。initrd允许这些工具在系统引导的早期阶段可用，确保硬件被正确设置
-
-initrd是一个物理磁盘分区的映像，通常作为单独文件存储。被装载为一个内存驻留的块设备。由于initrd基于磁盘映像，它在大小和灵活性方面有一定限制
-
-initramfs是initrd的现代替代，并不基于磁盘映像，而是cpio归档（基于UNIX的归档格式），引导过程中直接被内核解压到一个内存中的文件系统。可动态调整大小，且可在运行时更容易地修改。还允许系统在不重启情况下更改根文件系统
-
-实际使用中即使系统实际上使用initramfs，dmesg输出或其他系统文档中仍可能将其称为initrd
+> initrd是Linux引导过程中的临时文件系统，包含启动系统所需最基本的驱动程序和工具
+> - 加载必要驱动程序：系统启动时内核可能需加载驱动程序才能访问磁盘驱动器、文件系统或其他硬件。驱动程序可能不包含在内核，需要initrd
+> - 准备根文件系统：initrd在内核加载根文件系统前，为系统提供临时根文件系统。临时根文件系统包含用于初始化系统的工具和脚本
+> - 应对复杂硬件配置：如RAID或LVM，可能需额外软件来配置。initrd允许这些工具在系统引导的早期阶段可用，确保硬件被正确设置
+>
+> initrd是物理磁盘分区映像，通常作为单独文件存储。被装载为内存驻留的块设备。initrd基于磁盘映像在大小和灵活性方面有限制
+>
+> 磁盘映像（Disk Image）是一个文件或存储设备的完整字节级复制，包括文件系统、文件及可能的空白空间。可看作是磁盘的快照，保存磁盘在某时刻的完整状态
+>
+> initramfs是initrd的现代替代，不基于磁盘映像而是cpio归档（基于UNIX的归档格式），引导过程中直接被内核解压到内存中的文件系统。可动态调整大小，运行时更容易修改。允许系统在不重启情况下更改根文件系统
+>
+> dmesg输出等仍可能将initramfs称为initrd
 
 ---
 
@@ -83,18 +84,23 @@ initramfs是initrd的现代替代，并不基于磁盘映像，而是cpio归档�
 ```
 当内核发生分裂锁定（split lock）时，系统将会崩溃，而在用户空间发生分裂锁定时会发出警告
 
-内核的分裂锁定（Split Lock）是与处理器和内存访问相关的概念，主要涉及多线程编程和并发控制
-
-处理器缓存以“缓存行”为单位工作，通常大小为64字节。处理器读取或写入数据时会加载整个缓存行到缓存中
-
-多线程编程中锁是一种机制，控制多个线程对共享资源（如内存）的访问。当一个线程获取锁时，其他线程必须等待直到锁被释放
-
-当一个锁的数据结构横跨多个缓存行时，会发生分裂锁定。如锁定的数据结构开始于一个缓存行的末尾并延伸到下一个缓存行，处理器必须锁定两个缓存行来保证原子性。这增加了内存总线的负担，因为处理器必须同时锁定和同步两个缓存行，而不是一个
-
-分裂锁定会导致显著性能下降，处理器需更多时间管理和同步两个缓存行。它会增加内存总线的负载和延迟。某些情况下可能导致系统稳定性问题，特别在高并发环境中
-
-编程时应确保锁的数据结构不会跨越多个缓存行。使用对齐技术确保数据结构在单个缓存行内。一些现代处理器提供了避免或减轻分裂锁定影响的机制。如Intel的一些处理器有选项来检测和阻止分裂锁定操作
-
+> 分裂锁定（Split Lock）主要涉及多线程编程和并发控制
+> - 处理器缓存以“缓存行”为单位工作，通常大小为64字节。处理器读取或写入数据时会加载整个缓存行到缓存中
+> - 多线程编程中锁控制多个线程对共享资源（如内存）的访问。当一个线程获取锁时，其他线程必须等待直到锁被释放
+>
+> 当一个处理器核心尝试对某段内存加锁时，这段内存会在CPU的缓存中寻找（遵循缓存一致性协议如MESI）。如果这次加锁操作涉及的数据跨越多个缓存行，处理器需在所有涉及的缓存行间同步，确保操作的原子性和一致性
+>
+> 多核处理器系统中每个核心有自己的缓存，系统通过缓存一致性协议（如MESI协议）来保持各个核心缓存的数据一致性。一个核心需对跨越多个缓存行的数据进行加锁操作时：
+> - 锁定多个缓存行：处理器必须确保所有涉及的缓存行都被正确锁定。意味着需要在所有涉及的核心间广播加锁请求，确保没有其他核心可同时修改这些缓存行的数据
+> - 同步延迟增加：为锁定多个缓存行处理器需执行额外的同步操作，会导致显著的性能开销。所有涉及的核心都必须确认它们没有正在执行的、会影响这些缓存行的操作，这个过程增加延迟
+> - 增加总线和内存压力：处理器需要在多个缓存行间进行数据同步，增加CPU总线负载及对主内存的访问请求
+>
+> 编程时应确保锁的数据结构不会跨越多个缓存行。
+> - 一些现代处理器可检测和阻止分裂锁定操作
+> - 数据结构对齐：通过确保数据结构和锁定操作在单个缓存行内对齐，避免分裂锁定。编译器的对齐属性和指令可用来保证数据结构对齐
+> - 避免跨缓存行的操作：设计数据结构和并发控制逻辑时，开发者应尽量避免实现可能导致跨缓存行操作的代码
+> - 使用高级同步原语：利用现代处理器提供的高级同步机制，如无锁编程技术，可减少对传统锁的需求，降低分裂锁定风险
+>
 > Lain独有
 
 ---
@@ -113,15 +119,15 @@ initramfs是initrd的现代替代，并不基于磁盘映像，而是cpio归档�
 [    0.000000] x86/fpu: Enabled xstate features 0x207, context size is 840 bytes,
                         using 'compacted' format.
 ```
-x86 浮点单元（FPU）配置信息。表明支持 XSAVE 特性，以及这些特性对应状态偏移和大小。启用了 xstate features 0x207，上下文大小 840 字节，使用了'compacted'格式。这段信息说明了处理器支持保存和恢复一组扩展的浮点和SIMD状态（如x87 FPU, SSE, AVX等），需要840字节的空间来存储这些状态，并且它使用一种优化的方式来压缩这些状态信息
+x86 浮点单元（FPU）配置信息
+- 支持`XSAVE`特性，及这些特性对应状态偏移和大小
+- 启用了`xstate features 0x207`，上下文大小 840 字节，使用了`compacted`格式
+- 支持保存和恢复一组扩展的浮点和SIMD状态（如x87 FPU, SSE, AVX等），需要840字节的空间来存储这些状态，使用一种优化的方式来压缩这些状态信息
 
-FPU 的 XSAVE 特性用于保存和恢复处理器的浮点和 SIMD（单指令多数据）状态。这特性在进行上下文切换或处理多线程应用时非常重要
-
-FPU负责处理浮点计算，而SIMD（如Intel的SSE和AVX指令集）用于加速多媒体、科学计算和大数据处理中的并行计算。这些操作涉及到一系列寄存器，包括传统的FPU寄存器和新的SIMD寄存器
-
-在进行频繁线程或进程切换时，XSAVE确保寄存器状态的正确保存和恢复，维持应用程序正确执行
-
-
+> FPU负责处理浮点计算，SIMD（如Intel的SSE和AVX指令集）用于加速多媒体、科学计算和大数据处理中的并行计算。这些涉及到一系列寄存器，包括传统的FPU寄存器和新的SIMD寄存器
+>
+> FPU `XSAVE` 特性用于保存和恢复处理器的浮点和 SIMD（单指令多数据）状态。在进行上下文切换或处理多线程应用时非常重要。进行频繁线程或进程切换时，XSAVE确保寄存器状态的正确保存和恢复
+>
 > Lain独有
 
 ---
@@ -129,20 +135,16 @@ FPU负责处理浮点计算，而SIMD（如Intel的SSE和AVX指令集）用于�
 ```text
 [    0.000000] signal: max sigframe size: 3632
 ```
-信号栈帧（sigframe）的最大尺寸是 3632 字节。信号栈帧是OS用于处理进程接收信号时保存和恢复上下文的数据结构
+信号栈帧（sigframe）的最大尺寸是 3632 字节
 
-当进程收到信号时，OS会在进程的堆栈上创建信号栈帧。包含处理信号所需信息，以及处理完信号后恢复到进程原始状态的必要信息
-
+> 信号栈帧是OS用于处理进程接收信号时保存和恢复上下文的数据结构。进程收到信号时OS会在进程的堆栈上创建信号栈帧。包含处理信号所需信息及处理完信号后恢复到进程原始状态的必要信息
+>
 > Mikan也有，但是在0.198207才加载这个，同时大小为3376字节
 
 ---
 
 ```text
 [    0.000000] BIOS-provided physical RAM map:
-```
-内存映射信息是由 BIOS 提供
-
-```text
 [    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009dfff] usable
 [    0.000000] BIOS-e820: [mem 0x000000000009e000-0x000000000009efff] reserved
 [    0.000000] BIOS-e820: [mem 0x000000000009f000-0x000000000009ffff] usable
@@ -169,11 +171,20 @@ FPU负责处理浮点计算，而SIMD（如Intel的SSE和AVX指令集）用于�
 [    0.000000] BIOS-e820: [mem 0x00000000ff000000-0x00000000ffffffff] reserved
 [    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000087f7fffff] usable
 ```
-BIOS 提供的物理 RAM 内存映射，表明内存地址的范围和用途。被OS用来管理内存资源
-- usable 可被OS使用
-- reserved 被保留不能被OS使用(如BIOS保留区域)
-- ACPI data 被 ACPI 系统使用
-- ACPI NVS 被 ACPI 系统用作非易失性存储
+e820是用于x86架构计算机的BIOS中断调用，用于查询系统物理内存的布局，表明内存地址的范围和用途。被OS用来管理内存资源
+
+> e820返回的内存映射是一个列表，每个列表项包含以下信息：
+> - 起始地址：内存区域的起始物理地址。
+> - 长度：内存区域的长度，单位通常是字节。
+> - 类型：指示内存区域类型的标识符。类型可能包括可用内存（RAM）、保留内存、ACPI信息等。
+>   - usable 可被OS使用
+>   - reserved 被保留不能被OS使用(如BIOS保留区域)
+>   - ACPI data 被 ACPI 系统使用
+>   - ACPI NVS 被 ACPI 系统用作非易失性存储
+>
+> 系统启动时，特别是Linux内核初始化阶段，内核会调用e820接口来获取系统的内存布局
+>
+> 现代计算机系统中物理内存不总是完全连续的。系统固件、内存映射的I/O设备、以及其他硬件组件可能占用物理地址空间中的特定区域。e820提供的内存映射让操作系统能够识别这些非连续的内存区域，确保操作系统不会将这些特殊用途的地址空间用于常规的内存分配，避免潜在的冲突和系统不稳定
 
 > 当然与Mikan的内存映射不一样
 
@@ -182,16 +193,20 @@ BIOS 提供的物理 RAM 内存映射，表明内存地址的范围和用途。�
 ```text
 [    0.000000] NX (Execute Disable) protection: active
 ```
-系统启用了无执行（NX）保护，这是一种硬件技术，可以防止恶意软件通过数据区域执行代码。
+系统启用了无执行（NX）保护（一种硬件技术），防止恶意软件通过数据区域执行代码
 
-NX（Non-eXecutable），也称执行禁止（Execute Disable）用于标记内存中某些区域为不可执行。这些内存区域不能被用来执行代码，只能用于存储数据。用于防御各种恶意攻击如缓冲区溢出攻击
-
-支持NX的系统中，OS和处理器共同管理内存页面（通常是内存基本单位）的权限。每个内存页面可被标记为可执行或非可执行
-- 缓冲区溢出攻击：攻击者无法通过溢出数据缓冲区来注入恶意代码并执行，因为数据缓冲区所在内存通常被标记NX
-- 返回指向栈的编程（Return-to-Stack）攻击：由于栈被标记为NX，攻击者无法执行栈上代码
-- 返回指向libc的编程（Return-to-libc）攻击：这类攻击通过跳转到标准库中的函数来绕过NX保护，但对于防止直接在非可执行内存上执行代码仍有效
-
-Intelx86和x86_64架构中的XD位，AMD处理器中的NX位提供硬件支持区分可执行和非可执行的内存页面
+> NX（Non-eXecutable），也称执行禁止（Execute Disable）用于标记内存中某些区域为不可执行。这些内存区域不能被用来执行代码，只能用于存储数据。用于防御各种恶意攻击如缓冲区溢出攻击
+>
+> 支持NX的系统中，OS和处理器共同管理内存页面（通常是内存基本单位）的权限。每个内存页面可被标记为可执行或非可执行
+> - 缓冲区溢出攻击：攻击者无法通过溢出数据缓冲区来注入恶意代码并执行，因为数据缓冲区所在内存通常被标记NX
+> - Return-to-Stack攻击：由于栈被标记为NX，攻击者无法执行栈上代码
+>   - 攻击者通过缓冲区溢出将一段恶意代码注入到程序的栈上，同时修改栈上的返回地址，使之指向这段恶意代码的位置。当函数尝试返回时，程序将跳转到注入的代码并执行它。这种攻击方式直接在栈上执行代码
+>   - Return-to-Stack攻击的有效性在现代系统中大大降低因为：
+>     - NX bit（No Execute bit）
+>     - ASLR（地址空间布局随机化）：通过随机化进程的地址空间布局，使得攻击者难以预测栈上恶意代码的准确地址。
+> - Return-to-libc攻击：通过跳转到标准库中的函数来绕过NX保护
+>   - 不需要在栈上注入任何代码。攻击者利用缓冲区溢出修改返回地址，使其指向C标准库（libc）中已有的函数，如system()。通过控制函数的参数（同样通过栈溢出实现），攻击者可执行任意命令
+> Intelx86和x86_64架构中的XD位，AMD处理器中的NX位提供硬件支持区分可执行和非可执行的内存页面
 
 ---
 
@@ -200,10 +215,10 @@ Intelx86和x86_64架构中的XD位，AMD处理器中的NX位提供硬件支持�
 ```
 内核在启动过程中完成了与APIC相关的某些静态调用的初始化
 
-高级可编程中断控制器（APIC）是用于管理中断的硬件组件。APIC主要负责接收、优先级排序和将中断发送到CPU进行处理。多核处理器系统中APIC还负责协调哪个CPU核心处理特定中断
-- 中断是硬件设备通知CPU需处理某事件（如鼠标移动、键盘输入、网络数据到达等）的机制
-
-这里静态调用通常指内核为高效管理中断而建立的一些预定义函数调用或例程。这些调用在系统启动时被初始化，以便在处理中断时能快速响应。初始化过程包括设置静态调用地址、参数和相关的中断处理逻辑
+> 高级可编程中断控制器（APIC）是用于管理中断的硬件组件。APIC负责接收、优先级排序和将中断发送到CPU进行处理。多核处理器系统中APIC还负责协调哪个CPU核心处理特定中断
+> - 中断是硬件设备通知CPU需处理某事件（如鼠标移动、键盘输入、网络数据到达等）的机制
+>
+> 这里静态调用通常指内核为高效管理中断而建立的一些预定义函数调用或例程。这些调用在系统启动时被初始化，以便在处理中断时能快速响应。初始化过程包括设置静态调用地址、参数和相关的中断处理逻辑
 
 ---
 
@@ -217,10 +232,6 @@ Intelx86和x86_64架构中的XD位，AMD处理器中的NX位提供硬件支持�
 
 ```text
 [    0.000000] extended physical RAM map:
-```
-内存映射信息是扩展的物理 RAM 映射
-
-```text
 [0.000000] reserve setup_data: [mem 0x0000000000000000-0x000000000009dfff] usable
 [0.000000] reserve setup_data: [mem 0x000000000009e000-0x000000000009efff] reserved
 [0.000000] reserve setup_data: [mem 0x000000000009f000-0x000000000009ffff] usable
@@ -251,7 +262,6 @@ Intelx86和x86_64架构中的XD位，AMD处理器中的NX位提供硬件支持�
 [0.000000] reserve setup_data: [mem 0x00000000ff000000-0x00000000ffffffff] reserved
 [0.000000] reserve setup_data: [mem 0x0000000100000000-0x000000087f7fffff] usable
 ```
-
 基于BIOS-provided Physical RAM Map提供信息，还包括OS的额外检测和配置，如特定硬件设备或驱动程序要求的内存区域，或OS基于其自身策略设定的内存区域
 
 支持更复杂的内存管理策略，如NUMA（非统一内存访问）、内存热添加功能或特殊用途内存配置
@@ -265,7 +275,8 @@ Intelx86和x86_64架构中的XD位，AMD处理器中的NX位提供硬件支持�
 ```
 使用了 EFI 引导方式，版本 2.80，由 American Megatrends 公司提供
 
-> Mikan用的是INSYDE Corp.提供的efi，基于同一标准（如UEFI 2.8），但在具体实现、功能和用户界面上可能有所不同
+> Mikan用的是INSYDE Corp.提供的efi
+> - 基于同一标准（UEFI 2.8），在具体实现、功能和用户界面上可能有所不同
 
 ```text
 [    0.000000] efi: ACPI=0x7451e000 ACPI 2.0=0x7451e014 TPMFinalLog=0x7464c000
@@ -276,27 +287,65 @@ EFI 固件提供的各种表格和信息的地址
 - ACPI=0x7451e000: ACPI 表的基地址是 0x7451e000
 - SMBIOS=0x75d1d000: SMBIOS 表的基地址是 0x75d1d000
 
+> SMBIOS(System Management BIOS) 定义了如何在系统内存中存储设备信息的标准
+> - 提供硬件信息（制造商名称、产品版本、配置参数等）
+> - 允许OS和系统管理软件访问这些硬件信息
+> - 通常通过DMI（Desktop Management Interface）的标准来提供访问这些信息的方法
+
 ```text
 [    0.000000] random: crng init done
 ```
-系统的加密随机数生成器（Cryptographically Secure Pseudo-Random Number Generator，crng）已完成初始化。
+加密随机数生成器（Cryptographically Secure Pseudo-Random Number Generator，crng）已完成初始化
+
+> CSPRNG是一种伪随机数生成器（PRNG），它的输出不能通过可行的计算来预测，除非整个内部状态已知
+>
+> CSPRNG需要一个或多个随机值作为初始种子。这些种子可从不同的随机源获取，如硬件噪音、用户输入的随机性等
 
 ```text
 [    0.000000] SMBIOS 3.4.0 present.
-```
-系统的 SMBIOS（System Management BIOS，系统管理 BIOS）版本为 3.4.0。
-
-```text
 [    0.000000] DMI: ASUS System Product Name/ROG STRIX B660-I GAMING WIFI,
                     BIOS 2212 12/13/2022
 ```
-提供了系统的 DMI（Desktop Management Interface，桌面管理接口）信息，包括制造商（ASUS）、产品名（System Product Name）、主板型号（ROG STRIX B660-I GAMING WIFI）以及 BIOS 的版本（2212）和发布日期（2022 年 12 月 13 日）
+系统的 SMBIOS 版本为 3.4.0
+
+系统的 DMI 信息，包括制造商（ASUS）、产品名（System Product Name）、主板型号（ROG STRIX B660-I GAMING WIFI）以及 BIOS 的版本（2212）和发布日期（2022 年 12 月 13 日）
+
+---
 
 ```text
 [    0.000000] tsc: Detected 3500.000 MHz processor
 [    0.000000] tsc: Detected 3494.400 MHz TSC
 ```
-TSC（Time Stamp Counter，时间戳计数器）检测到处理器的频率。
+TSC（Time Stamp Counter，时间戳计数器）检测到处理器的频率
+
+> 时间戳计数器（TSC） 是一个x86处理器中的寄存器，在内核级别提供一个高分辨率的时间测量工具。TSC在每个CPU周期会递增，可通过读取这个计数器来测量事件发生的时间间隔。由于TSC在每个处理器周期会递增，所以它的频率等于CPU频率。可测量一个操作需多少CPU周期完成
+>
+> 内核使用TSC来检测处理器的频率：
+> - 系统启动时内核会初始化并读取TSC的值
+> - 内核在一段已知时间内读取TSC的值两次，用第二次读取的值减去第一次的值，得到TSC增加的数量。因为TSC以处理器频率递增，这个差值可估算CPU频率
+>
+> 早期的多核和多处理器系统中，TSC可能在不同核心或处理器间不同步，或在处理器频率变化时（如节能模式调整频率）TSC的速率也会变化，导致不准确。现代处理器设计已克服了这些问题，使TSC成为非常有用的计时工具。这种类型的TSC被称为“不变TSC”（invariant TSC）
+
+```text
+[    0.000000] tsc: Fast TSC calibration using PIT
+```
+> Mikan独有?
+
+> 快速校准: 系统启动时内核用尽可能快的方式确定TSC频率
+>
+> PIT (Programmable Interval Timer)：x86架构中的旧式计时器，定期生成中断。可被设置为以特定频率运行，允许OS测量时间间隔
+>
+> Linux内核使用PIT作为已知的、可靠的时间源来校准TSC。通过测量PIT中断间的TSC计数增量，内核可计算出TSC准确频率。由于PIT频率已知，内核可通过比较TSC增量来确定TSC速率。TSC频率通常与CPU内部频率相同，但并不总是直接暴露给OS。校准过程是自动进行的，对于大多数用户来说透明。但这对于需要精确计时的应用来说非常关键，如某些性能测试或时间敏感任务（如数据库事务日志或网络请求）
+>
+> PIT的一些功能已被更高精度和更灵活的计时器所取代，如高精度事件定时器（HPET）和本地APIC定时器
+>
+> 高精度事件定时器（High Precision Event Timer，HPET）是硬件定时器，为OS和应用提供比传统定时器（如PIT和RTC）更高的定时精度和分辨率
+>
+> Linux中处理现实世界时间的主要系统是实时时钟（RTC）和系统时钟
+> - 实时时钟（RTC）：一种硬件时钟，独立于CPU和主系统电源运行，由电池供电。它持续追踪现实世界的时间，即使计算机关闭或重启。系统启动时OS会从RTC读取时间，用于初始化系统时钟
+> - 系统时钟：OS维护的时钟，负责跟踪从系统启动到现在经过的时间。系统时钟通常在启动时从RTC同步，然后通过其他计时器（如TSC、HPET等）更新
+
+---
 
 ```text
 [    0.000129] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
@@ -306,12 +355,40 @@ TSC（Time Stamp Counter，时间戳计数器）检测到处理器的频率。
 [    0.000802] e820: update [mem 0x7c000000-0xffffffff] usable ==> reserved
 [    0.000806] last_pfn = 0x76000 max_arch_pfn = 0x400000000
 ```
-关于系统内存配置的更新。内存地址从 0x00000000 到 0x00000fff 的状态从可用（usable）更改为保留（reserved）
+关于系统内存配置的更新
+
+> `last_pfn`：`pfn`代表“page frame number”，是表示物理内存页框架编号的项。指系统中最后可用的物理内存页的位置
+>
+> `max_arch_pfn`：`max_arch_pfn`代表此架构支持的最大页框架号，定义系统能处理的最大物理内存地址空间边界
+>
+> 页面属性表（Page Attribute Table，PAT）是x86架构用于定义内存区域缓存策略的特性
+> - WB（Write-Back）、WC（Write-Combining）、UC-（Uncacheable）、WT（Write-Through）等表示不同类型的内存缓存行为。这些缓存行为决定CPU如何缓存和访问物理内存
+> - Configuration [0-7]指PAT表中的条目，每个条目定义了一种缓存类型。这些条目允许OS为不同内存区域设置最优缓存策略
+> - WB(write-back)是CPU缓存中最常用策略，允许内存写操作先缓存起来，缓存行只有在被替换出缓存时才会被写回到主内存
+> - WC(write-combining)对帧缓冲和某些类型的I/O操作特别有用，它组合多个写操作成为一个更大的写操作，以减少带宽需求。视频内存区域可能被设置为Write-Combining（WC）以提高图形性能
+> - UC(UnCacheable): 数据不被缓存。每次访问都直接对主内存进行。适用于必须避免数据在缓存和内存之间不一致的情况，如某些类型的硬件I/O操作
+> - WP(Write-Protect)允许数据被缓存，但任何试图修改这些数据的操作会导致一个保护故障。适用于需防止数据被写入但仍希望利用缓存加速读取的场景
+> - WT(Write-Through): CPU对缓存的写入操作同时也会写入主内存，确保缓存和内存中数据一致。适用于对数据一致性要求较高的场景，尽管牺牲性能
+
+```text
+[    0.000138] MTRR map: 7 entries (3 fixed + 4 variable; max 20), built from 9 variable MTRRs
+```
+系统已配置了7个MTRR条目（3个固定的和4个可变的），可变MTRR的总数最多可有20个。这7个条目基于9个可变MTRR构建的
+
+> MTRR 在x86架构中定义不同物理内存区域的缓存类型。固定MTRR通常用于定义常用的内存类型（如ROM、RAM），可变MTRR则用于更精细地控制额外内存区域
+>
+> Mikan独有?
+
+---
 
 ```text
 [    0.004873] esrt: Reserving ESRT space from 0x000000006dcd4918 to 0x000000006dcd49f0.
 ```
-ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留。
+ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留
+
+> ESRT是UEFI（统一可扩展固件接口）规范一部分。ESRT为OS提供可识别系统上的固件资源的机制，在必要时支持它们的更新
+>
+> ESRT提高固件更新过程的安全性和可靠性，是OS和固件间沟通的桥梁
 
 ```text
 [    0.004876] e820: update [mem 0x6dcd4000-0x6dcd4fff] usable ==> reserved
@@ -320,18 +397,40 @@ ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留。
 ```text
 [    0.004888] Using GB pages for direct mapping
 ```
-系统采用了 GB 级别的页面来进行直接映射。
+系统采用 GB 级别的页面来进行直接映射
+
+> 直接映射（Direct Mapping）指内核将整个物理内存映射到其虚拟地址空间的一部分, 为了提高内存访问效率。因为内核可通过虚拟地址直接访问物理内存，无需频繁地进行地址转换。直接映射的区域通常称为“直接映射区”或“线性映射区”
+> - 内存“直接映射”，实际上仍通过MMU进行地址转换——从内核的虚拟地址转换到相应物理地址。“直接映射”区别在于，它为内核提供了简化和高效的方式来访问物理内存，因为映射关系是固定的。可通过固定的偏移量快速计算出物理地址对应的虚拟地址
+> - 直接映射主要用于内核空间，而不是用户空间。用户空间进程的虚拟地址到物理地址的映射是动态的，随着进程的创建、执行和终止而不断变化。OS需频繁地更新页表来反映这些变化。而直接映射区域的映射关系是静态的，一旦建立就不需频繁变动，这简化了内存管理，提高访问效率
+>
+> 传统上内存按“页”（通常4KB）来管理。大页技术，特别是Gigabyte级别的大页，允许OS以更大的内存单元（1GB）来管理和映射内存，这减少了页表条目的数量，从而减少内存的页表查找时间，提高内存访问效率。使用大页特别适合于需处理大量内存的应用和场景，如数据库、大型缓存等。这样做有几个好处：
+> - 减少TLB（Translation Lookaside Buffer）缺失：TLB是一个小型缓存，用于存储最近使用的页表条目，加速虚拟地址到物理地址的转换过程。使用大页可减少TLB缺失次数，因为每个TLB条目现在可覆盖更大内存区域
+> - 减少页表大小和深度：由于每个页现在可映射更大内存区域，所需的页表条目数量减少了，页表的层级结构可更简单，减少页表遍历时间
+
+---
 
 ```text
 [0.004889] Incomplete global flushes, disabling PCID
+```
+尝试使用PCID（Process Context Identifiers）特性时，系统检测到全局缓存刷新操作不完整，因此禁用PCID特性
+
+> PCID（Process Context Identifiers）：一种硬件特性，用于提高上下文切换效率。没有PCID的系统中，OS从一个进程切换到另一个进程时，由于每个进程有自己的虚拟地址空间，通常需刷新TLB确保不会使用错误的地址转换信息。刷新过程影响性能。PCID允许TLB条目与特定进程上下文关联，每个进程被分配唯一PCID。意味着即使多个进程可能有相同虚拟地址映射到不同物理地址，CPU能通过PCID区分它们的TLB条目避免混淆。这导致切换时部分TLB（Translation Lookaside Buffer）条目可保持有效
+>
+> 全局缓存刷新：某些操作（如上下文切换）时，处理器需刷新缓存（包括TLB）以确保数据一致性。不完整的全局刷新可能意味在使用PCID特性时，不能正确保证内存访问一致性
+>
+> Lain独有
+
+```text
 [0.005132] Secure boot disabled
 ```
-系统的安全启动（Secure Boot）功能已被禁用。
+系统的安全启动（Secure Boot）功能已被禁用
+
+> 安全启动: 基于UEFI固件的安全特性，确保系统仅加载和执行经过验证的OS引导加载程序和内核。它通过校验软件的签名来防止恶意软件在系统启动过程中被加载
 
 ```text
 [0.005133] RAMDISK: [mem 0x58d0e000-0x5b486fff]
 ```
-创建了一个 RAM 磁盘（RAMDISK），也就是一部分 RAM 被模拟成硬盘使用，这部分 RAM 的地址范围是 0x58d0e000-0x5b486fff。
+创建 RAM 磁盘（RAMDISK），即部分 RAM 被模拟成硬盘使用，地址范围是 0x58d0e000-0x5b486fff
 
 ```text
 [0.005136] ACPI: Early table checksum verification disabled
@@ -374,11 +473,32 @@ ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留。
 [0.005194] ACPI: PHAT 0x0000000074329000 0005F1 (v01 ALASKA A M I    00000005 MSFT 0100000D)
 [0.005196] ACPI: WSMT 0x0000000074476000 000028 (v01 ALASKA A M I    01072009 AMI  00010013)
 ```
-每一个 ACPI: 后的大写字母组合代表了一种特定的 ACPI 表，例如 RSDP、XSDT、FACP、DSDT 等，这些都是 ACPI 规范中定义的不同类型的表。每种表包含了特定的系统配置信息，例如硬件设备的信息、电源管理策略等。
+ACPI: 后的大写字母组合代表一种特定的 ACPI 表。每种表包含特定的系统配置信息，如硬件设备信息、电源管理策略等。每个表都有内存地址，后面的数字是表的大小，v02 代表版本，然后是表的供应商，供应商版本和日期
 
-每个表都有一个内存地址，如 0x000000007451E014，后面的一串数字（如 000024）是表的大小，v02 代表版本，然后是表的供应商，供应商版本和日期。
-
-在这些日志中，您可以看到很多 SSDT 表，这是系统描述表（Secondary System Descriptor Table，SSDT），用于存放 ACPI 设备的定义。
+> 日志中有很多系统描述表（Secondary System Descriptor Table，SSDT），存放 ACPI 设备的定义
+> RSDP (Root System Description Pointer): 指向系统描述表(XSDT)的指针，是找到其他ACPI表的起点
+> XSDT (Extended System Description Table): 包含其他ACPI表的地址，是RSDP指向的一个表
+> FACP (Fixed ACPI Description Table): 描述系统的电源管理和配置信息，如电源按钮或睡眠按钮的功能
+> DSDT (Differentiated System Description Table): 包含ACPI机器语言（AML）代码，描述系统硬件配置和电源管理功能
+> FACS (Firmware ACPI Control Structure): 为OS提供了与固件通信以管理电源状态的方法
+> MCFG (Memory Mapped Configuration Space Base Address Description Table): 定义了PCIE系统的内存映射配置空间的基地址，用于访问PCIE设备
+> FIDT (Firmware Interface Table): 不是ACPI标准的一部分，可能特定于某些系统的
+> SSDT (Secondary System Description Table): 包含额外ACPI机器语言（AML）代码，用于描述系统硬件配置和电源管理功能，可有多个SSDT
+>
+> HPET (High Precision Event Timer): 描述了一个或多个高精度计时器的配置，用于提供精确的时间测量和事件计划。
+> APIC (Advanced Programmable Interrupt Controller): 提供了关于系统中中断控制器的信息，用于支持高级的中断管理功能。
+> NHLT (Non-Volatile Memory Host Controller Interface Table): 描述了音频设备的配置，特别是与Intel Low Power Audio设备相关的信息。
+> LPIT (Low Power Idle Table): 描述了系统的低功耗空闲状态，用于优化电源管理。
+> DBGP (Debug Port Table): 提供了调试端口的信息，用于系统调试。
+> DBG2 (Debug Device Table Version 2): 描述了系统中的调试设备，用于调试目的。
+> DMAR (DMA Remapping Table): 描述了I/O虚拟化和DMA重映射的功能，支持安全的设备访问内存。
+> FPDT (Firmware Performance Data Table): 包含有关固件性能的信息，用于性能监测和优化。
+> VFCT (VESA BIOS Extensions Firmware Control Table): 不是ACPI标准的一部分，可能是特定于某些系统的。
+> BGRT (Boot Graphics Resource Table): 描述了用于系统启动过程中显示的图像资源，用于定制启动画面。
+> WPBT (Windows Platform Binary Table): 允许OEM在Windows系统启动时执行特定的二进制文件，用于系统配置或更新。
+> TPM2 (Trusted Platform Module 2.0): 提供了关于系统中TPM设备的信息，用于支持安全功能。
+> PHAT (Platform Health Assessment Table): 不是ACPI标准的一部分，可能是特定于某些系统的，用于提供系统健康和诊断信息。
+> WSMT (Windows SMM Security Mitigations Table): 提供了安全缓解措施，用于保护系统免受SMM（System Management Mode）攻击。
 
 ```text
 [0.005197] ACPI: Reserving FACP table memory at [mem 0x7451b000-0x7451b113]
@@ -414,26 +534,26 @@ ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留。
 [0.005211] ACPI: Reserving PHAT table memory at [mem 0x74329000-0x743295f0]
 [0.005211] ACPI: Reserving WSMT table memory at [mem 0x74476000-0x74476027]
 ```
-为 ACPI（高级配置和电源接口）的各种表预留内存的信息。每个 "Reserving" 后面的表名就是 ACPI 的表名，"at [mem xxx-xxx]" 部分则指示了该表在物理内存中的位置。
+为 ACPI 各种表预留内存
 
-例如，ACPI: Reserving FACP table memory at [mem 0x7451b000-0x7451b113] 这行表示系统为 FACP（固定 ACPI 描述表，用于电源管理）预留了位于物理内存 0x7451b000-0x7451b113 的空间。
+---
 
 ```text
 [0.005374] No NUMA configuration found
 ```
-系统没有找到 NUMA（Non-Uniform Memory Access）配置。NUMA 是一种用于多处理器系统的内存设计，使得每个处理器都有自己的本地内存。
+系统没有找到 NUMA（Non-Uniform Memory Access）配置
+
+> NUMA 是用于多处理器系统的内存设计，使得每个处理器有自己的本地内存，访问本地内存比访问另一个处理器的本地内存更快。旨在提高多处理器系统的性能
+>
+> NUMA系统中内存被分割成多个区域，称为“节点”。每个节点与一个或多个处理器直接关联。因为访问本地节点内存不需通过系统总线或网络，而访问远程节点的内存则需要
+>
+> NUMA架构中处理器和其本地内存间的连接确实可被视为“总线”，但它们是专用和优化过的，与传统的共享系统总线(UMA架构)有所不同。这些连接被设计为能够提供更高的数据传输速率和更低的访问延迟，专门用于连接处理器和它们的本地内存。它们可基于不同技术实现，如直接连接、专用高速互连接口（例如Intel的QuickPath Interconnect (QPI) 或AMD的HyperTransport技术），这些技术都旨在提高处理器与内存之间的数据交换效率
+>
+> NUMA架构通过硬件设计实现，主板和芯片组在这种设计中起到了关键作用。主板布局和芯片组的设计决定了处理器、内存以及它们之间连接的物理和逻辑布局
 
 ```text
 [0.005374] Faking a node at [mem 0x0000000000000000-0x000000087f7fffff]
-```
-系统正在模拟一个内存节点，其地址范围从 0x0000000000000000 到 0x000000087f7fffff。
-
-```text
 [0.005376] NODE_DATA(0) allocated [mem 0x87f7fa000-0x87f7fffff]
-```
-系统为节点 0 分配了一块内存用于存放节点的数据。
-
-```text
 [0.005401] Zone ranges:
 [0.005402]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
 [0.005402]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
@@ -441,7 +561,19 @@ ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留。
 [0.005404]   Device   empty
 [0.005404] Movable zone start for each node
 ```
-系统中不同内存区域的范围。这些区域包括 DMA、DMA32、Normal 和 Device。例如，Normal 区域的范围是 [mem 0x0000000100000000-0x000000087f7fffff]。
+系统模拟一个内存节点，其地址范围从 0x0000000000000000 到 0x000000087f7fffff
+
+系统为节点 0 分配了一块内存用于存放节点的数据。
+
+系统中不同内存区域的范围
+
+> 如果系统不是NUMA架构，内核可能“伪造”单一内存节点来管理所有物理内存
+>
+> Zone
+> - 直接内存访问（DMA）区域: 一小块内存，用于旧的只能访问32位物理地址的设备的DMA操作。这个范围从0x0000000000001000到0x0000000000ffffff，覆盖了低于4GB的内存地址
+> - 用于32位系统的DMA操作的内存区域: 支持的地址范围是0x0000000001000000到0x00000000ffffffff，这允许设备进行DMA到整个4GB的地址空间
+> - 正常内存区域: 覆盖高于4GB的地址范围，从0x0000000100000000到0x000000087f7fffff。表明系统有超过2GB的物理内存
+> - Device empty: 没有为设备专门分配的内存区域
 
 ```text
 [0.005405] Early memory node ranges
@@ -467,3 +599,190 @@ ESRT（EFI System Resource Table，EFI 系统资源表）空间已被保留。
 [0.039115] On node 0, zone Normal: 2048 pages in unavailable ranges
 ```
 在节点 0 的特定区域（xxx）中，有 yyy 页内存是无法使用的。
+
+---
+---
+---
+
+> 下面是Mikan的
+
+```text
+[0.022907] ACPI: PM-Timer IO Port: 0x408
+```
+
+系统电源管理（PM）定时器的I/O端口地址是0x408。PM定时器是ACPI规范定义的硬件设备，用于高精度事件计时（如等待特定时间段），而不依赖于传统的时钟中断
+
+> PM定时器主要用于实现各种电源节能模式，如睡眠和休眠，同时保证系统时间的精确
+>
+> 与PM定时器相比，HPET提供了更高的精度和更广泛的应用范围，不仅限于电源管理。HPET通常用于需要高精度事件计时的应用，如多媒体应用、游戏和高性能计时任务
+>
+> I/O端口地址是计算机硬件中用于访问特定设备或设备功能的一个地址。每个设备或设备上的特定功能都分配有一个或多个I/O端口地址。
+>
+> I/O端口地址空间是与内存地址空间分开的，它通过特定的CPU指令（如IN和OUT指令）进行访问。这种机制允许软件与硬件设备进行低级交互，是操作系统和驱动程序进行硬件管理和控制的基础。
+
+```text
+[0.022914] ACPI: LAPIC_NMI (acpi_id[0x00] high edge lint[0x1])
+[0.022915] ACPI: LAPIC_NMI (acpi_id[0x01] high edge lint[0x1])
+[0.022916] ACPI: LAPIC_NMI (acpi_id[0x02] high edge lint[0x1])
+[0.022916] ACPI: LAPIC_NMI (acpi_id[0x03] high edge lint[0x1])
+[0.022917] ACPI: LAPIC_NMI (acpi_id[0x04] high edge lint[0x1])
+[0.022917] ACPI: LAPIC_NMI (acpi_id[0x05] high edge lint[0x1])
+[0.022918] ACPI: LAPIC_NMI (acpi_id[0x06] high edge lint[0x1])
+[0.022918] ACPI: LAPIC_NMI (acpi_id[0x07] high edge lint[0x1])
+[0.022919] ACPI: LAPIC_NMI (acpi_id[0x08] high edge lint[0x1])
+[0.022919] ACPI: LAPIC_NMI (acpi_id[0x09] high edge lint[0x1])
+[0.022919] ACPI: LAPIC_NMI (acpi_id[0x0a] high edge lint[0x1])
+[0.022920] ACPI: LAPIC_NMI (acpi_id[0x0b] high edge lint[0x1])
+[0.022920] ACPI: LAPIC_NMI (acpi_id[0x0c] high edge lint[0x1])
+[0.022921] ACPI: LAPIC_NMI (acpi_id[0x0d] high edge lint[0x1])
+[0.022921] ACPI: LAPIC_NMI (acpi_id[0x0e] high edge lint[0x1])
+[0.022922] ACPI: LAPIC_NMI (acpi_id[0x0f] high edge lint[0x1])
+```
+局部APIC（LAPIC）的非屏蔽中断（NMI）配置。每行对应一个处理器核心或线程的ACPI ID，并指定NMI触发的条件。“high edge”表示NMI是在信号从低到高变化时触发的，`lint[0x1]`指的是使用了哪个局部中断输入线（LINT）
+
+> APIC系统主要由两个组件组成：局部APIC（Local APIC）和I/O APIC。
+> - 局部APIC位于每个处理器（或核心）上，负责接收、处理和屏蔽来自本地或外部源（如I/O设备）的中断。每个处理器的局部APIC可以独立工作，允许并行处理中断，从而提高多处理器系统的效率。
+> - I/O APIC负责接收来自I/O设备的中断信号，并根据系统的配置将这些信号路由到一个或多个局部APIC。I/O APIC使得系统能够更灵活地管理外部中断，支持更多的中断向量，从而允许有更多的I/O设备直接与处理器交互。
+>
+> NMI（Non-Maskable Interrupt）是一种特殊类型的中断，不能被处理器的中断屏蔽位屏蔽。NMI通常用于指示紧急事件，如硬件故障、电源故障或系统崩溃。由于NMI不能被屏蔽，所以能够确保处理器及时响应这些紧急情况。NMI对于系统的稳定和安全至关重要，使得操作系统和硬件能够在出现严重问题时采取必要的措施，如执行安全的关机流程或保存调试信息。
+>
+> 中断输入线（LINT，Local Interrupt Line）是局部APIC的输入线，用于接收中断信号。在多核处理器系统中，每个核心的局部APIC可以通过这些输入线接收来自系统其他部分（如其他处理器核心、I/O APIC或直接连接的硬件设备）的中断信号。LINT使得系统能够将特定的中断事件直接发送到特定的处理器核心，从而优化中断处理流程和提高系统的整体性能。
+
+
+```text
+[0.022935] IOAPIC[0]: apic_id 33, version 33, address 0xfec00000, GSI 0-23
+[0.022940] IOAPIC[1]: apic_id 34, version 33, address 0xfec01000, GSI 24-55
+```
+提供了I/O APIC设备的信息。apic_id是I/O APIC的标识符，version表明了其版本，address是其寄存器访问的物理内存地址。GSI（全局系统中断）范围指示了该I/O APIC可处理的中断号范围
+
+```text
+[0.022942] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[0.022943] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 low level)
+[0.022946] ACPI: Using ACPI (MADT) for SMP configuration information
+[0.022947] ACPI: HPET id: 0x10228210 base: 0xfed00000
+[0.022956] e820: update [mem 0x6ab0d000-0x6ad6cfff] usable ==> reserved
+[0.022968] smpboot: Allowing 16 CPUs, 0 hotplug CPUs
+```
+ACPI中断源覆盖（INT_SRC_OVR）提供了关于如何将旧式中断信号映射到新的中断体系的信息。如`bus_irq 0`（通常是系统定时器中断）被映射到`global_irq 2`
+
+系统使用ACPI的多处理器描述表（MADT）来获取关于对称多处理（SMP）配置的信息。MADT包含了CPU、I/O APIC和中断源等的配置信息，使OS能正确地初始化和管理多处理器环境
+
+支持最多16个CPU核心进行同步多处理（SMP）。"0 hotplug CPUs"意味不支持在系统运行时动态添加（即热插拔）CPU核心
+
+```text
+[0.022989] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[0.022990] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000bffff]
+[0.022991] PM: hibernation: Registered nosave memory: [mem 0x000c0000-0x000fffff]
+[0.022992] PM: hibernation: Registered nosave memory: [mem 0x09b00000-0x09dfffff]
+[0.022993] PM: hibernation: Registered nosave memory: [mem 0x09f00000-0x09f3bfff]
+[0.022994] PM: hibernation: Registered nosave memory: [mem 0x62358000-0x64557fff]
+[0.022996] PM: hibernation: Registered nosave memory: [mem 0x64561000-0x64563fff]
+[0.022997] PM: hibernation: Registered nosave memory: [mem 0x6456c000-0x6456cfff]
+[0.022998] PM: hibernation: Registered nosave memory: [mem 0x6456f000-0x6456ffff]
+[0.022999] PM: hibernation: Registered nosave memory: [mem 0x64571000-0x64571fff]
+[0.023000] PM: hibernation: Registered nosave memory: [mem 0x64574000-0x64574fff]
+[0.023001] PM: hibernation: Registered nosave memory: [mem 0x6ab0d000-0x6ad6cfff]
+[0.023002] PM: hibernation: Registered nosave memory: [mem 0x6ba27000-0x6ba27fff]
+[0.023004] PM: hibernation: Registered nosave memory: [mem 0x7077f000-0x72f7efff]
+[0.023004] PM: hibernation: Registered nosave memory: [mem 0x72f7f000-0x7af7efff]
+[0.023004] PM: hibernation: Registered nosave memory: [mem 0x7af7f000-0x7affefff]
+[0.023006] PM: hibernation: Registered nosave memory: [mem 0x7b000000-0x7bffffff]
+[0.023006] PM: hibernation: Registered nosave memory: [mem 0x7c000000-0x7d78ffff]
+[0.023007] PM: hibernation: Registered nosave memory: [mem 0x7d790000-0x7d7effff]
+[0.023007] PM: hibernation: Registered nosave memory: [mem 0x7d7f0000-0x7d7f4fff]
+[0.023007] PM: hibernation: Registered nosave memory: [mem 0x7d7f5000-0x7fffffff]
+[0.023008] PM: hibernation: Registered nosave memory: [mem 0x80000000-0xfed7ffff]
+[0.023008] PM: hibernation: Registered nosave memory: [mem 0xfed80000-0xfed80fff]
+[0.023009] PM: hibernation: Registered nosave memory: [mem 0xfed81000-0xffffffff]
+```
+列出了系统在休眠或冬眠（hibernation）期间不会保存到磁盘的内存区域。通常包括硬件映射的内存、保留区域或某些不需要在唤醒时恢复的数据。这样可减少休眠文件大小，加快休眠和恢复速度
+
+```text
+[0.023010] [mem 0x80000000-0xfed7ffff] available for PCI devices
+[0.023011] Booting paravirtualized kernel on bare hardware
+```
+内核以半虚拟化方式在裸机上启动。半虚拟化允许客户机OS知道自己在虚拟环境中运行，从而进行优化，以减少虚拟化带来的性能损耗。即使消息中提到“裸硬件”，这也意味着内核能够使用虚拟化优化，即使它直接运行在物理硬件上。
+
+```text
+[0.023013] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+```
+涉及到系统时钟源的配置。"refined-jiffies"是一种时钟源，使用了更精确的计时机制来追踪系统时间。mask和max_cycles字段指定了时钟周期的最大值，max_idle_ns字段表示最大空闲时间，以纳秒计
+
+```text
+[0.026353] setup_percpu: NR_CPUS:384 nr_cpumask_bits:16 nr_cpu_ids:16 nr_node_ids:1
+[0.026701] percpu: Embedded 84 pages/cpu s221184 r8192 d114688 u524288
+[0.026707] pcpu-alloc: s221184 r8192 d114688 u524288 alloc=1*2097152
+[0.026708] pcpu-alloc: [0] 00 01 02 03 [0] 04 05 06 07
+[0.026712] pcpu-alloc: [0] 08 09 10 11 [0] 12 13 14 15
+```
+显示了关于每处理器变量（per-CPU variables）的配置。系统配置了最多384个CPU的支持，但实际上有16个CPU ID和1个节点ID。这反映了系统的处理器和NUMA（非一致性内存访问）节点配置。
+
+描述了为每个CPU分配的内核数据结构的大小和布局。这些数据结构存储了每个CPU的特定信息，如统计数据、内核栈等。s221184 r8192 d114688 u524288等值指的是分配给每个CPU的静态、保留、动态和总页数。
+
+```text
+[0.026731] Kernel command line: initrd=\efi\nixos\fabadrl8n5d4y4gqpyxz2vzz98q5k7i5-initrd-linux-6.7.4-initrd.efi init=/nix/store/3x58akl3zh5nhas3ac5v8hkvhkd0gac7-nixos-system-Mikan-24.05.20240215.a4d4fe8/init loglevel=4
+[0.028160] Dentry cache hash table entries: 4194304 (order: 13, 33554432 bytes, linear)
+```
+目录项（dentry）缓存的哈希表大小。目录项缓存用于加速文件系统中目录访问。这里配置了大约4.2百万条目，占用了约32MB的内存。
+
+```text
+[0.028778] Inode-cache hash table entries: 2097152 (order: 12, 16777216 bytes, linear)
+```
+描述了inode缓存的哈希表配置，其中有大约2.1百万条目，占用约16MB内存。Inode缓存用于加速对文件元数据的访问
+
+```text
+[0.028870] Fallback order for Node 0: 0
+```
+可能是关于NUMA（非统一内存访问）配置的。在单节点系统中，这表明所有的内存分配请求都将首先考虑节点0
+
+```text
+[0.028876] Built 1 zonelists, mobility grouping on.  Total pages: 7145770
+```
+内核已经构建了一个区域列表（zonelist），用于内存管理。"mobility grouping"开启意味着系统将尝试将相似的页面组织在一起，以优化内存使用。"Total pages"显示了系统总共有约714万个内存页面。
+
+```text
+[0.028876] Policy zone: Normal
+```
+内存分配策略主要针对的是“Normal”内存区域，这是大多数内存分配请求发生的地方。
+
+```text
+[0.028878] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+```
+内存的自动初始化设置。"stack:all(zero)"意味着所有的栈内存都将被初始化为0。"heap alloc:off, heap free:off"意味着堆内存的自动分配和释放功能被关闭，这可能是为了性能优化。
+
+```
+[0.028924] software IO TLB: area num 16.
+```
+系统配置了软件输入输出转换后备缓冲区（IO TLB），共有16个区域。软件IO TLB用于支持非直接内存访问（DMA）操作，特别是在物理内存分散的环境中。
+
+```
+[0.055803] Memory: 28264032K/29037428K available (14336K kernel code, 2319K rwdata, 9412K rodata, 2988K init, 2916K bss, 773136K reserved, 0K cma-reserved)
+```
+```
+[0.056583] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=16, Nodes=1
+```
+```
+[0.056605] ftrace: allocating 40198 entries in 158 pages
+```
+```
+[0.063381] ftrace: allocated 158 pages with 5 groups
+```
+```
+[0.063919] Dynamic Preempt: voluntary
+```
+```
+[0.063975] rcu: Preemptible hierarchical RCU implementation.
+[0.063976] rcu:     RCU event tracing is enabled.
+[0.063976] rcu:     RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=16.
+```
+```
+[0.063977]  Trampoline variant of Tasks RCU enabled.
+[0.063977]  Rude variant of Tasks RCU enabled.
+[0.063978]  Tracing variant of Tasks RCU enabled.
+[0.063978] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[0.063979] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=16
+[0.065748] NR_IRQS: 24832, nr_irqs: 1096, preallocated irqs: 16
+[0.065960] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[0.066085] Console: colour dummy device 80x25
+[0.066086] printk: legacy console [tty0] enabled
+
