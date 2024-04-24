@@ -1,0 +1,21 @@
+---
+title: "读CPU眼中的C/C++"
+date: "2024-03-01"
+description: "another perspective"
+image: /images/blog/
+authors:
+  - KUD
+---
+
+内存的金手指有两种传输线：数据传输线和地址传输线
+
+```assembly
+write():
+ push   rbp
+ mov    rbp,rsp
+ mov    DWORD PTR [rip+0x0],0x2        # e <write()+0xe>
+    R_X86_64_PC32 a-0x8
+ nop
+ pop    rbp
+ ret
+ ```
